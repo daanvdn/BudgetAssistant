@@ -1,0 +1,56 @@
+.wrapper {
+  display: grid;
+  grid-template-columns: fit-content(1fr) fit-content() 1fr;
+  // gap: 10px;
+  // grid-auto-rows: 1fr;
+  align-items: start;
+  // column-gap: normal;
+  grid-column-gap: 0;
+  grid-row-gap: 0
+
+}
+
+.one {
+  grid-column: 1 /1;
+  grid-row: 1;
+
+}
+
+.two {
+  grid-column: 2;
+  grid-row: 1;
+
+}
+
+.three {
+  grid-column: 3;
+  grid-row: 1;
+
+}
+::ng-deep .mat-expansion-panel-header .mat-expansion-panel-header-title {
+  justify-content: center !important;
+}
+
+.button-container {
+  display: flex;
+  //justify-content: flex-end;
+  justify-content: center;
+}
+
+
+.toolbar-container {
+  display: flex;
+  justify-content: space-between;
+  height: 8vh;
+}
+
+.title {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.spacer {
+  flex: 1;
+}
+

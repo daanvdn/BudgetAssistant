@@ -1,0 +1,89 @@
+<div mat-dialog-title style="text-align: center;">Transactions for category <span style="font-style: italic">{{ query.category }} and period {{query.period}}</span> </div>
+<div mat-dialog-content style="background-color:white; overflow-y: scroll; height: 100%; width: 100%; display: flex; flex-direction: column; align-items: center;">
+    <div>
+        <table mat-table [dataSource]="dataSource" matSort (matSortChange)="sortBy($event)" class="mat-z8"
+               style="border-collapse: separate; width: 100%"
+               matSortDisableClear matSortActive="bookingDate" matSortDirection="asc">
+            <ng-container matColumnDef="bookingDate">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header style="font-size: large; width: 15%">Date</th>
+                <td mat-cell *matCellDef="let item">
+                    <div class="default-items">
+                        {{ item.bookingDate | date }}
+                    </div>
+                </td>
+            </ng-container>
+            <ng-container matColumnDef="counterparty">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header style="font-size: large; width: 15%">
+                    Counterparty
+                </th>
+                <td mat-cell *matCellDef="let item">
+                    <div class="stacked-items" style=" inline-size: 200px;">
+                        <div>{{ item.counterparty.name | titlecase }}</div>
+                        <div
+                                style="font-style: italic; font-weight: lighter;padding-block: 2px;">{{ item.counterparty.accountNumber }}
+                        </div>
+                        <div
+                                style="font-style: italic; font-weight: lighter;padding-block: 2px;">{{ item.counterparty.streetAndNumber }} {{
+                                item.counterparty.zipCodeAndCity
+                            }}
+                        </div>
+                    </div>
+                </td>
+            </ng-container>
+            <ng-container matColumnDef="transaction">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header style="font-size: large;width: 20%">Transaction
+                </th>
+                <td mat-cell *matCellDef="let item">
+                    <div class="stacked-items"
+                         style="font-weight: lighter;padding-block: 2px; inline-size: 300px;  overflow-wrap: break-word;">
+                        <div>{{ item.transaction }}</div>
+                        <div *ngIf="item.transaction !== item.communications"
+                             style="padding-block: 2px">{{ item.communications }}
+                        </div>
+                    </div>
+                </td>
+            </ng-container>
+            <ng-container matColumnDef="amount">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header style="font-size: large; width: 10%">Amount</th>
+                <td mat-cell *matCellDef="let item">
+                    <div class="stacked-items" style="min-width: 100px;">
+                        <div>{{ item.amount }} {{ item.currency }}</div>
+                    </div>
+                </td>
+            </ng-container>
+            <ng-container matColumnDef="transactionType">
+                <th mat-header-cell *matHeaderCellDef style="font-size: large; width: 40%">Transaction Type</th>
+                <td mat-cell *matCellDef="let item">
+                    <table style="width: 100%">
+                        <tr>
+                            <td>
+                                <div style="font-weight: lighter;font-style: italic;">categorie
+                                </div>
+                            </td>
+                            <td>
+                                <div>
+                                    <app-category-tree-dropdown
+                                            (selectionChange)="setCategory(item, $event)"
+                                            [selectedCategoryQualifiedNameStr]="item.category"
+                                            [amountType]="amountType(item)"
+                                    >
+                                    </app-category-tree-dropdown>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr VALIGN=TOP mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+        </table>
+
+        <mat-paginator *ngIf="dataSource.page$ | async as page" [length]="page.totalElements" [pageSize]="page.size"
+                       [pageIndex]="page.number" (page)="dataSource.fetch($event.pageIndex)">
+        </mat-paginator>
+    </div>
+    <div mat-dialog-actions style="align-self: center">
+        <button mat-raised-button (click)="onCloseClick()">Close</button>
+    </div>
+</div>

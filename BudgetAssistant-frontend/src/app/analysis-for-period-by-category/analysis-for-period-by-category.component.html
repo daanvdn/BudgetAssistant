@@ -1,0 +1,60 @@
+<div *ngIf="isLoaded">
+  <h2 class="text_center">Categorieën</h2>
+  <div class="mat-z8" style="padding-left: 25px; display: flex; ">
+    <div style="width: 50%; height: 50%">
+      <div class="dashboard">
+        <h3 class="dashboard-card-content">Inkomsten</h3>
+        <ul class="card" *ngFor="let item of incomeDataPieChart">
+          <mat-card>
+            <mat-card-header class="dashboard-card-content">{{item.period.value}}</mat-card-header>
+            <mat-card-content class="dashboard-card-content">
+              <ngx-charts-pie-chart
+                [view]="view"
+                [customColors]="customColors"
+                [results]="item.nameValuePairs"
+                [gradient]="gradient"
+                [legend]="showLegend"
+                [legendPosition]="legendPosition"
+                [labels]="showLabels"
+                [doughnut]="isDoughnut"
+                [trimLabels]=false
+                [animations]=true
+              ></ngx-charts-pie-chart>
+              <ngx-charts-pie-chart
+
+              ></ngx-charts-pie-chart>
+            </mat-card-content>
+          </mat-card>
+
+        </ul>
+      </div>
+    </div>
+    <div style="width: 50%; height: 50%">
+      <div class="dashboard">
+        <h3 class="dashboard-card-content">Uitgaven</h3>
+        <ul class="card" *ngFor="let item of expensesDataPieChart">
+          <mat-card>
+            <mat-card-header class="dashboard-card-content">{{item.period.value}}</mat-card-header>
+            <mat-card-content class="dashboard-card-content">
+              <ngx-charts-pie-chart
+                [view]="view"
+                [customColors]="customColors"
+                [results]="item.nameValuePairs"
+                [gradient]="gradient"
+                [legend]="showLegend"
+                [legendPosition]="legendPosition"
+                [labels]="showLabels"
+                [doughnut]="isDoughnut"
+                [trimLabels]=false
+                [animations]=true
+              ></ngx-charts-pie-chart>
+            </mat-card-content>
+          </mat-card>
+
+        </ul>
+      </div>
+    </div>
+
+  </div>
+</div>
+

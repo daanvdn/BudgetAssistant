@@ -1,0 +1,128 @@
+<mat-toolbar color="primary" class="toolbar-container">
+    <span class="title">Rules</span>
+    <button (click)="runRules()"  class="button-container" mat-icon-button>
+        <fa-icon style="justify-content: center" [icon]="faPlay" [fixedWidth]="true" matTooltip="Run rules"></fa-icon>
+    </button>
+
+</mat-toolbar>
+
+<div style="padding-left: 10px">
+
+  <div [ngSwitch]="showCategoryTree">
+    <div *ngSwitchCase="true">
+
+      <div class="parent">
+        <div class="child0" >
+
+        </div>
+        <div class="child1">
+          <mat-button-toggle-group (change)="onToggleChange($event)" name="fontStyle" aria-label="Font Style">
+            <mat-button-toggle [checked]="true" value="expenses">Expenses</mat-button-toggle>
+            <mat-button-toggle value="revenue">Revenue</mat-button-toggle>
+          </mat-button-toggle-group>
+        </div>
+
+      </div>
+      <div [ngSwitch]="activeView" style="height: 95vh; overflow-y: scroll">
+        <div *ngSwitchCase="ActiveView.EXPENSES">
+          <mat-tree style="padding-left: 10px"
+                    [dataSource]="expensesCategoryWrapper.dataSource" [treeControl]="expensesCategoryWrapper.treeControl"
+                    class="example-tree">
+            <!-- This is the tree node template for leaf nodes -->
+            <!-- There is inline padding applied to this node using styles.
+              This padding value depends on the mat-icon-button width. -->
+            <mat-tree-node *matTreeNodeDef="let node" matTreeNodeToggle>
+              <div class="mat-tree-node">
+                <button mat-icon-button [disabled]="true">
+                  <mat-icon>remove</mat-icon>
+                </button>
+                {{ node.name }}
+                <button (click)="onClickCreateRule(node)" mat-icon-button>
+                  <fa-icon [icon]="faNetworkWired" [fixedWidth]="true" [matTooltip]="getTooltip(node)"></fa-icon>
+                </button>
+              </div>
+            </mat-tree-node>
+            <!-- This is the tree node template for expandable nodes -->
+            <mat-nested-tree-node *matTreeNodeDef="let node; when: hasChild">
+              <div class="mat-tree-node">
+                <button mat-icon-button matTreeNodeToggle
+                        [attr.aria-label]="'Toggle ' + node.name">
+                  <mat-icon class="mat-icon-rtl-mirror">
+                    {{ expensesCategoryWrapper.treeControl.isExpanded(node) ? 'expand_more' : 'add' }}
+                  </mat-icon>
+                </button>
+                {{ node.name }}
+                <button (click)="onClickCreateRule(node)" mat-icon-button>
+                  <fa-icon [icon]="faNetworkWired" [fixedWidth]="true" [matTooltip]="getTooltip(node)"></fa-icon>
+                </button>
+              </div>
+              <!-- There is inline padding applied to this div using styles.
+                  This padding value depends on the mat-icon-button width.  -->
+              <div [class.example-tree-invisible]="!expensesCategoryWrapper.treeControl.isExpanded(node)"
+                   role="group">
+                <ng-container matTreeNodeOutlet></ng-container>
+              </div>
+            </mat-nested-tree-node>
+          </mat-tree>
+        </div>
+        <div *ngSwitchCase="ActiveView.REVENUE">
+          <mat-tree  style="padding-left: 10px"
+                    [dataSource]="revenueCategoryTreeWrapper.dataSource"
+                    [treeControl]="revenueCategoryTreeWrapper.treeControl" class="example-tree">
+            <!-- This is the tree node template for leaf nodes -->
+            <!-- There is inline padding applied to this node using styles.
+              This padding value depends on the mat-icon-button width. -->
+            <mat-tree-node *matTreeNodeDef="let node" matTreeNodeToggle>
+              <div class="mat-tree-node">
+                <button mat-icon-button [disabled]="true">
+                  <mat-icon>remove</mat-icon>
+                </button>
+                {{ node.name }}
+                <button (click)="onClickCreateRule(node)" mat-icon-button>
+                  <fa-icon [icon]="faNetworkWired" [fixedWidth]="true" [matTooltip]="getTooltip(node)"></fa-icon>
+                </button>
+              </div>
+            </mat-tree-node>
+            <!-- This is the tree node template for expandable nodes -->
+            <mat-nested-tree-node *matTreeNodeDef="let node; when: hasChild">
+              <div class="mat-tree-node">
+                <button mat-icon-button matTreeNodeToggle
+                        [attr.aria-label]="'Toggle ' + node.name">
+                  <mat-icon class="mat-icon-rtl-mirror">
+                    {{ revenueCategoryTreeWrapper.treeControl.isExpanded(node) ? 'expand_more' : 'add' }}
+                  </mat-icon>
+                </button>
+                {{ node.name }}
+                <button (click)="onClickCreateRule(node)" mat-icon-button>
+                  <fa-icon [icon]="faNetworkWired" [fixedWidth]="true" [matTooltip]="getTooltip(node)"></fa-icon>
+                </button>
+              </div>
+              <!-- There is inline padding applied to this div using styles.
+                  This padding value depends on the mat-icon-button width.  -->
+              <div [class.example-tree-invisible]="!revenueCategoryTreeWrapper.treeControl.isExpanded(node)"
+                   role="group">
+                <ng-container matTreeNodeOutlet></ng-container>
+              </div>
+            </mat-nested-tree-node>
+          </mat-tree>
+        </div>
+      </div>
+    </div>
+    <div *ngSwitchCase="false">
+      <div class="grid-container">
+        <div class="grid-child" style="padding-top: 5px; padding-left: 5px">
+          <button mat-raised-button (click)="onClickNavigateBackToCategories()"
+                  matTooltip="Navigate back to category overview">
+            <mat-icon>keyboard_backspace</mat-icon>
+          </button>
+        </div>
+      </div>
+      <div>
+        <category-rules [categoryNode]="selectedCategoryNode">
+        </category-rules>
+      </div>
+    </div>
+
+  </div>
+
+</div>

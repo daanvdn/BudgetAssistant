@@ -1,0 +1,57 @@
+<mat-toolbar color="primary" class="toolbar-container">
+    <span class="title">Insights</span>
+    <button [disabled]="showCriteriaToolbar" mat-icon-button class="button-container"
+            (click)="showCriteriaToolbar=true">
+        <fa-icon style="justify-content: center" [fixedWidth]="true" [icon]="faSearch"></fa-icon>
+    </button>
+</mat-toolbar>
+<div style="overflow-x: hidden">
+    <mat-tab-group #matTabGroup mat-stretch-tabs="false" mat-align-tabs="center">
+        <mat-tab label="Revenue and Expenses">
+            <div *ngIf="showCriteriaToolbar" style="height: 10vh; padding-left:2px">
+                <criteria-toolbar (criteriaChange)="expensesRevenueCriteria = $event" (closed)="onClosed()" [enableExpensesRevenueToggle]="false"></criteria-toolbar>
+            </div>
+            <div [style.height]="getDynamicHeight()" style="overflow-y: scroll; padding-left:2px">
+                <expenses-revenue [criteria]="expensesRevenueCriteria"></expenses-revenue>
+            </div>
+        </mat-tab>
+        <mat-tab label="Category Overview">
+
+            <div *ngIf="showCriteriaToolbar" style="height: 10vh; padding-left:2px">
+                <criteria-toolbar (criteriaChange)="categoryOverviewCriteria = $event"  (closed)="onClosed()"></criteria-toolbar>
+            </div>
+            <div [style.height]="getDynamicHeight()" style="overflow-y: visible; padding-left:2px">
+                <revenue-expenses-per-period-and-category [criteria]="categoryOverviewCriteria">
+
+                </revenue-expenses-per-period-and-category>
+            </div>
+
+        </mat-tab>
+        <mat-tab label="Categories in Detail">
+
+            <div *ngIf="showCriteriaToolbar" style="height: 10vh; padding-left:2px">
+                <criteria-toolbar (criteriaChange)="categoryDetailsCriteria = $event" (closed)="onClosed()"></criteria-toolbar>
+            </div>
+
+            <div [style.height]="getDynamicHeight()" style="overflow-y: scroll; padding-left:2px">
+                <category-details [criteria]="categoryDetailsCriteria">
+
+                </category-details>
+            </div>
+
+        </mat-tab>
+        <mat-tab label="Budget Tracking">
+
+            <div *ngIf="showCriteriaToolbar" style="height: 10vh; padding-left:2px">
+                <criteria-toolbar [enableExpensesRevenueToggle]="false" (criteriaChange)="budgetTrackingCriteria = $event" (closed)="onClosed()"></criteria-toolbar>
+            </div>
+
+            <div [style.height]="getDynamicHeight()" style="overflow-y: scroll; padding-left:2px">
+                <budget-tracking [criteria]="budgetTrackingCriteria">
+
+                </budget-tracking>
+            </div>
+
+        </mat-tab>
+    </mat-tab-group>
+</div>

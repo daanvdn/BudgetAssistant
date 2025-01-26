@@ -1,0 +1,55 @@
+<h1 mat-dialog-title style="text-align: center;">Zoek transacties</h1>
+<div style="width: 100%;">
+  <div mat-dialog-content style="width: 100%;" >
+    <div style="padding-top: 5px;" class="top-border bottom-border">
+      <div id="first" style="padding-top: 5px;font-weight: bold; color: rgb(59, 58, 58); font-size: larger;">
+        Transactie type
+      </div>
+      <app-transactiontype-selection style="min-width: 350px;"
+        (transactionTypeChange)="handleTransactionTypeSelectionChange()"></app-transactiontype-selection>
+
+    </div>
+    <div style="padding-top: 5px;" class="top-border bottom-border">
+      <div style="padding-top: 5px;font-weight: bold; color: rgb(59, 58, 58); font-size: larger;">
+        Periode
+      </div>
+      <period-selection style=" font-size: larger;"
+        (change)="handlePeriodSelectionChange()"></period-selection>
+    </div>
+
+    <div style="padding-top: 5px;" class="top-border bottom-border">
+      <div style="padding-top: 5px;font-weight: bold; color: rgb(59, 58, 58); font-size: larger;">
+        Categorie
+      </div>
+      <app-category-tree-dropdown style=" font-size: larger;" (selectionChange)="handleCategorySelectionChange()"
+                                  [selectedCategoryQualifiedNameStr]="'DUMMY CATEGORIE'"
+                                  [amountType]="AmountType.BOTH"
+      ></app-category-tree-dropdown>
+
+
+    </div>
+
+    <div style="padding-top: 5px;" class="top-border bottom-border">
+      <div style="padding-top: 5px;font-weight: bold; color: rgb(59, 58, 58); font-size: larger;">
+        Tegenpartij
+      </div>
+      <app-counterparty-name-selection
+        (change)="handleTegenpartijSelectionChange()"></app-counterparty-name-selection>
+      <app-counterparty-account-number-selection
+        (change)="handleRekeningTegenpartijSelectionChange()"></app-counterparty-account-number-selection>
+    </div>
+
+    <div style="padding-top: 5px;" class="top-border bottom-border">
+      <div style="padding-top: 5px;font-weight: bold; color: rgb(59, 58, 58); font-size: larger;">
+        Transactie
+      </div>
+      <app-transaction-communications-search
+        (change)="handleTransactionMededelingenSearchChange()"></app-transaction-communications-search>
+
+    </div>
+  </div>
+  <div mat-dialog-actions>
+    <button mat-button (click)="onCancelClick()">Annuleer</button>
+    <button mat-button (click)="onSearchClick()" cdkFocusInitial>Zoek</button>
+  </div>
+</div>

@@ -1,0 +1,85 @@
+<mat-toolbar color="primary" class="toolbar-header">
+  <span>Uncategorized Transactions</span>
+</mat-toolbar>
+<div style="background: white">
+  <div #parent
+       style="height: 10vh; display: flex; justify-content: space-between;align-items: center; position: relative;">
+    <div #one>
+      <bank-account-selection>
+      </bank-account-selection>
+    </div>
+    <div #two style="position: absolute; left: 50%; transform: translateX(-50%);">
+      <mat-button-toggle-group (change)="onToggleChange($event)" name="fontStyle" aria-label="Font Style">
+        <mat-button-toggle [checked]="true" value="expenses">Expenses</mat-button-toggle>
+        <mat-button-toggle value="revenue">Revenue</mat-button-toggle>
+      </mat-button-toggle-group>
+    </div>
+    <!--    <div #three style="flex-grow: 1">-->
+    <div #three style="position: absolute; right: 0;">
+      <mat-paginator *ngIf="dataSource.backingPaginationDataSource.page$ | async as page"
+                     [length]="page.totalElements"
+                     [pageSize]="page.size"
+                     [pageIndex]="page.number" (page)="dataSource.fetch($event.pageIndex)">
+      </mat-paginator>
+
+    </div>
+  </div>
+  <div style="height: 75vh;background-color:white; align-content: space-between; overflow-y: auto;">
+    <table #table mat-table [dataSource]="dataSource" class="mat-z8" style="border-collapse: separate; width: 100%">
+      <ng-container matColumnDef="transaction">
+        <th mat-header-cell *matHeaderCellDef style="font-size: large;width: 50%"></th>
+        <td mat-cell style="font-size: large" *matCellDef="let item">
+          <div class="stacked-items"
+               style="font-weight: lighter;padding-block: 8px; ;  overflow-wrap: break-word;">
+            <div>{{ item.transaction }}</div>
+            <div *ngIf="item.transaction !== item.communications"
+                 style="padding-block: 8px">{{ item.communications }}
+            </div>
+          </div>
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="amount">
+        <th mat-header-cell *matHeaderCellDef style="font-size: large; width: 10%"></th>
+        <td mat-cell style="font-size: large" *matCellDef="let item">
+          <div class="stacked-items" style="min-width: 100px;">
+            <div>{{ item.amount }} {{ item.currency }}</div>
+          </div>
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="category">
+        <th mat-header-cell *matHeaderCellDef style="font-size: large; width: 40%">Categorie</th>
+        <td mat-cell style="font-size: large;" *matCellDef="let item">
+          <div>
+            <app-category-tree-dropdown
+              (selectionChange)="setCategory(item, $event)"
+              [selectedCategoryQualifiedNameStr]="item.category"
+              [amountType]="amountType(item)"
+            >
+            </app-category-tree-dropdown>
+          </div>
+
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr VALIGN=TOP mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+
+      <!-- Group header -->
+      <ng-container matColumnDef="groupHeader">
+        <td mat-cell *matCellDef="let groupBy">
+          <strong>Tegenpartij: {{ groupBy.counterparty ? groupBy.counterparty : 'N/A' }}</strong></td>
+      </ng-container>
+
+      <tr mat-row *matRowDef="let row; columns: ['groupHeader','amount','category']; when: isGroup"></tr>
+    </table>
+  </div>
+  <div #three style="position: absolute; right: 0;height: 5vh">
+    <mat-paginator *ngIf="dataSource.backingPaginationDataSource.page$ | async as page"
+                   [length]="page.totalElements"
+                   [pageSize]="page.size"
+                   [pageIndex]="page.number" (page)="dataSource.fetch($event.pageIndex)">
+    </mat-paginator>
+
+  </div>
+
+</div>

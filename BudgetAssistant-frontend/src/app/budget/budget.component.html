@@ -1,0 +1,77 @@
+<mat-toolbar color="primary" class="toolbar-header">
+  <span>Budget</span>
+</mat-toolbar>
+<div>
+  <div style="display: flex;justify-content: space-between; position: sticky; top:0px;background: rgba(255, 255, 255, 1); height: 5vh">
+    <bank-account-selection style="padding-left: 16px; width: fit-content;"></bank-account-selection>
+    <div style="display:flex">
+      <button mat-button (click)="saveAll()" class="button;flex-child">
+        <div style="display: flex; flex-direction: column; align-items: center;">
+          <mat-icon>save</mat-icon>
+          Save
+        </div>
+      </button>
+      <button mat-button (click)="toggleTree()" class="button;flex-child">
+        <div style="display: flex; flex-direction: column; align-items: center;">
+          <mat-icon>{{ isTreeExpanded ? 'expand_less' : 'expand_more' }}</mat-icon>
+          {{ isTreeExpanded ? 'Collapse' : 'Expand' }}
+        </div>
+      </button>
+    </div>
+  </div>
+  <form *ngIf="dataLoaded" [formGroup]="mainForm" style="height: 85vh; overflow-y: scroll">
+    <div class="mat-table-wrapper">
+      <table mat-table [dataSource]="dataSource" class="mat-elevation-z8" style="width: 100%">
+        <ng-container matColumnDef="category">
+          <th mat-header-cell *matHeaderCellDef>
+            <span [style.padding-left.px]="50">Categorie</span>
+          </th>
+          <td mat-cell *matCellDef="let data">
+            <button mat-icon-button
+                    [style.visibility]="!data.expandable ? 'hidden' : ''"
+                    [style.margin-left.px]="data.level * 32"
+                    (click)="treeControl.toggle(data)">
+              <mat-icon class="mat-icon-rtl-mirror">
+                {{ treeControl.isExpanded(data) ? 'expand_more' : 'chevron_right' }}
+              </mat-icon>
+            </button>
+            {{ data.name }}
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="budget">
+          <th mat-header-cell *matHeaderCellDef>Maandbudget</th>
+          <td mat-cell *matCellDef="let data">
+            <mat-form-field *ngIf="data.budgetTreeNodeId !== -1">
+              <label hidden="hidden">node {{ data.budgetTreeNodeId }}</label>
+              <input matInput type="number"
+                     formControlName="{{data.budgetTreeNodeId}}" [errorStateMatcher]="matcher"
+                     (focus)="determineSubTreeForNode(data)"
+              >
+              <mat-error *ngIf="mainForm.controls[data.budgetTreeNodeId]?.errors?.['negativeNumber']">
+                The number must not be negative!
+              </mat-error>
+              <mat-error *ngIf="mainForm.controls[data.budgetTreeNodeId]?.errors?.['isLessThanItsDescendants']">
+                Sum of descendants must not be greater than parent budget!
+              </mat-error>
+            </mat-form-field>
+            <span *ngIf="data.budgetTreeNodeId === -1">{{ data.budgetTreeNodeAmount }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="yearlyBudget">
+          <th mat-header-cell *matHeaderCellDef>Jaarbudget</th>
+          <td mat-cell *matCellDef="let data">
+            <span>{{ data.budgetTreeNodeAmount * 12 }}</span>
+
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"
+            [ngClass]="getRowClass(row)"></tr>
+
+
+      </table>
+    </div>
+  </form>
+
+</div>

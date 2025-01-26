@@ -1,0 +1,14 @@
+<div class="toolbar-container">
+    <div style="display: flex; justify-content: flex-start">
+        <bank-account-selection (change)="onBankAccountChange($event)" *ngIf="enableBankAccountSelection" style="width: fit-content;"></bank-account-selection>
+        <grouping-type-selection (change)="onGroupingChange($event)" *ngIf="enableGroupingTypeSelection"
+                                 style="width: fit-content"></grouping-type-selection>
+        <period-selection (change)="onPeriodChange($event)" *ngIf="enablePeriodSelection"></period-selection>
+        <expenses-revenue-toggle (change)="onExpensesRevenueChange($event)" *ngIf="enableExpensesRevenueToggle"></expenses-revenue-toggle>
+    </div>
+    <div class="button-container" style="width: 50px; height: 50px; ">
+        <button (click)="onClickClose()"  mat-raised-button>
+            <fa-icon size="lg" [icon]="faXmark" [fixedWidth]="true"></fa-icon>
+        </button>
+    </div>
+</div>

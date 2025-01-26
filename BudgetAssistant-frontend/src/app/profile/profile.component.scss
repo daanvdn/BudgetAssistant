@@ -1,0 +1,29 @@
+.label {
+  width: 120px; /* Adjust the width as needed */
+  display: inline-block;
+  padding-right: 10px;
+  text-align: left;
+}
+.card-content-wrapper {
+  display: flex;
+  flex-direction: row; /* Arranges them side by side */
+  justify-content: space-between; /* Distributes space evenly between them */
+}
+
+.default-items {
+  padding-right: 20px;
+  // font-weight: lighter;
+  //margin: 8px 8px;
+  max-width: 100%;
+  white-space: nowrap;
+}
+
+.table-header{
+  text-align: left;
+}
+
+.toolbar-container {
+  display: flex;
+  justify-content: center;
+  height: 8vh;
+}

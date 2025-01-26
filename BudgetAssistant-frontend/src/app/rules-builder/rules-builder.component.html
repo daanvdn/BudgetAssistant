@@ -1,0 +1,5 @@
+<div style="overflow-x: auto; overflow-y: auto">
+  <div style="padding-top: 10px; text-align: center">Create rule for category <span style="font-weight: bold">{{ categoryNode.name }}</span></div>
+  <query-builder [allowCollapse]="true" [(ngModel)]='ruleSet' [config]='config' (ngModelChange)="onRuleSetWrapperChange()">
+  </query-builder>
+</div>

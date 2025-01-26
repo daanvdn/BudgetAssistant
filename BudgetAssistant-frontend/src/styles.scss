@@ -1,0 +1,57 @@
+/* You can add global styles to this file, and also import other style files */
+
+//@import "~@ng-select/ng-select/themes/material.theme.css";
+//@import '~@angular/material/prebuilt-themes/deeppurple-amber.css';
+@import '~@angular/material/prebuilt-themes/indigo-pink';
+
+
+
+html, body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+}
+
+.wrapper {
+  border: 1px solid gray;
+}
+
+.inline_block {
+  display: inline-block;
+  padding: 2px;
+  vertical-align: top;
+
+  /* width:120px;
+height:120px;
+border: 1px solid red; */
+}
+
+.text_center {
+  /* margin: auto;
+  width: 50%; */
+  position: relative;
+  left: 50%;
+
+
+}
+
+.cdk-global-overlay-wrapper {
+  display: flex;
+  position: absolute;
+  z-index: 1000;
+  overflow: auto;
+  pointer-events: auto !important;
+}
+
+.example-container {
+  box-sizing: border-box;
+}
+.toolbar-header{
+  height: 8vh;
+  display: flex;
+  justify-content: center
+}
+

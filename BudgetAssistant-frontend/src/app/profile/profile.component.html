@@ -1,0 +1,98 @@
+<mat-toolbar color="primary" class="toolbar-container">
+    <span class="title">Profile</span>
+</mat-toolbar>
+<div  [formGroup]="form">
+  <div class="mat-z8" >
+
+    <mat-card>
+      <h2 style="padding-top: 5px; padding-bottom: 5px">Account</h2>
+      <div class="card-content-wrapper">
+        <mat-card-content>
+
+          <p>
+            <span class="label">Naam: </span>
+            <span style="font-style: italic">{{ currentUser!.firstName }} {{ currentUser!.lastName }}</span>
+          </p>
+          <p>
+            <span class="label">Gebruikersnaam: </span>
+            <span style="font-style: italic">{{ currentUser!.userName }}</span>
+          </p>
+          <p>
+            <span class="label">Paswoord: </span>
+            <span>
+              <mat-form-field style="font-style: italic">
+                <input matInput [type]="hidePassword ? 'password' : 'text'"
+                       formControlName="password" [(ngModel)]="currentUser!.password" name="password"
+                       style="width: auto; max-width: none;" readonly>
+                <button mat-icon-button matSuffix (mousedown)="hidePassword = false" (mouseup)="hidePassword = true"
+                        [attr.aria-label]="hidePassword ? 'Toon paswoord' : 'Verberg paswoord'">
+                  <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+                </button>
+              </mat-form-field>
+            </span>
+          </p>
+
+        </mat-card-content>
+      </div>
+    </mat-card>
+    <mat-card style="margin-top: 5px" *ngIf="dataSource">
+      <h2 style="padding-top: 5px; padding-bottom: 5px">Rekeningen</h2>
+      <div class="card-content-wrapper">
+        <mat-card-content>
+          <table mat-table [dataSource]="dataSource" class="mat-z8" style="border-collapse: separate">
+            <!-- Account Number Column -->
+            <ng-container matColumnDef="accountNumber">
+              <th class="table-header" mat-header-cell *matHeaderCellDef>Rekeningnummer</th>
+              <td mat-cell *matCellDef="let bankAccount">
+                <div class="default-items">
+                  {{ bankAccount.accountNumber | uppercase | iban }}
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Alias Column -->
+            <ng-container matColumnDef="alias">
+              <th class="table-header" mat-header-cell *matHeaderCellDef  style="min-width: 300px">Alias</th>
+              <td mat-cell *matCellDef="let bankAccount"  style="min-width: 300px">
+                <div *ngIf="!bankAccount.editAlias; else edit" class="default-items">
+                  <span *ngIf="bankAccount.alias; else noAlias" style="font-weight: bold" class="default-items">{{bankAccount.alias |uppercase }}</span>
+                  <ng-template #noAlias>
+                    <span style="font-style: italic" class="default-items">This account has no alias. Please add an alias</span>
+                  </ng-template>
+
+                </div>
+                <ng-template #edit>
+                  <div class="default-items" style="min-width: 300px">
+                    <input style="min-width: 300px" [(ngModel)]="bankAccount.alias"
+                           [ngModelOptions]="{standalone: true}">
+                  </div>
+                </ng-template>
+              </td>
+            </ng-container>
+            <!-- SaveOrEditButton Column -->
+            <ng-container matColumnDef="saveOrEditButton">
+              <th mat-header-cell *matHeaderCellDef></th>
+              <td mat-cell *matCellDef="let bankAccount">
+                <button *ngIf="!bankAccount.editAlias; else edit" mat-icon-button
+                        (click)="bankAccount.editAlias = true">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <ng-template #edit>
+                  <button mat-icon-button (click)="saveAlias(bankAccount)">
+                    <mat-icon>save</mat-icon>
+                  </button>
+                </ng-template>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+          </table>
+        </mat-card-content>
+      </div>
+    </mat-card>
+  </div>
+</div>
+
+
+

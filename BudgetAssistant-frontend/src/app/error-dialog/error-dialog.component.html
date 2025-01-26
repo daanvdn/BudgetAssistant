@@ -1,0 +1,11 @@
+<h1 mat-dialog-title>Foutmelding</h1>
+<div mat-dialog-content>
+  <p style="font-weight:bold; padding: 10px">{{ data.message }}</p>
+  <div *ngIf="data.reason !==undefined" style="font-style: italic; padding: 10px">
+    <mat-label>Reden:</mat-label><span style="font-style: italic; padding-left: 2px">{{ data.reason}}</span>
+  </div>
+
+</div>
+<div mat-dialog-actions>
+  <button mat-button [mat-dialog-close]="'OK'">Close</button>
+</div>

@@ -1,0 +1,85 @@
+
+.mat-table {
+  border-collapse: collapse;
+  td, th {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+
+  }
+  th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+
+  }
+  td{
+
+  }
+}
+
+
+.mat-mdc-table-sticky {
+  background: #59abfd;
+  opacity: 1;
+}
+.mat-mdc-table-sticky-border-elem-top {
+  border-bottom: 2px solid midnightblue;
+}
+
+.mat-mdc-table-sticky-border-elem-right {
+  border-left: 2px solid midnightblue;
+}
+
+.mat-mdc-table-sticky-border-elem-bottom {
+  border-top: 2px solid midnightblue;
+}
+
+.mat-mdc-table-sticky-border-elem-left {
+  border-right: 2px solid midnightblue;
+}
+
+.color-red {
+  color: red;
+
+}
+.color-light-coral {
+  background: lightcoral;
+
+}
+
+.color-green {
+  color: green;
+}
+
+.example-menu {
+  display: inline-flex;
+  flex-direction: column;
+  min-width: 180px;
+  max-width: 280px;
+  background-color: lightgray;
+  padding: 6px 0;
+}
+
+.example-menu-item {
+  background-color: transparent;
+  cursor: pointer;
+  border: none;
+
+  user-select: none;
+  min-width: 64px;
+  line-height: 36px;
+  padding: 0 16px;
+
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  flex: 1;
+}
+
+.example-menu-item:hover {
+  background-color: rgb(208, 208, 208);
+}
+
+.example-menu-item:active {
+  background-color: rgb(170, 170, 170);
+}

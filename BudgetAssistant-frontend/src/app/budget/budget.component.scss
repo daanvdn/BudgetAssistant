@@ -1,0 +1,47 @@
+.highlight-row-no-error{
+  background-color: lightgreen;
+}
+.highlight-row-error{
+  background-color: lightpink;
+}
+
+.highlight-total-row{
+  background-color: lightgray;
+  font-weight: bold;
+}
+/*td.mat-cell, th.mat-header-cell, tr.mat-header-row, tr.mat-row {
+  height: 30px;
+}*/
+:host ::ng-deep .mat-row{
+  padding-bottom: 2px;
+  padding-top: 2px;
+}
+/*
+:host ::ng-deep mat-error {
+  font-size: 10px;
+}
+*/
+
+
+.mat-table-wrapper {
+  //height: 300px; // Set this to your desired height
+  overflow: auto;
+}
+
+.mat-table {
+  width: 100%;
+}
+
+.button {
+  padding: 1.40em 0;
+  line-height: 1;
+}
+
+.flex-child{
+  flex: 1;
+}
+
+.flex-child:first-child {
+  margin-right: 2px;
+}
+

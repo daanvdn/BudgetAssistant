@@ -1,0 +1,23 @@
+<div *ngIf="criteria" style="display: flex; justify-content: space-between;">
+    <mat-selection-list *ngIf="criteria.transactionType === TransactionType.EXPENSES; else showRevenueCategories"
+                        [multiple]="false" (selectionChange)="onCategorySelectionChange($event)"
+                        style="width: fit-content; overflow-y: auto; height: 80vh">
+        <mat-list-option *ngFor="let category of expensesCategories" [value]="category">
+            {{ category.name }}
+        </mat-list-option>
+    </mat-selection-list>
+    <ng-template #showRevenueCategories>
+        <mat-selection-list [multiple]="false" (selectionChange)="onCategorySelectionChange($event) "
+                            style="width: fit-content; overflow-y: auto; height: 80vh">
+            <mat-list-option *ngFor="let category of revenueCategories" [value]="category">
+                {{ category.name }}
+            </mat-list-option>
+        </mat-selection-list>
+
+    </ng-template>
+    <div *ngIf="datatIsLoaded" style="width: 100%; height: 80vh">
+        <p-chart type="bar" [data]="chartData" [options]="chartOptions" [plugins]="plugins"></p-chart>
+
+    </div>
+</div>
+

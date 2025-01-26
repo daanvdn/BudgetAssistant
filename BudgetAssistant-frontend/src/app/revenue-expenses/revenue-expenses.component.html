@@ -1,0 +1,45 @@
+<div *ngIf="datatIsLoaded; else noDataFound">
+    <div style="display: flex; justify-content: space-between; overflow-x: auto; padding: 16px; margin: 20px">
+        <div style="width: 900px; height: fit-content">
+            <p-chart type="bar" [data]="data" [options]="chartOptions" [plugins]="plugins"></p-chart>
+        </div>
+        <button mat-raised-button style="max-width: 120px; max-height: 50px; margin-right:5px"
+                (click)="toggleTable()"> {{ this.getToggleTableMessage() }}
+        </button>
+    </div>
+    <div *ngIf="!tableIsHidden"
+         style="overflow: hidden;  overflow-y: auto;padding: 16px; margin: 20px; width: 900px;">
+        <table mat-table [dataSource]="dataSource" class="mat-z8" style="width: 100%; border: black 1px solid">
+            <ng-container matColumnDef="period">
+                <th mat-header-cell *matHeaderCellDef style="">periode</th>
+                <td mat-cell *matCellDef="let item">{{ item.period.value }}</td>
+            </ng-container>
+            <ng-container matColumnDef="revenue">
+                <th mat-header-cell *matHeaderCellDef style="">inkomsten</th>
+                <td mat-cell *matCellDef="let item">{{ item.revenue | number:'1.1-2' }}</td>
+            </ng-container>
+            <ng-container matColumnDef="expenses">
+                <th mat-header-cell *matHeaderCellDef style="">uitgaven</th>
+                <td mat-cell *matCellDef="let item">{{ item.expenses | number:'1.1-2' }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="balance">
+                <th mat-header-cell *matHeaderCellDef style="">saldo</th>
+                <td mat-cell [ngClass]="item.balance < 0 ? 'color-red' : 'color-green'"
+                    *matCellDef="let item">{{ item.balance | number:'1.1-2' }}
+                </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+        </table>
+    </div>
+</div>
+<ng-template #noDataFound>
+    <div [hidden]="datatIsLoaded"
+         style="font-weight: bold; padding-left: 25px;padding-top: 25px; text-align: center">
+    Geen data gevonden die beantwoordt aan de zoekcriteria!<br>Verander rekening, periode of andere criteria
+  </div>
+</ng-template>
+
+

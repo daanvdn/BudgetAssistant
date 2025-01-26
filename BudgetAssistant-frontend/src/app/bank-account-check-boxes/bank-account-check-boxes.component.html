@@ -1,0 +1,7 @@
+<form [formGroup]="form">
+  <div formArrayName="bankAccounts" *ngFor="let bankAccount of bankAccounts; let i = index">
+    <mat-checkbox [formControlName]="i" >
+      {{ bankAccount.accountNumber | uppercase }}
+    </mat-checkbox>
+  </div>
+</form>

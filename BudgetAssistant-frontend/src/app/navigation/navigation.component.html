@@ -1,0 +1,48 @@
+<mat-drawer-container class="example-container mat-typography mat-app-background">
+  <mat-drawer #drawer mode="side" disableClose="true" opened="true">
+    <mat-nav-list>
+      <a routerLink="/profiel" routerLinkActive="activebutton" ariaCurrentWhenActive="page">
+        <mat-list-item>
+          <fa-icon [icon]="faUser" [fixedWidth]="true"></fa-icon>
+          <h4>Profiel</h4>
+        </mat-list-item>
+      </a>
+      <a routerLink="/transacties" routerLinkActive="activebutton" ariaCurrentWhenActive="page">
+        <mat-list-item>
+          <fa-icon [icon]="faDollarSign" [fixedWidth]="true"></fa-icon>
+          <h4>Transacties</h4>
+        </mat-list-item>
+      </a>
+      <a routerLink="/inzichten" routerLinkActive="activebutton" ariaCurrentWhenActive="page">
+        <mat-list-item>
+          <fa-icon [icon]="faChartPie" [fixedWidth]="true"></fa-icon>
+          <h4>Inzichten</h4>
+        </mat-list-item>
+      </a>
+      <a routerLink="/regels" routerLinkActive="activebutton" ariaCurrentWhenActive="page">
+        <mat-list-item>
+          <fa-icon [icon]="faNetworkWired" [fixedWidth]="true"></fa-icon>
+          <h4>Regels</h4>
+        </mat-list-item>
+      </a>
+      <a routerLink="/budget" routerLinkActive="activebutton" ariaCurrentWhenActive="page">
+        <mat-list-item>
+          <fa-icon [icon]="faScaleBalanced" [fixedWidth]="true"></fa-icon>
+          <h4>Budget</h4>
+        </mat-list-item>
+      </a>
+      <a (click)="onLogout()">
+        <mat-list-item>
+          <fa-icon [icon]="faRightFromBracket" [fixedWidth]="true"></fa-icon>
+          <h4>Logout</h4>
+        </mat-list-item>
+      </a>
+
+
+    </mat-nav-list>
+      <button mat-icon-button></button>
+  </mat-drawer>
+  <mat-drawer-content style="overflow-y: hidden; overflow-x: hidden">
+    <router-outlet></router-outlet>
+  </mat-drawer-content>
+</mat-drawer-container>

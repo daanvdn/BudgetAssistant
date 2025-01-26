@@ -1,0 +1,27 @@
+<div [formGroup]="categoryFormGroup">
+  <mat-form-field #formField  style="; width: 100%" >
+      <input #autoCompleteTrigger="matAutocompleteTrigger" formControlName="searchField"  type="text" placeholder="{{selectedCategoryQualifiedNameStr}}" aria-label="Number" matInput
+        (input)="filterChanged($event)" [matAutocomplete]="auto" >
+      <mat-autocomplete autoActiveFirstOption #auto="matAutocomplete" >
+        <mat-option [disabled]="true">Please select an item from below</mat-option>
+        <mat-tree [dataSource]="dataSource" [treeControl]="treeControl" #myMatTree>
+          <mat-tree-node *matTreeNodeDef="let node" matTreeNodeToggle matTreeNodePadding>
+            <button mat-icon-button [disabled]="true"></button>
+            <mat-checkbox style="font-weight: lighter; font-size: large" [checked]="checklistSelection.isSelected(node)"
+              (change)="toggleSelection(node)">{{node.name}}</mat-checkbox>
+          </mat-tree-node>
+          <mat-tree-node *matTreeNodeDef="let node; when: hasChild" matTreeNodePadding >
+            <button mat-icon-button matTreeNodeToggle [attr.aria-label]="'toggle ' + node.filename" >
+              <mat-icon class="mat-icon-rtl-mirror" style="font-weight: lighter; font-size: large">
+                {{treeControl.isExpanded(node) ? 'expand_more' : 'chevron_right'}}
+              </mat-icon>
+            </button>
+            <mat-checkbox style="font-weight: lighter; font-size: large" [checked]="checklistSelection.isSelected(node)"
+              (change)="toggleSelection(node)">
+              {{node.name}}</mat-checkbox>
+          </mat-tree-node>
+        </mat-tree>
+      </mat-autocomplete>
+    </mat-form-field>
+</div>
+

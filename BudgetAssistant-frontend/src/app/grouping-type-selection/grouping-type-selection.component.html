@@ -1,0 +1,10 @@
+<div [formGroup]="groupingTypesFormFieldGroup" class="inline_block">
+  <mat-form-field appearance="fill">
+    <mat-label>Selecteer groepering</mat-label>
+    <mat-select  placeholder="Groepering" [(value)]="selectedGrouping" name="type" (selectionChange)="onGroupingChange($event.value)">
+      <mat-option *ngFor="let groupingType of groupingTypeStringValues" [value]="groupingType">
+        {{groupingType}}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+</div>

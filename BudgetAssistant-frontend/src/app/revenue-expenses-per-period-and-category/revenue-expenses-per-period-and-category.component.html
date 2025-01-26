@@ -1,0 +1,55 @@
+<div *ngIf="datatIsLoaded && this.criteria">
+<!--<div *ngIf="dummyIsLoaded && this.criteria">-->
+    <ng-template #showTransactions cdkMenuPanel>
+        <div class="example-menu" cdkMenu>
+            <button class="example-menu-item" cdkMenuItem (click)="onShowTransactions()">Show Transactions</button>
+        </div>
+    </ng-template>
+    <div style="display: flex; justify-content: space-between;overflow-y: auto; overflow-x: auto; padding-top: 5px">
+        <div style="width: 100%; height: fit-content">
+            <p-chart type="bar" [data]="this.criteria.transactionType == TransactionType.EXPENSES ? expensesData : revenueData"
+                     [options]="chartOptions" [plugins]="plugins" (onDataSelect)="handleDataSelect($event)"></p-chart>
+        </div>
+    </div>
+    <div style=" padding-top: 10px; width: 100%; overflow-x: auto">
+        <h2 [matTooltip]="anomaliesToolTip"  matTooltipPosition="above" style="text-align: center; color: rgba(0, 0, 0, 0.50)">Anomalies</h2>
+        <table style="width: 99%" mat-table
+               [dataSource]="this.criteria.transactionType == TransactionType.EXPENSES ? expensesDataSource : revenueDataSource"
+               class="mat-z8 full-width-table wrapper">
+            <!-- Category Column -->
+
+            <ng-container matColumnDef="category" [sticky]="true">
+                <th mat-header-cell *matHeaderCellDef
+                    style="position: sticky; top: 0; background: white;">{{ firstColumn }}
+                </th>
+                <td mat-cell style="background-color: #f2f2f2"
+                    *matCellDef="let element"> {{ element[firstColumn] }}
+                </td>
+            </ng-container>
+
+            <!-- Dynamic table headers -->
+            <ng-container *ngFor="let column of displayedColumnsExceptFirst"
+                          style="padding-right: 15px; height: auto; width: auto; word-wrap: anywhere">
+                <ng-container [matColumnDef]="column"
+                              style="padding-right: 15px; height: auto; width: auto; word-wrap: anywhere">
+                    <th mat-header-cell *matHeaderCellDef
+                        style="position: sticky; top: 0; background: white;">{{ column }}
+                    </th>
+                    <td #amountCell mat-cell style="width: max-content" *matCellDef="let element"
+                        [ngClass]="{'color-light-coral' : element[column].color ==='LIGHT_RED'}"
+                        (contextmenu)="openContextMenu(column, element['category'],$event)"
+                        [cdkContextMenuTriggerFor]="showTransactions"
+
+                    >{{ element[column].value}}</td>
+                </ng-container>
+            </ng-container>
+
+            <!-- Table rows -->
+            <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+    </div>
+</div>
+
+
+
