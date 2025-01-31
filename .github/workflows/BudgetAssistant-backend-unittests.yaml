@@ -31,9 +31,11 @@ jobs:
     - name: Install pip dependencies
       run: |
         conda run -n base pip install -r requirements-dev.txt
-    - name: Test with pytest
+    - name: Install pytest-django
+      run: |
+        conda run -n base pip install pytest-django
+    - name: Run tests with pytest
       env:
         DATABASE_BACKEND: sqlite
       run: |
-        conda install pytest
-        pytest 
+        conda run -n base pytest
