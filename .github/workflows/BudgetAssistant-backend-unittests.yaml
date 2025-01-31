@@ -32,6 +32,8 @@ jobs:
       run: |
         conda run -n base pip install -r requirements-dev.txt
     - name: Test with pytest
+      env:
+        DATABASE_BACKEND: sqlite
       run: |
         conda install pytest
         pytest 
