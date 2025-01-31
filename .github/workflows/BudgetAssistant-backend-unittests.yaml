@@ -4,6 +4,8 @@ on:
   push:
     paths:
       - 'BudgetAssistant-backend/**'
+  workflow_dispatch:
+
 jobs:
   build-linux:
     runs-on: ubuntu-latest
