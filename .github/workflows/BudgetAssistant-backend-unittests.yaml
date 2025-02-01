@@ -40,8 +40,8 @@ jobs:
           mysql -h 127.0.0.1 -u test_user -ptest_password -e "SELECT SCHEMA_NAME, DEFAULT_CHARACTER_SET_NAME, DEFAULT_COLLATION_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = 'test_db';"
       - name: Set test_user permissions
         run: |
-          #give test_user all permissions on test_db
-          mysql -h 127.0.0.1 -u root -ppassword -e "GRANT ALL PRIVILEGES ON test_db.* TO 'test_user'@'%';"
+          #give test_user all permissions on ALL databases
+          mysql -h 127.0.0.1 -u root -ppassword -e "GRANT ALL PRIVILEGES ON *.* TO 'test_user'@'%';"
       - name: Log all tables
         run: |
           mysql -h 127.0.0.1 -u root -ppassword -e "SHOW TABLES FROM test_db;"
