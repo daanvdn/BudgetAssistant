@@ -1,3 +1,4 @@
+import hashlib
 import json
 import re
 from typing import List
@@ -69,7 +70,7 @@ class CustomUser(RequiredFieldsMixin, AbstractUser):
 
 
 class Transaction(RequiredFieldsMixin, models.Model):
-    transaction_id = models.CharField(max_length=1000, primary_key=True, unique=True, blank=False, null=False)
+    transaction_id = models.CharField(max_length=64, primary_key=True, unique=True, blank=False, null=False)
     bank_account = models.ForeignKey('BankAccount', on_delete=models.CASCADE, blank=False, null=False)
     booking_date = models.DateField(blank=False, null=False)
     statement_number = models.TextField(blank=False, null=False)
@@ -114,7 +115,10 @@ class Transaction(RequiredFieldsMixin, models.Model):
 
     @staticmethod
     def _create_transaction_id(transaction_number:str, bank_account: BankAccount) -> str:
-        return '_'.join([transaction_number, str(hash(bank_account.account_number))])
+        raw_value = '_'.join([transaction_number, str(hash(bank_account.account_number))])
+        return hashlib.sha256(raw_value.encode()).hexdigest()[:64]  # Trim if needed
+
+
 
     # def to_csv(self) ->List[str]:
     #     return [
