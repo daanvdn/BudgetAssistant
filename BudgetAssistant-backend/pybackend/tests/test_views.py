@@ -88,6 +88,7 @@ class ProtectedApiTestCase(APITestCase):
         self.access_token = str(refresh.access_token)
         print(f"Token for user {self.user.username} is: {self.access_token}")
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
+        self.client.force_authenticate(user=self.user, token=self.access_token)
 
     def deserialize_instance(self, item_dict: Dict, pk_name:str, serializer_class: Any) -> Any:
         return serializer_class().deserialize_instance(item_dict, item_dict[pk_name])
