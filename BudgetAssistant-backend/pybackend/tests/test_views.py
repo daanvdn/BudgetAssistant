@@ -97,7 +97,7 @@ class ProtectedApiTestCase(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
 
 
-def deserialize_instance(self, item_dict: Dict, pk_name:str, serializer_class: Any) -> Any:
+    def deserialize_instance(self, item_dict: Dict, pk_name:str, serializer_class: Any) -> Any:
         return serializer_class().deserialize_instance(item_dict, item_dict[pk_name])
 
 
