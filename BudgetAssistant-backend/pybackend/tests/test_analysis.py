@@ -10,7 +10,7 @@ from lxml import etree
 from model_bakery import baker
 from polyfactory.factories import DataclassFactory
 
-from utils import RevenueAndExpensesPerPeriodAndCategoryFactory, fake
+from tests.utils import RevenueAndExpensesPerPeriodAndCategoryFactory, fake
 from pybackend.analysis import BudgetTrackerResult, BudgetTrackerResultNode, BudgetTrackerResultNodeSerializer, \
     BudgetTrackerResultSerializer, CategoryAndAmount, CategoryAndAmountSerializer, \
     CategoryDetailsForPeriodHandlerResult, CategoryDetailsForPeriodHandlerResultSerializer, Dataset, DatasetSerializer, \

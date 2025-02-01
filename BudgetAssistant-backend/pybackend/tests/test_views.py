@@ -20,7 +20,7 @@ from rest_framework.test import APIClient, APITestCase
 from rest_framework.utils.serializer_helpers import ReturnDict
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from utils import RevenueAndExpensesPerPeriodAndCategoryFactory, create_random_rule_set, generate_random_period
+from tests.utils import RevenueAndExpensesPerPeriodAndCategoryFactory, create_random_rule_set, generate_random_period
 from pybackend.analysis import BudgetTrackerResult, CategoryAndAmount, CategoryDetailsForPeriodHandlerResult, \
     CategoryDetailsForPeriodHandlerResultSerializer, ExpensesAndRevenueForPeriod, \
     PeriodAndAmount, RevenueAndExpensesPerPeriodAndCategory, RevenueAndExpensesPerPeriodAndCategorySerializer

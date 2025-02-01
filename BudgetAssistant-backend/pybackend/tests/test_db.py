@@ -4,7 +4,7 @@ from django.db import connection
 from django.test import TestCase
 from model_bakery import baker
 
-from utils import create_random_rule_set
+from tests.utils import create_random_rule_set
 from pybackend.commons import normalize_counterparty_name_or_account
 from pybackend.models import BankAccount, BudgetTree, BudgetTreeNode, Category, CategoryTree, Counterparty, CustomUser, \
     Transaction

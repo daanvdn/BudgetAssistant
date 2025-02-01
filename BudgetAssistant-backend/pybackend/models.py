@@ -69,7 +69,7 @@ class CustomUser(RequiredFieldsMixin, AbstractUser):
 
 
 class Transaction(RequiredFieldsMixin, models.Model):
-    transaction_id = models.CharField(max_length=1000, primary_key=True, unique=True, blank=False, null=False)
+    transaction_id = models.TextField(primary_key=True, unique=True, blank=False, null=False)
     bank_account = models.ForeignKey('BankAccount', on_delete=models.CASCADE, blank=False, null=False)
     booking_date = models.DateField(blank=False, null=False)
     statement_number = models.TextField(blank=False, null=False)
