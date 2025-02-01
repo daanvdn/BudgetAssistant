@@ -77,4 +77,6 @@ jobs:
           DATABASE_BACKEND: mysql
           EMAIL_HOST_PASSWORD: fake_password
 
-        run: pytest
+        run: |
+          #add ./pybackend to the python path
+          export PYTHONPATH=$PYTHONPATH:./pybackend && pytest
