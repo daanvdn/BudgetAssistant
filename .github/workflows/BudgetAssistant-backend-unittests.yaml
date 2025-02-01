@@ -26,7 +26,7 @@ jobs:
           MARIADB_DATABASE: test_db
           MARIADB_ROOT_PASSWORD: password
           GRANT: ALL PRIVILEGES ON test_db.* TO 'test_user'@'%' IDENTIFIED BY 'test_password'
-        options: --health-cmd="healthcheck.sh --connect --innodb_initialized" --health-interval=15s --health-timeout=10s --health-retries=20
+        options: --health-cmd="healthcheck.sh --connect --innodb_initialized" --health-interval=15s --health-timeout=10s --health-retries=20 --character-set-server=utf8mb4
     steps:
       - uses: actions/checkout@v4
       - name: Check if Mariadb is running
