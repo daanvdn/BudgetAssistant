@@ -19,7 +19,7 @@ jobs:
       mariadb:
         image: mariadb:latest
         ports:
-          - "3306:3306"
+          - 3306
         env:
           MARIADB_USER: test_user
           MARIADB_PASSWORD: test_password
@@ -41,6 +41,7 @@ jobs:
           conda env update --file environment.yml --name base
       - name: Install pip dependencies
         run: |
+          conda install -c conda-forge gcc=12
           conda run -n base pip install -r requirements-dev.txt
           conda run -n base pip install pytest-django
           conda run -n base pip install mysqlclient
