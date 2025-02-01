@@ -114,7 +114,7 @@ elif os.getenv('DATABASE_BACKEND') == 'mysql':
         'NAME': 'test_db',
         'USER': 'test_user',
         'PASSWORD': 'test_password',
-        'HOST': 'localhost',
+        'HOST': '127.0.0.1',
         'PORT': '3306',
     }
 else:
