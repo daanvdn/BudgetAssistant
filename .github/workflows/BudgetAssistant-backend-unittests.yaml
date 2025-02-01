@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'BudgetAssistant-backend/**'
+      - '.github/workflows/BudgetAssistant-backend-unittests.yaml'
   workflow_dispatch:
 
 jobs:
