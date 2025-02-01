@@ -26,12 +26,18 @@ jobs:
           MARIADB_DATABASE: test_db
           MARIADB_ROOT_PASSWORD: password
           GRANT: ALL PRIVILEGES ON test_db.* TO 'test_user'@'%' IDENTIFIED BY 'test_password'
-        options: --health-cmd="healthcheck.sh --connect --innodb_initialized" --health-interval=15s --health-timeout=10s --health-retries=20 --character-set-server=utf8mb4
+        options: --health-cmd="healthcheck.sh --connect --innodb_initialized" --health-interval=15s --health-timeout=10s --health-retries=20
     steps:
       - uses: actions/checkout@v4
       - name: Check if Mariadb is running
         run: |
           mysql -h 127.0.0.1 -u test_user -ptest_password -e "USE test_db;"
+      - name: Set collation
+        run: |
+          mysql -h 127.0.0.1 -u test_user -ptest_password -e "ALTER DATABASE test_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+      - name: Verify collation
+        run: |
+          mysql -h 127.0.0.1 -u test_user -ptest_password -e "SELECT SCHEMA_NAME, DEFAULT_CHARACTER_SET_NAME, DEFAULT_COLLATION_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = 'test_db';"
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v3
