@@ -111,7 +111,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Transaction',
             fields=[
-                ('transaction_id', models.CharField(max_length=1000, primary_key=True, serialize=False, unique=True)),
+                ('transaction_id', models.CharField(max_length=64, primary_key=True, serialize=False, unique=True)),
                 ('booking_date', models.DateField()),
                 ('statement_number', models.TextField()),
                 ('transaction_number', models.TextField(unique=True)),
