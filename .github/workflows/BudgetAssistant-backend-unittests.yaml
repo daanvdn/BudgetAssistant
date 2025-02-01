@@ -36,6 +36,7 @@ jobs:
     - name: Run migrations
       env:
         DJANGO_SETTINGS_MODULE: pybackend.settings
+        DATABASE_BACKEND: sqlite
       run: |
         python manage.py migrate
 
