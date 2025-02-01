@@ -70,6 +70,8 @@ jobs:
           EMAIL_HOST_PASSWORD: fake_password
         run: |
           python manage.py migrate --verbosity 3
+      - name: Set Django Allowed Hosts
+        run: echo "DJANGO_ALLOWED_HOSTS=127.0.0.1,localhost" >> $GITHUB_ENV
 
       - name: Run Pytest
         env:
