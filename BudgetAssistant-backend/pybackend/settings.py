@@ -70,6 +70,9 @@ MIDDLEWARE += [
     'corsheaders.middleware.CorsMiddleware',
 ]
 
+if 'test' in sys.argv:
+    MIDDLEWARE.remove('django.middleware.csrf.CsrfViewMiddleware')
+
 AUTH_USER_MODEL = 'pybackend.CustomUser'
 
 
