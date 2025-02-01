@@ -80,7 +80,10 @@ def to_dict(data: ReturnDict):
 class ProtectedApiTestCase(APITestCase):
     def setUp(self):
         self.client = APIClient()
-        self.user = CustomUser.objects.create_user(username="testuser", password="password123")
+        #check if test_user exists. If not create it
+        if not CustomUser.objects.filter(username="test_user").exists():
+
+            self.user = CustomUser.objects.create_user(username="test_user", password="test_password")
         refresh = RefreshToken.for_user(self.user)
         self.access_token = str(refresh.access_token)
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
