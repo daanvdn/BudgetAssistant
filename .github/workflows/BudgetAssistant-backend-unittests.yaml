@@ -15,17 +15,17 @@ jobs:
         working-directory: ./BudgetAssistant-backend
     strategy:
       max-parallel: 5
-  services:
-    mariadb:
-      image: mariadb:latest
-      ports:
-        - 3306
-      env:
-        MYSQL_USER: test_user
-        MYSQL_PASSWORD: test_password
-        MYSQL_DATABASE: test_db
-        MYSQL_ROOT_PASSWORD: password
-      options: --health-cmd="mysqladmin ping" --health-interval=5s --health-timeout=2s --health-retries=3
+    services:
+      mariadb:
+        image: mariadb:latest
+        ports:
+          - 3306
+        env:
+          MYSQL_USER: test_user
+          MYSQL_PASSWORD: test_password
+          MYSQL_DATABASE: test_db
+          MYSQL_ROOT_PASSWORD: password
+        options: --health-cmd="mysqladmin ping" --health-interval=5s --health-timeout=2s --health-retries=3
     steps:
       - uses: actions/checkout@v4
       - name: Verify MariaDB connection
