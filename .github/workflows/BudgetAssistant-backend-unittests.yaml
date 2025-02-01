@@ -42,7 +42,9 @@ jobs:
         run: |
           #give test_user all permissions on test_db
           mysql -h 127.0.0.1 -u root -ppassword -e "GRANT ALL PRIVILEGES ON test_db.* TO 'test_user'@'%';"
-
+      - name: Log all tables
+        run: |
+          mysql -h 127.0.0.1 -u root -ppassword -e "SHOW TABLES FROM test_db;"
       - name: Set up Python 3.11
         uses: actions/setup-python@v3
         with:
@@ -67,7 +69,7 @@ jobs:
           DATABASE_BACKEND: mysql
           EMAIL_HOST_PASSWORD: fake_password
         run: |
-          python manage.py migrate
+          python manage.py migrate --verbosity 3
 
       - name: Run Pytest
         env:
