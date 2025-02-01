@@ -92,7 +92,7 @@ class ProtectedApiTestCase(APITestCase):
         # self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
         # self.client.force_authenticate(user=self.user, token=self.access_token)
         response = self.client.post("/api/token/", {"username": "test_user", "password": "test_password"}, format="json")
-        print(response.json())  # Debugging
+        print(f"Auth response: {response.json()}" )  # Debugging
         self.access_token = response.json().get("access")
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
 
