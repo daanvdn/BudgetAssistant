@@ -84,13 +84,20 @@ class ProtectedApiTestCase(APITestCase):
         if not CustomUser.objects.filter(username="test_user").exists():
 
             self.user = CustomUser.objects.create_user(username="test_user", password="test_password")
-        refresh = RefreshToken.for_user(self.user)
-        self.access_token = str(refresh.access_token)
-        print(f"Token for user {self.user.username} is: {self.access_token}")
-        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
-        self.client.force_authenticate(user=self.user, token=self.access_token)
+        self.client.force_authenticate(user=self.user)
 
-    def deserialize_instance(self, item_dict: Dict, pk_name:str, serializer_class: Any) -> Any:
+        # refresh = RefreshToken.for_user(self.user)
+        # self.access_token = str(refresh.access_token)
+        # print(f"Token for user {self.user.username} is: {self.access_token}")
+        # self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
+        # self.client.force_authenticate(user=self.user, token=self.access_token)
+        response = self.client.post("/api/token/", {"username": "test_user", "password": "test_password"}, format="json")
+        print(response.json())  # Debugging
+        self.access_token = response.json().get("access")
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
+
+
+def deserialize_instance(self, item_dict: Dict, pk_name:str, serializer_class: Any) -> Any:
         return serializer_class().deserialize_instance(item_dict, item_dict[pk_name])
 
 
