@@ -25,6 +25,7 @@ jobs:
           MARIADB_PASSWORD: test_password
           MARIADB_DATABASE: test_db
           MARIADB_ROOT_PASSWORD: password
+          GRANT: ALL PRIVILEGES ON test_db.* TO 'test_user'@'%' IDENTIFIED BY 'test_password'
         options: --health-cmd="healthcheck.sh --connect --innodb_initialized" --health-interval=15s --health-timeout=10s --health-retries=20
     steps:
       - uses: actions/checkout@v4
