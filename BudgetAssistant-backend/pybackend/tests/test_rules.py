@@ -13,7 +13,7 @@ from pybackend.models import Category, CustomUser, Transaction
 from pybackend.rules import ALL_OF, ANY_OF, CONTAINS_STRING_OP, MATCH_STRING_OP, Rule, \
     RuleMatchType, RuleOperator, RuleSerializer, RuleSet, RuleSetSerializer, RuleSetWrapper, RuleSetWrapperSerializer, \
     TransactionField
-from pybackend.tests.utils import RuleSetFactory, StringRuleFactory, create_random_rule_set
+from utils import RuleSetFactory, StringRuleFactory, create_random_rule_set
 
 faker = Faker()
 
