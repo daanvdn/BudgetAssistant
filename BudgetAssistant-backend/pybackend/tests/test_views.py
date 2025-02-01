@@ -86,6 +86,7 @@ class ProtectedApiTestCase(APITestCase):
             self.user = CustomUser.objects.create_user(username="test_user", password="test_password")
         refresh = RefreshToken.for_user(self.user)
         self.access_token = str(refresh.access_token)
+        print(f"Token for user {self.user.username} is: {self.access_token}")
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
 
     def deserialize_instance(self, item_dict: Dict, pk_name:str, serializer_class: Any) -> Any:
