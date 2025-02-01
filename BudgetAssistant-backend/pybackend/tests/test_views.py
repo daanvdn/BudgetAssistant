@@ -79,7 +79,7 @@ def to_dict(data: ReturnDict):
 )
 class ProtectedApiTestCase(APITestCase):
     def setUp(self):
-        self.client = APIClient()
+        self.client = APIClient(enforce_csrf_checks=False)
         #check if test_user exists. If not create it
         if not CustomUser.objects.filter(username="test_user").exists():
 
@@ -388,10 +388,14 @@ class UploadTransactionsTests(ProtectedApiTestCase):
                 return file, csv_file
 
     def test_upload_transactions_all_new(self):
+        print(f"Request headers: {self.client.headers}")
+
         url = reverse('upload_transactions')
 
         file_handle1, simple_uploaded_file1 = self._to_simple_uploaded_file("belfius_transactions.csv")
         file_handle2, simple_uploaded_file2 = self._to_simple_uploaded_file("belfius_transactions_2.csv")
+        print(f"Request content type: {simple_uploaded_file1.content_type}")
+        print(f"Request content type: {simple_uploaded_file2.content_type}")
         response = self.client.post(url, {'files': [simple_uploaded_file1, simple_uploaded_file2]},  format='multipart')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         response_dict =response.json()

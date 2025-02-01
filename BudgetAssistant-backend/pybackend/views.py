@@ -23,6 +23,7 @@ from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import BooleanField
 from rest_framework.generics import GenericAPIView
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.serializers import CharField, EmailField
@@ -505,6 +506,7 @@ class DistinctCounterpartyAccountsView(APIView):
 
 class UploadTransactionsView(APIView):
     permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
 
     @extend_schema(
         request={
