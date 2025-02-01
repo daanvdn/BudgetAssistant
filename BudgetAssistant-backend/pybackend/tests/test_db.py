@@ -4,11 +4,11 @@ from django.db import connection
 from django.test import TestCase
 from model_bakery import baker
 
-from tests.utils import create_random_rule_set
 from pybackend.commons import normalize_counterparty_name_or_account
 from pybackend.models import BankAccount, BudgetTree, BudgetTreeNode, Category, CategoryTree, Counterparty, CustomUser, \
     Transaction
 from pybackend.rules import RuleSet, RuleSetWrapper
+from tests.utils import create_random_rule_set
 
 
 class TestBankAccountManager(TestCase):
@@ -116,17 +116,6 @@ class CounterpartyManagerTests(TestCase):
 
 class TransactionManagerTests(TestCase):
 
-    def setUp(self):
-        # Enable foreign key constraints in SQLite for this test
-        #check if we are using sqlite
-        if 'sqlite' in connection.settings_dict['ENGINE']:
-            with connection.cursor() as cursor:
-                cursor.execute('PRAGMA foreign_keys = ON;')
-
-    def tearDown(self):
-        # Delete all rows in all tables
-        from django.core.management import call_command
-        call_command('flush', '--noinput')
 
     def test_find_distinct_counterparty_names(self):
         counterparty1 = baker.make(Counterparty, name="counterparty1")
@@ -154,11 +143,12 @@ class TransactionManagerTests(TestCase):
     def test_find_all_by_upload_timestamp(self):
         counterparty = Counterparty.objects.create(name="counterparty1", account_number="123")
         timestamp = datetime.now()
+        bank_account= baker.make(BankAccount)
         # use baker prepare to create a transaction with a specific upload timestamp. The other values can be random
-        transaction = baker.prepare(Transaction, counterparty=counterparty)
+        transaction = baker.prepare(Transaction, counterparty=counterparty, bank_account=bank_account)
         transaction.upload_timestamp = timestamp
         transaction.save()
-        transaction2 = baker.prepare(Transaction, counterparty=counterparty)
+        transaction2 = baker.prepare(Transaction, counterparty=counterparty, bank_account=bank_account)
         transaction2.upload_timestamp = datetime.now()
         transaction2.save()
         result = Transaction.objects.find_all_by_upload_timestamp(timestamp)
@@ -179,10 +169,11 @@ class TransactionManagerTests(TestCase):
 
     def test_find_all_to_manually_review(self):
         bank_account = BankAccount.objects.create(account_number="123456")
-        transaction1 = baker.prepare(Transaction, bank_account=bank_account, is_manually_reviewed=True)
+        counterparty = baker.make(Counterparty)
+        transaction1 = baker.prepare(Transaction, bank_account=bank_account, is_manually_reviewed=True, counterparty=counterparty )
         transaction1.save()
 
-        transaction2 = baker.prepare(Transaction, bank_account=bank_account, is_manually_reviewed=False)
+        transaction2 = baker.prepare(Transaction, bank_account=bank_account, is_manually_reviewed=False, counterparty=counterparty)
         transaction2.save()
         result = Transaction.objects.find_all_to_manually_review()
         self.assertEqual(len(result), 1)
