@@ -98,28 +98,24 @@ WSGI_APPLICATION = 'pybackend.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
-
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': ':memory:',
+    }
+}
 DATABASE_BACKEND = env(var='DATABASE_BACKEND', default='sqlite')
 if 'test' in sys.argv:
     DATABASE_BACKEND = 'sqlite'
-if DATABASE_BACKEND == 'mysql':
 
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.mysql',
-            'NAME': 'django_db',
-            'USER': env("MY_SQL_USER"),
-            'PASSWORD': env("MY_SQL_PASSWORD"),
-            'HOST': '',  # Set to empty string for localhost.
-            'PORT': '',  # Set to empty string for default.
-        }
-    }
-elif DATABASE_BACKEND == 'sqlite':
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': ':memory:',
-        }
+elif os.getenv('DATABASE_BACKEND') == 'mysql':
+    DATABASES['default'] = {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'test_db',
+        'USER': 'test_user',
+        'PASSWORD': 'test_password',
+        'HOST': 'localhost',
+        'PORT': '3306',
     }
 else:
     raise ImproperlyConfigured("Unknown DATABASE_BACKEND environment variable")
