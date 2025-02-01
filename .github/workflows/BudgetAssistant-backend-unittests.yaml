@@ -25,7 +25,7 @@ jobs:
           MYSQL_PASSWORD: test_password
           MYSQL_DATABASE: test_db
           MYSQL_ROOT_PASSWORD: password
-        options: --health-cmd="mysqladmin ping" --health-interval=15s --health-timeout=10s --health-retries=20
+        options: --health-cmd="healthcheck.sh" --health-interval=15s --health-timeout=10s --health-retries=20
     steps:
       - uses: actions/checkout@v4
       - name: Verify MariaDB connection
