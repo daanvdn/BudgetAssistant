@@ -118,8 +118,10 @@ class TransactionManagerTests(TestCase):
 
     def setUp(self):
         # Enable foreign key constraints in SQLite for this test
-        with connection.cursor() as cursor:
-            cursor.execute('PRAGMA foreign_keys = ON;')
+        #check if we are using sqlite
+        if 'sqlite' in connection.settings_dict['ENGINE']:
+            with connection.cursor() as cursor:
+                cursor.execute('PRAGMA foreign_keys = ON;')
 
     def tearDown(self):
         # Delete all rows in all tables

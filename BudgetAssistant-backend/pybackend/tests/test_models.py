@@ -281,8 +281,8 @@ class TestTransaction(TestCase):
             communications='Test communication',
             category=category
         )
-        self.assertEqual(transaction.transaction_id,
-                         f'{transaction.transaction_number}_{hash(bank_account.account_number)}')
+
+        self.assertEqual(transaction.transaction_id, Transaction._create_transaction_id(transaction.transaction_number, bank_account))
         # check if the transaction is associated with the bank account
         self.assertEqual(transaction.bank_account, bank_account)
         # check if the transaction is associated with the counterparty
