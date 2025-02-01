@@ -50,6 +50,7 @@ jobs:
         env:
           DJANGO_SETTINGS_MODULE: pybackend.settings
           DATABASE_BACKEND: mysql
+          EMAIL_HOST_PASSWORD: fake_password
         run: |
           python manage.py migrate
 
@@ -57,4 +58,6 @@ jobs:
         env:
           DJANGO_SETTINGS_MODULE: pybackend.settings
           DATABASE_BACKEND: mysql
+          EMAIL_HOST_PASSWORD: fake_password
+
         run: pytest
