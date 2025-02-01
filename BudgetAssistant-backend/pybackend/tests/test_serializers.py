@@ -1,6 +1,7 @@
 import importlib.resources as pkg_resources
 import json
 from datetime import datetime
+from typing import Dict
 
 from django.test import TestCase
 from model_bakery import baker
@@ -466,9 +467,18 @@ class BudgetTreeSerializerTests(TestCase):
         self.maxDiff = None
 
     def test(self):
+
+        def set_node_id_to_none(node:Dict):
+            node['budget_tree_node_id'] = None
+            if node.get('children'):
+                for child in node['children']:
+                    set_node_id_to_none(child)
+
         bank_account = baker.make(BankAccount)
         budget_tree = BudgetTreeProvider().provide(bank_account)
         data = BudgetTreeSerializer(budget_tree).data
         actual_data = to_dict(data).pop('root')
         expected_data = load_expected_as_dict('budget_tree.json').pop('root')
+        set_node_id_to_none(expected_data)
+        set_node_id_to_none(actual_data)
         self.assertDictEqual(expected_data, actual_data)

@@ -54,7 +54,7 @@ class CommonFunctionsTest(TestCase):
 class BelfiusTransactionParserTest(TestCase):
     def setUp(self):
         self.parser = BelfiusTransactionParser()
-        self.user = baker.prepare(CustomUser, _fill_optional=True)
+        self.user = baker.prepare(CustomUser, username="bla", _fill_optional=True)
         self.user.save()
 
     def generate_csv(self, rows) -> str:

@@ -17,8 +17,6 @@ import environ
 from MySQLdb.constants.ER import DATABASE_NAME
 from django.core.exceptions import ImproperlyConfigured
 
-
-
 env = environ.Env()
 environ.Env.read_env()  # Reads .env file
 
@@ -98,24 +96,30 @@ WSGI_APPLICATION = 'pybackend.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': ':memory:',
-    }
-}
-DATABASE_BACKEND = env(var='DATABASE_BACKEND', default='sqlite')
-if 'test' in sys.argv:
-    DATABASE_BACKEND = 'sqlite'
+DATABASES = {'default': {
+    'ENGINE': 'django.db.backends.mysql',
+    'NAME': 'test_db',
+    'USER': 'test_user',
+    'PASSWORD': 'test_password',
+    'HOST': '127.0.0.1',
+    'PORT': '3306'
 
-elif os.getenv('DATABASE_BACKEND') == 'mysql':
-    DATABASES['default'] = {
+}}
+
+DATABASE_BACKEND = env(var='DATABASE_BACKEND', default='mysql')
+if DATABASE_BACKEND == 'mysql':
+    DATABASES['production'] = {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'test_db',
-        'USER': 'test_user',
-        'PASSWORD': 'test_password',
+        'NAME': 'fake_db',
+        'USER': 'fake_user',
+        'PASSWORD': 'fake_password',
         'HOST': '127.0.0.1',
-        'PORT': '3306',
+        'PORT': '3306'
+    }
+elif DATABASE_BACKEND == 'sqlite':
+    DATABASES['default'] = {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': ':memory:'
     }
 else:
     raise ImproperlyConfigured("Unknown DATABASE_BACKEND environment variable")
