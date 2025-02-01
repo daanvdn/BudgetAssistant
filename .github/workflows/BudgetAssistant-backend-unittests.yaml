@@ -21,20 +21,13 @@ jobs:
         ports:
           - "3306:3306"
         env:
-          MYSQL_USER: test_user
-          MYSQL_PASSWORD: test_password
-          MYSQL_DATABASE: test_db
-          MYSQL_ROOT_PASSWORD: password
+          MARIADB_USER: test_user
+          MARIADB_PASSWORD: test_password
+          MARIADB_DATABASE: test_db
+          MARIADB_ROOT_PASSWORD: password
         options: --health-cmd="healthcheck.sh" --health-interval=15s --health-timeout=10s --health-retries=20
     steps:
       - uses: actions/checkout@v4
-      - name: Verify MariaDB connection
-        env:
-          PORT: ${{ job.services.mariadb.ports[3306] }}
-        run: |
-          while ! mysqladmin ping -h"127.0.0.1" -P"$PORT" --silent; do
-            sleep 1
-          done
       - name: Set up Python 3.11
         uses: actions/setup-python@v3
         with:
