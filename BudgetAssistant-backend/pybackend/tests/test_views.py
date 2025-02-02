@@ -81,9 +81,10 @@ class ProtectedApiTestCase(APITestCase):
     def setUp(self):
         self.client = APIClient(enforce_csrf_checks=False)
         #check if test_user exists. If not create it
+        self.password="test_password"
         if not CustomUser.objects.filter(username="test_user").exists():
 
-            self.user = CustomUser.objects.create_user(username="test_user", password="test_password")
+            self.user = CustomUser.objects.create_user(username="test_user", password=self.password)
         self.client.force_authenticate(user=self.user)
 
         # refresh = RefreshToken.for_user(self.user)
@@ -660,17 +661,17 @@ class TokenRefreshTestCase(APITestCase):
 
 
 class UpdateUserViewTestCase(ProtectedApiTestCase):
-    def setUp(self):
+    def setUp0(self):
         # Create a test user
         self.user = CustomUser.objects.create_user(
-            username="testuser",
+            username="test_user",
             email="oldemail@example.com",
             password="OldPassword123!"
         )
         self.update_url = reverse("update_user")
 
         # Authenticate the test user
-        response = self.client.post("/api/token/", {"username": "testuser", "password": "OldPassword123!"},
+        response = self.client.post("/api/token/", {"username": "test_user", "password": "OldPassword123!"},
                                     format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.access_token = response.data["access"]
@@ -689,7 +690,7 @@ class UpdateUserViewTestCase(ProtectedApiTestCase):
 
         # Ensure the old password no longer works
         self.client.credentials()  # Clear the token
-        login_response = self.client.post("/api/token/", {"username": "testuser", "password": "OldPassword123!"},
+        login_response = self.client.post("/api/token/", {"username": "testuser", "password": self.password},
                                           format="json")
         self.assertEqual(login_response.status_code, status.HTTP_401_UNAUTHORIZED)
 
