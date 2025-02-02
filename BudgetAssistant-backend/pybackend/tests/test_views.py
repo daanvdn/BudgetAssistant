@@ -661,6 +661,9 @@ class TokenRefreshTestCase(APITestCase):
 
 
 class UpdateUserViewTestCase(ProtectedApiTestCase):
+    def setUp(self):
+        super().setUp()
+        self.update_url = reverse("update_user")
     def setUp0(self):
         # Create a test user
         self.user = CustomUser.objects.create_user(
