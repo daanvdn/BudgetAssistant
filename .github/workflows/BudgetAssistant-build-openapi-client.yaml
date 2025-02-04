@@ -55,7 +55,7 @@ jobs:
           DATE=$(date +%Y%m%d)
           COUNT=$(ls *.tgz 2>/dev/null | grep -c "$DATE")
           VERSION="$DATE-$((COUNT + 1))"
-          jq --arg version "$VERSION" '.name="budget-assistant-client" | .version=$version | .main="index.js" | .types="index.d.ts" | .files=["**/*"]' package.json > package.tmp.json
+          jq --arg version "$VERSION" '.name="budget-assistant-client" | .version=$VERSION | .main="index.js" | .types="index.d.ts" | .files=["**/*"]' package.json > package.tmp.json
           mv package.tmp.json package.json
       - name: Package npm module
         run: |
