@@ -47,3 +47,19 @@ jobs:
       - name: Generate OpenAPI Angular/Typescript client
         run: |
           openapi-generator-cli generate -i schema.yml -g typescript-angular -o ./api --additional-properties=modelPropertyNaming=camelCase,fileNaming=kebab-case,enumPropertyNaming=original,ngVersion=14.2.8,npmName=budget-assistant-client
+      - name: Update package.json for npm
+        run: |
+          cd ./api
+          npm init -y
+          npm install
+          jq '.name="budget-assistant-client" | .version="1.0.0" | .main="index.js" | .types="index.d.ts" | .files=["**/*"]' package.json > package.tmp.json
+          mv package.tmp.json package.json
+      - name: Package npm module
+        run: |
+          cd ./api
+          npm pack
+      - name: Upload npm package as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: budget-assistant-client
+          path: ./api/*.tgz
