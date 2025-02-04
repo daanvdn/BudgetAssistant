@@ -51,18 +51,18 @@ jobs:
         run: |
           cd ./api
           npm init -y
-          echo "running npm install"
           npm install
+          
           DATE=$(date +%Y%m%d)
 
           # Fetch existing artifacts to determine the version suffix
           COUNT=$(gh api repos/${{ github.repository }}/actions/artifacts --paginate \
-            | jq '[.artifacts[].name | select(startswith("budget-assistant-client-'$DATE'"))] | length' || echo 0)
+            | jq --arg date "$DATE" '[.artifacts[].name | select(startswith("budget-assistant-client-" + $date))] | length' || echo 0)
 
           VERSION="$DATE-$((COUNT + 1))"
           
-          jq --arg version "$VERSION" '.name="budget-assistant-client" | .version=$VERSION | .main="index.js" | .types="index.d.ts" | .files=["**/*"]' package.json > package.tmp.json
-          echo "create package.json file"
+          jq --arg version "$VERSION" \
+             '.name="budget-assistant-client" | .version=$version | .main="index.js" | .types="index.d.ts" | .files=["**/*"]' package.json > package.tmp.json
           mv package.tmp.json package.json
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
