@@ -722,7 +722,7 @@ class UpdateUserViewTestCase(ProtectedApiTestCase):
         """Test accessing the update view without authentication."""
 
         self.client.logout()
-        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer blabbla")
+        self.client.credentials(HTTP_AUTHORIZATION=None)
         response = self.client.put(
             self.update_url,
             {"password": "NewSecurePassword123!"},
