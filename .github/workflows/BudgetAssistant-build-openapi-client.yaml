@@ -31,7 +31,8 @@ jobs:
         run: |
           conda install -c conda-forge gcc=12
           conda run -n base pip install -r requirements-dev.txt
-
+      - name: Make manage.py executable
+        run: chmod +x ./manage.py
       - name: Generate OpenAPI schema
         run: |
           ./manage.py spectacular --color --file schema.yml
