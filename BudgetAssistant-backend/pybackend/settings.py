@@ -19,7 +19,7 @@ from django.core.exceptions import ImproperlyConfigured
 
 env = environ.Env()
 environ.Env.read_env()  # Reads .env file
-
+TEST_MODE = 'test' in sys.argv or os.getenv('TEST_MODE', 'false').lower() == 'true'
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -70,7 +70,7 @@ MIDDLEWARE += [
     'corsheaders.middleware.CorsMiddleware',
 ]
 
-if 'test' in sys.argv:
+if TEST_MODE:
     MIDDLEWARE.remove('django.middleware.csrf.CsrfViewMiddleware')
 
 AUTH_USER_MODEL = 'pybackend.CustomUser'

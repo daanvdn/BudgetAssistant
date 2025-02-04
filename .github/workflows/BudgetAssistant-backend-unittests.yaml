@@ -82,6 +82,7 @@ jobs:
           DJANGO_SETTINGS_MODULE: pybackend.settings
           DATABASE_BACKEND: mysql
           EMAIL_HOST_PASSWORD: fake_password
+          TEST_MODE: true
 
         run: |
           #add ./pybackend to the python path
