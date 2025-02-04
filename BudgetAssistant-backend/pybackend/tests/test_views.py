@@ -728,6 +728,8 @@ class UpdateUserViewTestCase(ProtectedApiTestCase):
             {"password": "NewSecurePassword123!"},
             format="json"
         )
+        #log the response message
+        print(f"Response message: {response.json()}")  # Debugging
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
