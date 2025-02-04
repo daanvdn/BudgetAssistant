@@ -51,12 +51,21 @@ jobs:
         run: |
           cd ./api
           npm init -y
+          echo "running npm install"
           npm install
           DATE=$(date +%Y%m%d)
-          COUNT=$(ls *.tgz 2>/dev/null | grep -c "$DATE")
+
+          # Fetch existing artifacts to determine the version suffix
+          COUNT=$(gh api repos/${{ github.repository }}/actions/artifacts --paginate \
+            | jq '[.artifacts[].name | select(startswith("budget-assistant-client-'$DATE'"))] | length' || echo 0)
+
           VERSION="$DATE-$((COUNT + 1))"
+          
           jq --arg version "$VERSION" '.name="budget-assistant-client" | .version=$VERSION | .main="index.js" | .types="index.d.ts" | .files=["**/*"]' package.json > package.tmp.json
+          echo "create package.json file"
           mv package.tmp.json package.json
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Package npm module
         run: |
           cd ./api
@@ -66,5 +75,5 @@ jobs:
       - name: Upload npm package as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: budget-assistant-client
-          path: .*.tgz
+          name: budget-assistant-client-${{ env.DATE }}-${{ env.COUNT }}
+          path: ./api/*.tgz
