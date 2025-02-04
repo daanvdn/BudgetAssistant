@@ -65,7 +65,7 @@ jobs:
              '.name="budget-assistant-client" | .version=$version | .main="index.js" | .types="index.d.ts" | .files=["**/*"]' package.json > package.tmp.json
           mv package.tmp.json package.json
           #store full package name in environment variable
-          echo "PACKAGE_NAME=budget-assistant-client-$VERSION" >> $GITHUB_ENV
+          echo "PACKAGE_NAME=budget-assistant-client-$VERSION.tgz" >> $GITHUB_ENV
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Package npm module
@@ -82,4 +82,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.PACKAGE_NAME }}
-          path: ./api/*.tgz
+          path: ./api
