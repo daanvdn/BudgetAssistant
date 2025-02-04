@@ -52,12 +52,17 @@ jobs:
           cd ./api
           npm init -y
           npm install
-          jq '.name="budget-assistant-client" | .version="1.0.0" | .main="index.js" | .types="index.d.ts" | .files=["**/*"]' package.json > package.tmp.json
+          DATE=$(date +%Y%m%d)
+          COUNT=$(ls *.tgz 2>/dev/null | grep -c "$DATE")
+          VERSION="$DATE-$((COUNT + 1))"
+          jq --arg version "$VERSION" '.name="budget-assistant-client" | .version=$version | .main="index.js" | .types="index.d.ts" | .files=["**/*"]' package.json > package.tmp.json
           mv package.tmp.json package.json
       - name: Package npm module
         run: |
           cd ./api
           npm pack
+      - name: Print all files in the current directory
+        run: ls -al
       - name: Upload npm package as artifact
         uses: actions/upload-artifact@v4
         with:
