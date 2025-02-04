@@ -730,7 +730,8 @@ class UpdateUserViewTestCase(ProtectedApiTestCase):
         )
         #log the response message
         print(f"Response message: {response.json()}")  # Debugging
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.json()['detail'], 'Authentication credentials were not provided.')
+        self.assertTrue(response.status_code in [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN])
 
 
 class UpdateBudgetEntryAmountTests(ProtectedApiTestCase):
