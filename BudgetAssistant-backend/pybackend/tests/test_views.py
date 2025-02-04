@@ -3,7 +3,7 @@ import json
 import random
 import unittest
 from datetime import UTC, datetime
-from typing import Any, Dict, List, Tuple
+from typing import Any, Callable, Dict, List, Tuple
 from unittest.mock import MagicMock, patch
 
 from dateutil.relativedelta import relativedelta
@@ -18,9 +18,7 @@ from rest_framework import status
 from rest_framework.renderers import JSONRenderer
 from rest_framework.test import APIClient, APITestCase
 from rest_framework.utils.serializer_helpers import ReturnDict
-from rest_framework_simplejwt.tokens import RefreshToken
 
-from tests.utils import RevenueAndExpensesPerPeriodAndCategoryFactory, create_random_rule_set, generate_random_period
 from pybackend.analysis import BudgetTrackerResult, CategoryAndAmount, CategoryDetailsForPeriodHandlerResult, \
     CategoryDetailsForPeriodHandlerResultSerializer, ExpensesAndRevenueForPeriod, \
     PeriodAndAmount, RevenueAndExpensesPerPeriodAndCategory, RevenueAndExpensesPerPeriodAndCategorySerializer
@@ -44,6 +42,7 @@ from pybackend.rules import RuleSetWrapper, RuleSetWrapperSerializer
 from pybackend.serializers import BankAccountSerializer, BudgetTreeNodeSerializer, BudgetTreeSerializer, \
     CategoryTreeSerializer, \
     TransactionSerializer
+from tests.utils import RevenueAndExpensesPerPeriodAndCategoryFactory, create_random_rule_set, generate_random_period
 
 
 def deserialize_succesful_operation_response(data: Dict) -> SuccessfulOperationResponse:
@@ -67,6 +66,7 @@ def to_dict(data: ReturnDict):
     return json_dict
 
 
+
 @override_settings(
     REST_FRAMEWORK={
         'DEFAULT_RENDERER_CLASSES': (
@@ -85,15 +85,28 @@ class ProtectedApiTestCase(APITestCase):
         if not CustomUser.objects.filter(username="test_user").exists():
 
             self.user = CustomUser.objects.create_user(username="test_user", password=self.password)
+        self.login()
+
+    def login(self):
         self.client.force_authenticate(user=self.user)
-        response = self.client.post("/api/token/", {"username": "test_user", "password": "test_password"}, format="json")
+        response = self.client.post("/api/token/", {"username": "test_user", "password": self.password}, format="json")
         #print(f"Auth response: {response.json()}" )  # Debugging
         self.access_token = response.json().get("access")
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
 
+    def logout(self):
+        self.client.logout()
 
     def deserialize_instance(self, item_dict: Dict, pk_name:str, serializer_class: Any) -> Any:
         return serializer_class().deserialize_instance(item_dict, item_dict[pk_name])
+
+    def do_test_fail_if_logged_out(self, fn:Callable):
+        self.logout()
+        response = fn()
+        self.assertIn(response.status_code, [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN])
+
+
+
 
 
 class BankAccountsForUserTests(ProtectedApiTestCase):
@@ -112,6 +125,10 @@ class BankAccountsForUserTests(ProtectedApiTestCase):
             actual_bank_accounts.append(actual)
 
         self.assertEqual(actual_bank_accounts, expected_bank_accounts)
+
+    def test_fail_if_logged_out(self):
+        fn = lambda: self.client.get(reverse('bank_accounts_for_user'), {'username': self.user.username})
+        self.do_test_fail_if_logged_out(fn)
 
 
 class RevenueExpensesQueryFactory(DataclassFactory[RevenueExpensesQuery]):
@@ -160,6 +177,11 @@ class RevenueAndExpensesPerPeriodTests(ProtectedApiTestCase):
             actual = RevenueAndExpensesPerPeriodResponse(**serializer.validated_data)
             self.assertEqual(expected, actual)
 
+    def test_fail_if_logged_out(self):
+        url = reverse('revenue_and_expenses_per_period')
+        fn = lambda : self.client.post(url, {}, format='json')
+
+        self.do_test_fail_if_logged_out(fn)
 
 class TransactionQuery2Factory(DataclassFactory[TransactionQuery]):
     __allow_none_optionals__ = False
@@ -228,6 +250,11 @@ class PageTransactionsTests(ProtectedApiTestCase):
         response = self.client.post(url, data=PageTransactionsRequestSerializer(request).data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+    def test_fail_if_logged_out(self):
+        url = reverse('page_transactions')
+        fn = lambda : self.client.post(url, {}, format='json')
+
+        self.do_test_fail_if_logged_out(fn)
 
 class PageTransactionsInContextTests(ProtectedApiTestCase):
 
@@ -249,6 +276,11 @@ class PageTransactionsInContextTests(ProtectedApiTestCase):
         url = reverse('page_transactions_in_context')
         response = self.client.post(url, PageTransactionsInContextRequestSerializer(request).data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+    def test_fail_if_logged_out(self):
+        url = reverse('page_transactions_in_context')
+        fn = lambda : self.client.post(url, {}, format='json')
+
+        self.do_test_fail_if_logged_out(fn)
 
 
 class TransactionsPageDTOFactory(DataclassFactory[TransactionsPage]):
@@ -283,6 +315,11 @@ class PageTransactionsToManuallyReviewTests(ProtectedApiTestCase):
             validated_data = serializer.validated_data
             actual = TransactionsPage(**validated_data)
             self.assertEqual(actual, service_response)
+    def test_fail_if_logged_out(self):
+        url = reverse('page_transactions_to_manually_review')
+        fn = lambda : self.client.post(url, {}, format='json')
+
+        self.do_test_fail_if_logged_out(fn)
 
 
 
@@ -298,6 +335,10 @@ class CountTransactionsToManuallyReviewTests(ProtectedApiTestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json()['count'], 10)
 
+    def test_fail_if_logged_out(self):
+        url = reverse('count_transactions_to_manually_review')
+        fn = lambda : self.client.get(url, {}, format='json')
+        self.do_test_fail_if_logged_out(fn)
 
 class SaveTransactionTests(ProtectedApiTestCase):
 
@@ -317,6 +358,11 @@ class SaveTransactionTests(ProtectedApiTestCase):
             response = self.client.post(url, data=TransactionSerializer(dto).data, format='json')
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             self.assertEqual(response.json(), SuccessfulOperationResponseSerializer(service_response).data)
+    def test_fail_if_logged_out(self):
+        url = reverse('save_transaction')
+        fn = lambda : self.client.post(url, {}, format='json')
+
+        self.do_test_fail_if_logged_out(fn)
 
 class CategoryTreeTests(ProtectedApiTestCase):
 
@@ -336,6 +382,11 @@ class CategoryTreeTests(ProtectedApiTestCase):
         response = self.client.get(url, query_params={'transaction_type': 'REVENUE'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json(), json)
+    def test_fail_if_logged_out(self):
+        url = reverse('category_tree')
+        fn = lambda : self.client.get(url, {}, format='json')
+
+        self.do_test_fail_if_logged_out(fn)
 
 
 class DistinctCounterpartyNamesTests(ProtectedApiTestCase):
@@ -353,6 +404,12 @@ class DistinctCounterpartyNamesTests(ProtectedApiTestCase):
         actual = response.json()
         self.assertEqual(len(actual), len(counterparties))
         self.assertSetEqual(set(actual), {cp.name for cp in counterparties})
+
+    def test_fail_if_logged_out(self):
+        url = reverse('distinct_counterparty_names')
+        fn = lambda : self.client.get(url, {})
+
+        self.do_test_fail_if_logged_out(fn)
 
 
 class DistinctCounterpartyAccountsTests(ProtectedApiTestCase):
@@ -372,6 +429,10 @@ class DistinctCounterpartyAccountsTests(ProtectedApiTestCase):
         self.assertEqual(len(actual), len(expected))
         self.assertSetEqual(set(actual), expected)
 
+    def test_fail_if_logged_out(self):
+        url = reverse('distinct_counterparty_accounts')
+        fn = lambda : self.client.get(url)
+        self.do_test_fail_if_logged_out(fn)
 
 class UploadTransactionsTests(ProtectedApiTestCase):
 
@@ -416,6 +477,12 @@ class UploadTransactionsTests(ProtectedApiTestCase):
         self.assertEqual(response_dict['updated'], 10)
         file_handle1.close()
 
+    def test_fail_if_logged_out(self):
+        url = reverse('upload_transactions')
+        fn = lambda : self.client.post(url, {}, format='multipart')
+
+        self.do_test_fail_if_logged_out(fn)
+
 
 class PeriodAndAmountFactory(DataclassFactory[PeriodAndAmount]):
     __set_as_default_factory_for_type__ = True
@@ -458,6 +525,12 @@ class RevenueExpensesPerPeriodAndCategoryTests(ProtectedApiTestCase):
         actual = deserialize(actual)
         self.assertEqual(expected, actual)
 
+    def test_fail_if_logged_out(self):
+        url = reverse('revenue_expenses_per_period_and_category')
+        fn = lambda : self.client.post(url, {}, format='json')
+
+        self.do_test_fail_if_logged_out(fn)
+
 
 class BudgetTrackerResultFactory(DataclassFactory[BudgetTrackerResult]):
     __allow_none_optionals__ = False
@@ -478,14 +551,13 @@ class TrackBudgetTests(ProtectedApiTestCase):
                                     format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+    def test_fail_if_logged_out(self):
+        url = reverse('track_budget')
+        fn = lambda : self.client.post(url, {}, format='json')
 
-class RevenueExpensesPerPeriodAndCategoryShow1MonthBeforeAndAfterTests(ProtectedApiTestCase):
+        self.do_test_fail_if_logged_out(fn)
 
-    @unittest.skip("Not implemented")
-    def test_revenue_expenses_per_period_and_category_show_1_month_before_and_after(self):
-        self.url = reverse('revenue_expenses_per_period_and_category_show_1_month_before_and_after')
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
 
 
 class ResolveStartEndDateShortcutTests(ProtectedApiTestCase):
@@ -513,6 +585,12 @@ class ResolveStartEndDateShortcutTests(ProtectedApiTestCase):
         self.assertEqual(actual.end.year, expected.end.year)
         self.assertEqual(actual.end.month, expected.end.month)
         self.assertEqual(actual.end.day, expected.end.day)
+
+    def test_fail_if_logged_out(self):
+        url = reverse('resolve_start_end_date_shortcut')
+        fn = lambda : self.client.get(url, {}, format='json')
+
+        self.do_test_fail_if_logged_out(fn)
 
 
 class RegisterViewTestCase(APITestCase):
@@ -654,6 +732,7 @@ class TokenRefreshTestCase(APITestCase):
         self.assertIn('detail', response.data)
 
 
+
 class UpdateUserViewTestCase(ProtectedApiTestCase):
     def setUp(self):
         super().setUp()
@@ -764,6 +843,11 @@ class UpdateBudgetEntryAmountTests(ProtectedApiTestCase):
         response = self.client.post(url, data=update, content_type='application/json')
         self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+    def test_fail_if_logged_out(self):
+        url = reverse('update_budget_entry_amount')
+        fn = lambda : self.client.post(url, {}, content_type='application/json')
+
+        self.do_test_fail_if_logged_out(fn)
 
 class FindOrCreateBudgetTests(ProtectedApiTestCase):
     def test_with_non_existing_tree(self):
@@ -781,6 +865,11 @@ class FindOrCreateBudgetTests(ProtectedApiTestCase):
         serializer = BudgetTreeSerializer(data=actual)
         if serializer.is_valid(raise_exception=False):
             self.assertEqual(BudgetTree(**serializer.validated_data), BudgetTree(**expected))
+    def test_fail_if_logged_out(self):
+        url = reverse('find_or_create_budget')
+        fn = lambda : self.client.post(url, {}, format='json')
+
+        self.do_test_fail_if_logged_out(fn)
 
 
 class SaveRuleSetWrapperTests(ProtectedApiTestCase):
@@ -803,6 +892,11 @@ class SaveRuleSetWrapperTests(ProtectedApiTestCase):
         actual = RuleSetWrapper.objects.first()
         self.assertEqual(actual, changed)
         self.assertNotEqual(actual.rule_set, original.rule_set)
+    def test_fail_if_logged_out(self):
+        url = reverse('save_rule_set_wrapper')
+        fn = lambda : self.client.post(url, {}, format='json')
+
+        self.do_test_fail_if_logged_out(fn)
 
 
 class GetOrCreateRuleSetWrapperTests(ProtectedApiTestCase):
@@ -838,6 +932,11 @@ class GetOrCreateRuleSetWrapperTests(ProtectedApiTestCase):
         self.assertEqual(rule_set_wrapper, expected)
         self.assertEqual(rule_set_wrapper, expected)
 
+    def test_fail_if_logged_out(self):
+        url = reverse('get_or_create_rule_set_wrapper')
+        fn = lambda : self.client.post(url, {}, format='json')
+
+        self.do_test_fail_if_logged_out(fn)
 
 
 class CategorizeTransactionsTests(ProtectedApiTestCase):
@@ -858,6 +957,11 @@ class CategorizeTransactionsTests(ProtectedApiTestCase):
         if serializer.is_valid(raise_exception=True):
             actual_response = CategorizeTransactionsResponse(**serializer.validated_data)
             self.assertEqual(actual_response, expected_response)
+    def test_fail_if_logged_out(self):
+        url = reverse('categorize_transactions')
+        fn = lambda : self.client.post(url)
+
+        self.do_test_fail_if_logged_out(fn)
 
 
 class SaveAliasTests(ProtectedApiTestCase):
@@ -873,6 +977,11 @@ class SaveAliasTests(ProtectedApiTestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         bank_account.refresh_from_db()
         self.assertEqual(bank_account.alias, alias)
+    def test_fail_if_logged_out(self):
+        url = reverse('save_alias')
+        fn = lambda : self.client.post(url, {}, format='json')
+
+        self.do_test_fail_if_logged_out(fn)
 
 
 class CategoryDetailsForPeriodHandlerResultFactory(DataclassFactory[CategoryDetailsForPeriodHandlerResult]):
@@ -901,6 +1010,11 @@ class CategoryDetailsForPeriodTests(ProtectedApiTestCase):
 
         response_obj = deserialize(response)
         self.assertEqual(response_obj, expected_response)
+    def test_fail_if_logged_out(self):
+        url = reverse('category_details_for_period')
+        fn = lambda : self.client.get(url, {})
+
+        self.do_test_fail_if_logged_out(fn)
 
 
 class CategoriesForAccountAndTransactionTypeTests(ProtectedApiTestCase):
@@ -921,3 +1035,9 @@ class CategoriesForAccountAndTransactionTypeTests(ProtectedApiTestCase):
         self.assertIsInstance(response, list)
         self.assertEqual(len(response), len(revenue_categories))
         self.assertEqual(sorted(response), sorted([category.name for category in revenue_categories]))
+
+    def test_fail_if_logged_out(self):
+        url = reverse('categories_for_account_and_transaction_type')
+        fn = lambda : self.client.get(url, {})
+
+        self.do_test_fail_if_logged_out(fn)
