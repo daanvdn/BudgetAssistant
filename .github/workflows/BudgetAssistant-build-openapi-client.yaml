@@ -34,13 +34,6 @@ jobs:
           conda run -n base pip install -r requirements-dev.txt
       - name: Make manage.py executable
         run: chmod +x ./manage.py
-      - name: Run migrations
-        env:
-          DJANGO_SETTINGS_MODULE: pybackend.settings
-          DATABASE_BACKEND: mysql
-          EMAIL_HOST_PASSWORD: fake_password
-        run: |
-          python manage.py migrate --verbosity 3
       - name: Set Django Allowed Hosts
         run: echo "DJANGO_ALLOWED_HOSTS=127.0.0.1,localhost,github-actions" >> $GITHUB_ENV
       - name: Generate OpenAPI schema
