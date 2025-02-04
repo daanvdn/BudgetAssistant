@@ -64,6 +64,8 @@ jobs:
           jq --arg version "$VERSION" \
              '.name="budget-assistant-client" | .version=$version | .main="index.js" | .types="index.d.ts" | .files=["**/*"]' package.json > package.tmp.json
           mv package.tmp.json package.json
+          #store full package name in environment variable
+          echo "PACKAGE_NAME=budget-assistant-client-$VERSION" >> $GITHUB_ENV
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Package npm module
@@ -71,9 +73,13 @@ jobs:
           cd ./api
           npm pack
       - name: Print all files in the current directory
-        run: ls -al
+        run: |
+          echo "Files in the current directory:"
+          ls -al
+          echo "Files in the api directory:"
+          ls -al ./api
       - name: Upload npm package as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: budget-assistant-client-${{ env.DATE }}-${{ env.COUNT }}
+          name: ${{ env.PACKAGE_NAME }}
           path: ./api/*.tgz
