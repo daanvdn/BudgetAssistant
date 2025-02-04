@@ -1,4 +1,4 @@
-name: BudgetAssistant-backend-unittests
+name: BudgetAssistant-build-openapi-client
 
 on:
   push:
