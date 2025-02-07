@@ -86,6 +86,6 @@ jobs:
       - name: Publish npm package to GitHub Packages
         run: |
           cd ./api
-          npm publish --access public
+          npm publish --access public --registry=https://npm.pkg.github.com/
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
