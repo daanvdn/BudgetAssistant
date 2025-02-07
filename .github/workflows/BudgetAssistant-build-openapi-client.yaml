@@ -63,9 +63,9 @@ jobs:
           
           jq --arg version "$VERSION" \
              '.name="@daanvdn/budget-assistant-client" | .version=$version | .main="index.js" | .types="index.d.ts" | .files=["**/*"] | .publishConfig={"@daanvdn:registry":"https://npm.pkg.github.com"}' package.json > package.tmp.json
-          jq 'walk(if type == "string" then gsub("GIT_USER_ID"; "daanvdn") else . end)' package.tmp.json > package.tmp.json
-          jq 'walk(if type == "string" then gsub("GIT_REPO_ID"; "BudgetAssistant") else . end)' package.tmp.json > package.tmp.json
-          mv package.tmp.json package.json
+          jq 'walk(if type == "string" then gsub("GIT_USER_ID"; "daanvdn") else . end)' package.tmp.json > package.tmp.json2
+          jq 'walk(if type == "string" then gsub("GIT_REPO_ID"; "BudgetAssistant") else . end)' package.tmp.json2 > package.tmp.json3
+          mv package.tmp.json3 package.json
           #store full package name in environment variable
           echo "PACKAGE_NAME=budget-assistant-client-$VERSION.tgz" >> $GITHUB_ENV
         env:
