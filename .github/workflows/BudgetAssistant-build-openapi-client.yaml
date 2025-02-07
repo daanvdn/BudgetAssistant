@@ -54,12 +54,12 @@ jobs:
           npm install
           
           DATE=$(date +%Y%m%d)
-
+          
           # Fetch existing artifacts to determine the version suffix
           COUNT=$(gh api repos/${{ github.repository }}/actions/artifacts --paginate \
             | jq --arg date "$DATE" '[.artifacts[].name | select(startswith("budget-assistant-client-" + $date))] | length' || echo 0)
-
-          VERSION="$DATE-$((COUNT + 1))"
+          
+          VERSION="1.0.$((COUNT + 1))"
           
           jq --arg version "$VERSION" \
              '.name="budget-assistant-client" | .version=$version | .main="index.js" | .types="index.d.ts" | .files=["**/*"] | .publishConfig={"@daanvdn:registry":"https://npm.pkg.github.com"}' package.json > package.tmp.json
