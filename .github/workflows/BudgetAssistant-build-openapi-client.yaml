@@ -84,8 +84,6 @@ jobs:
           name: ${{ env.PACKAGE_NAME }}
           path: ./BudgetAssistant-backend/api/${{ env.PACKAGE_NAME }}
       - name: Publish npm package to GitHub Packages
-        with:
-          registry-url: https://npm.pkg.github.com/
         run: |
           cd ./api
           npm publish --access public
