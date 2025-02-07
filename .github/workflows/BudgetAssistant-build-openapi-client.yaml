@@ -62,7 +62,7 @@ jobs:
           VERSION="1.0.$((COUNT + 1))"
           
           jq --arg version "$VERSION" \
-             '.name="budget-assistant-client" | .version=$version | .main="index.js" | .types="index.d.ts" | .files=["**/*"] | .publishConfig={"@daanvdn:registry":"https://npm.pkg.github.com"}' package.json > package.tmp.json
+             '.name="budget-assistant-client" | .version=$version | .main="index.js" | .types="index.d.ts" | .files=["**/*"] | .publishConfig={"@daanvdn:registry":"https://npm.pkg.github.com"} | .repository.url |= gsub("GIT_USER_ID"; "daanvdn") | .repository.url |= gsub("GIT_REPO_ID"; "BudgetAssistant")' package.json > package.tmp.json
           mv package.tmp.json package.json
           #store full package name in environment variable
           echo "PACKAGE_NAME=budget-assistant-client-$VERSION.tgz" >> $GITHUB_ENV
@@ -88,4 +88,4 @@ jobs:
           cd ./api
           npm publish --access public --registry=https://npm.pkg.github.com/
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.PACKAGES_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
