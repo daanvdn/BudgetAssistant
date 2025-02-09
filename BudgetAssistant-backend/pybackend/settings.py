@@ -16,6 +16,8 @@ from pathlib import Path
 import environ
 from MySQLdb.constants.ER import DATABASE_NAME
 from django.core.exceptions import ImproperlyConfigured
+from drf_spectacular.contrib import djangorestframework_camel_case
+
 
 env = environ.Env()
 environ.Env.read_env()  # Reads .env file
@@ -23,18 +25,21 @@ TEST_MODE = 'test' in sys.argv or os.getenv('TEST_MODE', 'false').lower() == 'tr
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+print('TEST_MODE:', TEST_MODE)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-us#89kk1!imm+zl8yb$-(stb=ubi&j5ujz)id_&aj6=5f5lvz='
+if TEST_MODE:
+    SECRET_KEY = 'django-insecure-us#89kk1!imm+zl8yb$-(stb=ubi&j5ujz)id_&aj6=5f5lvz='
+else:
+    SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'true').lower() == 'true'
 
-ALLOWED_HOSTS = ["*", "127.0.0.1", "localhost"]
-
+ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS","127.0.0.1").split(",")
 
 # Application definition
 
@@ -96,15 +101,14 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'pybackend.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 DATABASES = {'default': {
     'ENGINE': 'django.db.backends.mysql',
-    'NAME': 'test_db',
-    'USER': 'test_user',
-    'PASSWORD': 'test_password',
-    'HOST': '127.0.0.1',
+    'NAME': 'test_db' if TEST_MODE else os.environ['DATABASE_NAME'],
+    'USER': 'test_user' if TEST_MODE else os.environ['DATABASE_USERNAME'],
+    'PASSWORD': 'test_password' if TEST_MODE else os.environ['DATABASE_PASSWORD'],
+    'HOST': '127.0.0.1' if TEST_MODE else os.environ['DATABASE_HOST'],
     'PORT': '3306'
 
 }}
@@ -120,11 +124,6 @@ if DATABASE_BACKEND == 'mysql':
     #     'HOST': '127.0.0.1',
     #     'PORT': '3306'
     # }
-elif DATABASE_BACKEND == 'sqlite':
-    DATABASES['default'] = {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': ':memory:'
-    }
 else:
     raise ImproperlyConfigured("Unknown DATABASE_BACKEND environment variable")
 
@@ -183,10 +182,13 @@ SPECTACULAR_SETTINGS = {
     # OTHER SETTINGS
 }
 REST_FRAMEWORK = {
-    # 'DEFAULT_RENDERER_CLASSES': (
-    #     'djangorestframework_camel_case.render.CamelCaseJSONRenderer',
-    #     'djangorestframework_camel_case.render.CamelCaseBrowsableAPIRenderer',
-    # ),
+    'DEFAULT_RENDERER_CLASSES': (
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+
+         #'djangorestframework_camel_case.render.CamelCaseJSONRenderer',
+         #'djangorestframework_camel_case.render.CamelCaseBrowsableAPIRenderer',
+     ),
     'DEFAULT_PARSER_CLASSES': (
         # 'djangorestframework_camel_case.parser.CamelCaseJSONParser',
         'rest_framework.parsers.JSONParser',

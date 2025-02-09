@@ -1,0 +1,40 @@
+services:
+  db:
+    image: mariadb:latest
+    environment:
+      MYSQL_DATABASE: ${MY_SQL_PROD_DB}
+      MYSQL_USER: ${MY_SQL_USER}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_PASSWORD: ${MY_SQL_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - ${MARIADB_STORAGE}:/var/lib/mysql
+    env_file:
+      - .env
+
+  django-backend:
+    image: budget-assistant-backend
+    build:
+      dockerfile: Dockerfile-django
+    container_name: django-docker
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
+      DEBUG: ${DEBUG}
+      DJANGO_LOGLEVEL: ${DJANGO_LOGLEVEL}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS}
+      DATABASE_ENGINE: ${DATABASE_ENGINE}
+      DATABASE_NAME: ${MY_SQL_PROD_DB}
+      DATABASE_USERNAME: ${MY_SQL_USER}
+      DATABASE_PASSWORD: ${MY_SQL_PASSWORD}
+      #DATABASE_HOST: ${DATABASE_HOST}
+      DATABASE_HOST: db
+      DATABASE_PORT: 3306
+    env_file:
+      - .env
+volumes:
+  mariadb_storage:
