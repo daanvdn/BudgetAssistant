@@ -216,6 +216,8 @@ celerybeat.pid
 *.sage.py
 
 # Environments
+.env
+BudgetAssistant-backend/dockerfiles/.env
 pybackend/.env
 .venv
 env/

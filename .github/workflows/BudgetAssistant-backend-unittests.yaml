@@ -72,6 +72,7 @@ jobs:
           DJANGO_SETTINGS_MODULE: pybackend.settings
           DATABASE_BACKEND: mysql
           EMAIL_HOST_PASSWORD: fake_password
+          TEST_MODE: true
         run: |
           python manage.py migrate --verbosity 3
       - name: Set Django Allowed Hosts
