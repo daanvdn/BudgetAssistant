@@ -18,7 +18,6 @@ from MySQLdb.constants.ER import DATABASE_NAME
 from django.core.exceptions import ImproperlyConfigured
 from drf_spectacular.contrib import djangorestframework_camel_case
 
-
 env = environ.Env()
 environ.Env.read_env()  # Reads .env file
 TEST_MODE = 'test' in sys.argv or os.getenv('TEST_MODE', 'false').lower() == 'true'
@@ -75,6 +74,13 @@ MIDDLEWARE += [
     'corsheaders.middleware.CorsMiddleware',
 ]
 
+# Session settings
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # Use database-backed sessions
+SESSION_COOKIE_NAME = 'sessionid'  # Name of the cookie to store the session ID
+SESSION_COOKIE_AGE = 1209600  # Age of session cookies, in seconds (default: 2 weeks)
+SESSION_SAVE_EVERY_REQUEST = True  # Whether to save the session data on every request
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # Whether to expire the session when the user closes their browser
+
 if TEST_MODE:
     MIDDLEWARE.remove('django.middleware.csrf.CsrfViewMiddleware')
 
@@ -101,30 +107,29 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'pybackend.wsgi.application'
 
-# Database
-# https://docs.djangoproject.com/en/4.1/ref/settings/#databases
-DATABASES = {'default': {
-    'ENGINE': 'django.db.backends.mysql',
-    'NAME': 'test_db' if TEST_MODE else os.environ['DATABASE_NAME'],
-    'USER': 'test_user' if TEST_MODE else os.environ['DATABASE_USERNAME'],
-    'PASSWORD': 'test_password' if TEST_MODE else os.environ['DATABASE_PASSWORD'],
-    'HOST': '127.0.0.1' if TEST_MODE else os.environ['DATABASE_HOST'],
-    'PORT': '3306'
-
-}}
-
-DATABASE_BACKEND = env(var='DATABASE_BACKEND', default='mysql')
+DATABASE_BACKEND = 'sqlite' if TEST_MODE else env(var='DATABASE_BACKEND', default='mysql')
 if DATABASE_BACKEND == 'mysql':
-    pass
-    # DATABASES['production'] = {
-    #     'ENGINE': 'django.db.backends.mysql',
-    #     'NAME': 'fake_db',
-    #     'USER': 'fake_user',
-    #     'PASSWORD': 'fake_password',
-    #     'HOST': '127.0.0.1',
-    #     'PORT': '3306'
-    # }
+    # Database
+    # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
+    DATABASES = {'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'test_db' if TEST_MODE else os.environ['DATABASE_NAME'],
+        'USER': 'test_user' if TEST_MODE else os.environ['DATABASE_USERNAME'],
+        'PASSWORD': 'test_password' if TEST_MODE else os.environ['DATABASE_PASSWORD'],
+        'HOST': '127.0.0.1' if TEST_MODE else os.environ['DATABASE_HOST'],
+        'PORT': '3306'
+
+    }}
+
+elif DATABASE_BACKEND == 'sqlite':
+    # Database
+    # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
+    DATABASES = {'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': ':memory:',
+    }}
 else:
+
     raise ImproperlyConfigured("Unknown DATABASE_BACKEND environment variable")
 
 # Password validation
@@ -230,7 +235,7 @@ EMAIL_USE_TLS = True
 
 # Gmail Credentials
 EMAIL_HOST_USER = 'daanvdn@gmail.com'
-EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default='dummy-password')
 
 
 LOGGING = {

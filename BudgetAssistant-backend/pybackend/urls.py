@@ -14,11 +14,11 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import include, path
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from . import views
-from .views import DummyRuleView, PasswordResetAPIView, PasswordResetConfirmAPIView, RegisterView, \
+from .views import CustomLogoutView, DummyRuleView, PasswordResetAPIView, PasswordResetConfirmAPIView, RegisterView, \
     UpdateUserView, \
     ValidateResetTokenAPIView
 
@@ -55,13 +55,14 @@ urlpatterns = [
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/update-user/', UpdateUserView.as_view(), name='update_user'),
+    path('api/logout/', CustomLogoutView.as_view(), name='custom_logout'),
     path('api/password-reset/', PasswordResetAPIView.as_view(), name='password_reset'),
     path('api/password-reset-confirm/', PasswordResetConfirmAPIView.as_view(), name='password_reset_confirm'),
     path('api/password-reset-validate/<str:uidb64>/<str:token>/', ValidateResetTokenAPIView.as_view(), name='password_reset_validate'),
     path('api/dummy_view/', DummyRuleView.as_view(), name='dummy_rule_view'),
 
 
-]+ router.urls
+              ]+ router.urls
 #router.register(r'transactions', TransactionViewSet, basename='transaction')
 
 
