@@ -59,7 +59,8 @@ jobs:
           echo "//npm.pkg.github.com/:_authToken=${{ secrets.GH_TOKEN }}" > ~/.npmrc
           
           # Fetch existing versions, ensuring an empty array does not break jq
-          VERSIONS=$(npm view @daanvdn/budget-assistant-client versions --json || echo "[]")
+          VERSIONS=$(npm view @daanvdn/budget-assistant-client versions --json --registry=https://npm.pkg.github.com || echo "[]")
+
           COUNT=$(echo "$VERSIONS" | jq --arg date "$DATE" '[.[] | select(. | startswith($date))] | length')
           
           VERSION="1.0.$((COUNT + 1))"
