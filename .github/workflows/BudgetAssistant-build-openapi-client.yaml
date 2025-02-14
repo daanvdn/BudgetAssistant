@@ -60,10 +60,13 @@ jobs:
           
           # Fetch existing versions, ensuring an empty array does not break jq
           VERSIONS=$(npm view @daanvdn/budget-assistant-client versions --json --registry=https://npm.pkg.github.com || echo "[]")
+          echo "Existing versions: $VERSIONS"
 
           COUNT=$(echo "$VERSIONS" | jq --arg date "$DATE" '[.[] | select(. | startswith($date))] | length')
+          echo "Count: $COUNT"
           
           VERSION="1.0.$((COUNT + 1))"
+          echo "New version: $VERSION"
           
           jq --arg version "$VERSION" \
           '.name="@daanvdn/budget-assistant-client" | .version=$version | .main="index.js" | .types="index.d.ts" | .files=["**/*"] | .publishConfig={"@daanvdn:registry":"https://npm.pkg.github.com"}' package.json > package.tmp.json
