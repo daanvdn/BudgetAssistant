@@ -259,3 +259,5 @@ cython_debug/
 
 /pybackend/.env
 /budget-assistant-backend-django.iml
+
+.npmrc

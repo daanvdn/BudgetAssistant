@@ -5,7 +5,7 @@ from datetime import datetime
 from email.message import EmailMessage
 from typing import Dict, List, Optional, Union
 
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, logout
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.tokens import default_token_generator
@@ -665,6 +665,7 @@ class ResolveStartEndDateShortcutView(APIView):
         except:
             return HttpResponseServerError()
 
+@extend_schema(auth=[])
 class RegisterView(GenericAPIView):
     permission_classes = [AllowAny]
 
