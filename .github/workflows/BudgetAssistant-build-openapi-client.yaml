@@ -53,31 +53,32 @@ jobs:
           npm init -y
           npm install
           
-          DATE=$(date +%Y%m%d)
-          
           # Authenticate to avoid permission issues
           echo "//npm.pkg.github.com/:_authToken=${{ secrets.GH_TOKEN }}" > ~/.npmrc
           
           # Fetch existing versions, ensuring an empty array does not break jq
           VERSIONS=$(npm view @daanvdn/budget-assistant-client versions --json --registry=https://npm.pkg.github.com || echo "[]")
           echo "Existing versions: $VERSIONS"
-
-          COUNT=$(echo "$VERSIONS" | jq --arg date "$DATE" '[.[] | select(. | startswith($date))] | length')
-          echo "Count: $COUNT"
           
-          VERSION="1.0.$((COUNT + 1))"
-          echo "New version: $VERSION"
+          # Find the most recent version
+          LATEST_VERSION=$(echo "$VERSIONS" | jq -r 'sort_by(.) | last')
+          echo "Latest version: $LATEST_VERSION"
           
-          jq --arg version "$VERSION" \
-          '.name="@daanvdn/budget-assistant-client" | .version=$version | .main="index.js" | .types="index.d.ts" | .files=["**/*"] | .publishConfig={"@daanvdn:registry":"https://npm.pkg.github.com"}' package.json > package.tmp.json
+          # Increment the minor version number by 1
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$LATEST_VERSION"
+          NEW_VERSION="$MAJOR.$((MINOR + 1)).0"
+          echo "New version: $NEW_VERSION"
+          
+          jq --arg version "$NEW_VERSION" \
+             '.name="@daanvdn/budget-assistant-client" | .version=$version | .main="index.js" | .types="index.d.ts" | .files=["**/*"] | .publishConfig={"@daanvdn:registry":"https://npm.pkg.github.com"}' package.json > package.tmp.json
           jq 'walk(if type == "string" then gsub("GIT_USER_ID"; "daanvdn") else . end)' package.tmp.json > package.tmp.json2
           jq 'walk(if type == "string" then gsub("GIT_REPO_ID"; "BudgetAssistant") else . end)' package.tmp.json2 > package.tmp.json3
           mv package.tmp.json3 package.json
           
           # Store full package name in environment variable
-          echo "PACKAGE_NAME=budget-assistant-client-$VERSION.tgz" >> $GITHUB_ENV
+          echo "PACKAGE_NAME=budget-assistant-client-$NEW_VERSION.tgz" >> $GITHUB_ENV
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
       - name: Package npm module
         run: |
           cd ./api
