@@ -5,7 +5,7 @@ from datetime import datetime
 from email.message import EmailMessage
 from typing import Dict, List, Optional, Union
 
-from django.contrib.auth import get_user_model, logout
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.tokens import default_token_generator
@@ -26,13 +26,14 @@ from rest_framework.fields import BooleanField
 from rest_framework.generics import GenericAPIView
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
 from rest_framework.serializers import CharField, EmailField
 from rest_framework.views import APIView
 
 from pybackend.analysis import BudgetTrackerResult, BudgetTrackerResultSerializer, \
     CategoryDetailsForPeriodHandlerResult, \
     CategoryDetailsForPeriodHandlerResultSerializer, \
-    RevenueAndExpensesPerPeriodAndCategory, \
+    ExpensesAndRevenueForPeriod, RevenueAndExpensesPerPeriodAndCategory, \
     RevenueAndExpensesPerPeriodAndCategorySerializer
 from pybackend.categorization import RuleBasedCategorizer
 from pybackend.commons import RevenueExpensesQuery, RevenueExpensesQuerySerializer, RevenueExpensesQueryWithCategory, \
@@ -259,24 +260,17 @@ class BankAccountsForUserView(APIView):
         user = request.user
         if not isinstance(user, CustomUser):
             raise ValueError(f"User must be an instance of CustomUser. Received {type(user)}")
+        bank_accounts = get_bank_accounts_service().find_distinct_by_users_contains(user)
+        # use BankAccountSerializer to serialize the bank accounts
+        serializer = BankAccountSerializer(bank_accounts, many=True)
+        return JsonResponse(serializer.data, safe=False, status=200)
 
-        # Check if bank accounts are already in the session
-        if 'bank_accounts' in request.session:
-            bank_accounts_data = request.session['bank_accounts']
-        else:
-            bank_accounts = get_bank_accounts_service().find_distinct_by_users_contains(user)
-            # Serialize the bank accounts
-            serializer = BankAccountSerializer(bank_accounts, many=True)
-            bank_accounts_data = serializer.data
-            # Store the serialized data in the session
-            request.session['bank_accounts'] = bank_accounts_data
-
-        return JsonResponse(bank_accounts_data, safe=False, status=200)
 
 class RevenueAndExpensesPerPeriodView(APIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
+        # request=OpenApiRequest(request=RevenueExpensesQuerySerializer),
         request=RevenueExpensesQuerySerializer,
         responses={
             200: RevenueAndExpensesPerPeriodResponseSerializer,
@@ -293,17 +287,9 @@ class RevenueAndExpensesPerPeriodView(APIView):
 
             if revenue_expenses_query.is_empty():
                 return None
-
-            # Check if the result is already in the session
-            session_key = f"revenue_expenses_{revenue_expenses_query}"
-            if session_key in request.session:
-                expenses_and_revenue_per_period = request.session[session_key]
-            else:
-                expenses_and_revenue_per_period = get_analysis_service().get_revenue_and_expenses_per_period(
-                    revenue_expenses_query)
-                if expenses_and_revenue_per_period:
-                    request.session[session_key] = expenses_and_revenue_per_period
-
+            expenses_and_revenue_per_period: Optional[
+                List[ExpensesAndRevenueForPeriod]] = get_analysis_service().get_revenue_and_expenses_per_period(
+                revenue_expenses_query)
             if not expenses_and_revenue_per_period:
                 return JsonResponse({}, status=204)
 
@@ -324,6 +310,7 @@ class RevenueAndExpensesPerPeriodView(APIView):
                 return HttpResponseServerError()
         else:
             return JsonResponse({}, status=500)
+
 class PageTransactionsView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -338,28 +325,20 @@ class PageTransactionsView(APIView):
             body = json.loads(request.body.decode('utf-8'))
             serializer = PageTransactionsRequestSerializer(data=body)
             if serializer.is_valid(raise_exception=True):
+
                 page_transactions_request = PageTransactionsRequest(**serializer.validated_data)
                 query = page_transactions_request.query
                 page = page_transactions_request.page
                 size = page_transactions_request.size
                 sort_order = page_transactions_request.sort_order
                 sort_property = page_transactions_request.sort_property
+                response: TransactionsPage = get_transactions_service().page_transactions(query, page, size, sort_order,
+                                                                                          sort_property)
+                return JsonResponse(response, status=200)
 
-                # Create a session key based on the request parameters
-                session_key = f"page_transactions_{query}_{page}_{size}_{sort_order}_{sort_property}"
-
-                # Check if the result is already in the session
-                if session_key in request.session:
-                    response = request.session[session_key]
-                else:
-                    response: TransactionsPage = get_transactions_service().page_transactions(
-                        query, page, size, sort_order, sort_property)
-                    # Store the result in the session
-                    request.session[session_key] = response
-
-                return JsonResponse(TransactionsPageSerializer(response).data, status=200)
         except Exception as e:
             return JsonResponse({}, status=400)
+
 
 class PageTransactionsInContextView(APIView):
     permission_classes = [IsAuthenticated]
@@ -380,20 +359,11 @@ class PageTransactionsInContextView(APIView):
             size = request_obj.size
             sort_order = request_obj.sort_order
             sort_property = request_obj.sort_property
-
-            # Create a session key based on the request parameters
-            session_key = f"page_transactions_in_context_{query}_{page}_{size}_{sort_order}_{sort_property}"
-
-            # Check if the result is already in the session
-            if session_key in request.session:
-                response = request.session[session_key]
-            else:
-                response: TransactionsPage = get_transactions_service().page_transactions_in_context(
-                    query, page, size, sort_order, sort_property)
-                # Store the result in the session
-                request.session[session_key] = response
-
+            response: TransactionsPage = get_transactions_service().page_transactions_in_context(query, page, size,
+                                                                                                 sort_order,
+                                                                                                 sort_property)
             return JsonResponse(TransactionsPageSerializer(response).data, status=200)
+
         else:
             return JsonResponse({}, status=400)
 
@@ -419,23 +389,13 @@ class PageTransactionsToManuallyReviewView(APIView):
             sort_order = request_obj.sort_order
             sort_property = request_obj.sort_property
             transaction_type = request_obj.transaction_type
-
-            # Create a session key based on the request parameters
-            session_key = f"page_transactions_to_manually_review_{bank_account}_{page}_{size}_{sort_order}_{sort_property}_{transaction_type}"
-
-            # Check if the result is already in the session
-            if session_key in request.session:
-                transactions_page_dto = request.session[session_key]
-            else:
-                transactions_page_dto: TransactionsPage = get_transactions_service().page_transactions_to_manually_review(
-                    bank_account, page, size, sort_order, sort_property, transaction_type)
-                # Store the result in the session
-                request.session[session_key] = transactions_page_dto
-
-            return JsonResponse(TransactionsPageSerializer(transactions_page_dto).data, status=200)
+            transactions_page_dto: TransactionsPage = get_transactions_service().page_transactions_to_manually_review(
+                bank_account, page, size, sort_order,
+                sort_property, transaction_type)
         else:
             return JsonResponse({}, status=400)
 
+        return JsonResponse(TransactionsPageSerializer(transactions_page_dto).data, status=200)
 
 class CountTransactionsToManuallyReviewView(APIView):
     permission_classes = [IsAuthenticated]
@@ -448,17 +408,9 @@ class CountTransactionsToManuallyReviewView(APIView):
         })
     def get(self, request):
         bank_account = request.query_params.get('bank_account')
-        session_key = f"count_transactions_to_manually_review_{bank_account}"
-
-        # Check if the result is already in the session
-        if session_key in request.session:
-            count = request.session[session_key]
-        else:
-            count = get_transactions_service().count_transactions_to_manually_review(bank_account)
-            # Store the result in the session
-            request.session[session_key] = count
-
+        count = get_transactions_service().count_transactions_to_manually_review(bank_account)
         return JsonResponse(CountSerializer(Count(count=count)).data, status=200)
+
 
 def serialize_succesful_or_failed_operation_reponse(response: Union[
     SuccessfulOperationResponse, FailedOperationResponse]) -> Dict:
@@ -483,27 +435,22 @@ class SaveTransactionView(APIView):
         })
     def post(self, request):
         try:
-            body = request.body.decode('utf-8')
-            transaction_json = json.loads(body)
-            session_key = f"save_transaction_{transaction_json['id']}"
+            body = request.body
+            # body is a bytes object, so we need to convert it to a string
+            decode = body.decode('utf-8')
+            transaction_json = json.loads(decode)
+            response: Union[
+                SuccessfulOperationResponse, FailedOperationResponse] = get_transactions_service().save_transaction(
+                transaction_json)
 
-            # Check if the result is already in the session
-            if session_key in request.session:
-                response = request.session[session_key]
-            else:
-                response: Union[
-                    SuccessfulOperationResponse, FailedOperationResponse] = get_transactions_service().save_transaction(
-                    transaction_json)
-                # Store the result in the session
-                request.session[session_key] = serialize_succesful_or_failed_operation_reponse(response)
-
-            return JsonResponse(request.session[session_key], status=response.status_code)
+            return JsonResponse(serialize_succesful_or_failed_operation_reponse(response), status=response.status_code)
         except Exception as e:
             return JsonResponse(
                 serialize_succesful_or_failed_operation_reponse(FailedOperationResponse(error=str(e), status_code=500)),
                 status=500)
 
 class CategoryTreeView(APIView):
+
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
@@ -511,27 +458,18 @@ class CategoryTreeView(APIView):
         responses={
             200: CategoryTreeSerializer,
             500: None,
-            400: str
+            400 : str
         }
     )
     def get(self, request, *args, **kwargs):
         try:
             transaction_type = TransactionTypeEnum[request.query_params.get('transaction_type')]
-            session_key = f"category_tree_{transaction_type}"
-
-            # Check if the result is already in the session
-            if session_key in request.session:
-                category_tree = request.session[session_key]
+            if transaction_type == TransactionTypeEnum.EXPENSES:
+                category_tree = get_expenses_category_tree()
+            elif transaction_type == TransactionTypeEnum.REVENUE:
+                category_tree = get_revenue_category_tree()
             else:
-                if transaction_type == TransactionTypeEnum.EXPENSES:
-                    category_tree = get_expenses_category_tree()
-                elif transaction_type == TransactionTypeEnum.REVENUE:
-                    category_tree = get_revenue_category_tree()
-                else:
-                    return HttpResponseBadRequest("Invalid transaction type")
-                # Store the result in the session
-                request.session[session_key] = category_tree
-
+                return HttpResponseBadRequest("Invalid transaction type")
             return JsonResponse(CategoryTreeSerializer(category_tree).data, safe=False, status=200)
         except Exception as e:
             traceback.print_exc()
@@ -542,7 +480,8 @@ class DistinctCounterpartyNamesView(APIView):
 
     @extend_schema(
         parameters=[BANK_ACCOUNT_NUMBER_PARAM],
-        responses={
+        responses= {
+            #for status 200, the response is a list of strings
             200: STRING_LIST_RESPONSE,
             500: None
         })
@@ -550,17 +489,10 @@ class DistinctCounterpartyNamesView(APIView):
         try:
             account = request.query_params.get('account')
             account = BankAccount.normalize_account_number(account)
-            session_key = f"distinct_counterparty_names_{account}"
-
-            # Check if the result is already in the session
-            if session_key in request.session:
-                names_list = request.session[session_key]
-            else:
-                names: QuerySet = Transaction.objects.find_distinct_counterparty_names(account)
-                names_list = list(names)
-                # Store the result in the session
-                request.session[session_key] = names_list
-
+            names: QuerySet = Transaction.objects.find_distinct_counterparty_names(account)
+            # convert this QuerySet to a list
+            names_list = list(names)
+            # convert the list to a json response
             return JsonResponse(names_list, safe=False, status=200)
         except Exception as e:
             traceback.print_exc()
@@ -571,29 +503,22 @@ class DistinctCounterpartyAccountsView(APIView):
 
     @extend_schema(
         parameters=[BANK_ACCOUNT_NUMBER_PARAM],
-        responses={
+        responses= {
+            #for status 200, the response is a list of strings
             200: STRING_LIST_RESPONSE,
             500: None
         })
     def get(self, request):
         try:
-            account = request.query_params.get('bank_account')
-            account = BankAccount.normalize_account_number(account)
-            session_key = f"distinct_counterparty_accounts_{account}"
-
-            # Check if the result is already in the session
-            if session_key in request.session:
-                account_numbers_list = request.session[session_key]
-            else:
-                account_numbers: QuerySet = Transaction.objects.find_distinct_counterparty_account_numbers(account)
-                account_numbers_list = list(account_numbers)
-                # Store the result in the session
-                request.session[session_key] = account_numbers_list
-
+            account = request.data.get('bank_account')
+            account_numbers: QuerySet = Transaction.objects.find_distinct_counterparty_account_numbers(account)
+            # convert this QuerySet to a list
+            account_numbers_list = list(account_numbers)
+            # convert the list to a json response
             return JsonResponse(account_numbers_list, safe=False, status=200)
         except Exception as e:
             traceback.print_exc()
-            return HttpResponseServerError()
+            return JsonResponse({}, status=500)
 
 class UploadTransactionsView(APIView):
     permission_classes = [IsAuthenticated]
@@ -624,23 +549,16 @@ class UploadTransactionsView(APIView):
                 raise ValueError(f"User must be an instance of CustomUser. Received {type(user)}")
             upload_timestamp = datetime.now()
 
-            session_key = f"upload_transactions_{user.id}_{upload_timestamp}"
-            if session_key in request.session:
-                result = request.session[session_key]
-            else:
-                created = 0
-                updated = 0
-                for file in files:
-                    decoded_file = io.TextIOWrapper(file, encoding='utf-8')
-                    lines = decoded_file.readlines()  # Reads all lines as a list
-                    parse_result = get_transactions_service().upload_transactions(lines, user, upload_timestamp,
-                                                                                  BelfiusTransactionParser(), file.name)
-                    created += parse_result.created
-                    updated += parse_result.updated
-                result = {'created': created, 'updated': updated}
-                request.session[session_key] = result
-
-            return JsonResponse(result, status=200)
+            created = 0
+            updated = 0
+            for file in files:
+                decoded_file = io.TextIOWrapper(file, encoding='utf-8')
+                lines = decoded_file.readlines()  # Reads all lines as a list
+                parse_result = get_transactions_service().upload_transactions(lines, user, upload_timestamp,
+                                                                              BelfiusTransactionParser(), file.name)
+                created += parse_result.created
+                updated += parse_result.updated
+            return JsonResponse({'created': created, 'updated': updated}, status=200)
         except Exception as e:
             traceback.print_exc()
             return HttpResponseServerError()
@@ -663,30 +581,24 @@ class RevenueExpensesPerPeriodAndCategoryView(APIView):
             if serializer.is_valid():
                 validated_data = serializer.validated_data
                 revenue_expenses_query = RevenueExpensesQuery(**validated_data)
-                session_key = f"revenue_expenses_per_period_and_category_{revenue_expenses_query}"
-
-                # Check if the result is already in the session
-                if session_key in request.session:
-                    result = request.session[session_key]
-                else:
-                    result = get_analysis_service().get_revenue_and_expenses_per_period_and_category(
-                        revenue_expenses_query)
-                    if result:
-                        request.session[session_key] = result
-
+                result = get_analysis_service().get_revenue_and_expenses_per_period_and_category(revenue_expenses_query)
                 if not result:
+
                     return JsonResponse(RevenueAndExpensesPerPeriodAndCategorySerializer(
                         RevenueAndExpensesPerPeriodAndCategory.empty_instance()).data, status=204, safe=False)
                 else:
                     return JsonResponse(RevenueAndExpensesPerPeriodAndCategorySerializer(result).data,
                                         status=200, safe=False)
             else:
+                # bad request
                 return JsonResponse({}, status=400)
         except Exception as e:
             traceback.print_exc()
             return HttpResponseServerError()
 
+
 class TrackBudgetView(APIView):
+
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
@@ -703,16 +615,7 @@ class TrackBudgetView(APIView):
             if serializer.is_valid():
                 validated_data = serializer.validated_data
                 query_obj = RevenueExpensesQuery(**validated_data)
-                session_key = f"track_budget_{query_obj}"
-
-                # Check if the result is already in the session
-                if session_key in request.session:
-                    result = request.session[session_key]
-                else:
-                    result: Optional[BudgetTrackerResult] = get_analysis_service().track_budget(query_obj)
-                    if result:
-                        request.session[session_key] = result
-
+                result: Optional[BudgetTrackerResult] = get_analysis_service().track_budget(query_obj)
                 if not result:
                     return JsonResponse({}, status=204)
                 return JsonResponse(BudgetTrackerResultSerializer(result).data, status=200)
@@ -723,6 +626,7 @@ class TrackBudgetView(APIView):
         except Exception as e:
             traceback.print_exc()
             return HttpResponseServerError()
+
 
 class RevenueExpensesPerPeriodAndCategoryShow1MonthBeforeAndAfterView(APIView):
     permission_classes = [IsAuthenticated]
@@ -743,7 +647,8 @@ class ResolveStartEndDateShortcutView(APIView):
         parameters=[OpenApiParameter(
             name='query', type=str,
             enum=["current month", "previous month", "current quarter", "previous quarter", "current year",
-                  "previous year", "all"], required=True)],
+                  "previous year",
+                  "all"], required=True)],
         responses={
             200: ResolvedStartEndDateShortcutSerializer,
             500: None
@@ -751,24 +656,14 @@ class ResolveStartEndDateShortcutView(APIView):
     )
     def get(self, request):
         try:
+            # Implement logic to resolve start and end date shortcut
             query: str = request.query_params.get('query')
             if not query:
                 return HttpResponseBadRequest()
 
-            session_key = f"resolve_start_end_date_shortcut_{query}"
-
-            # Check if the result is already in the session
-            if session_key in request.session:
-                result = request.session[session_key]
-            else:
-                result = get_period_service().resolve_start_end_date_shortcut(query)
-                request.session[session_key] = result
-
-            return JsonResponse(ResolvedStartEndDateShortcutSerializer(result).data, status=200)
-        except Exception as e:
-            traceback.print_exc()
+            return JsonResponse(ResolvedStartEndDateShortcutSerializer(get_period_service().resolve_start_end_date_shortcut(query)).data, status=200)
+        except:
             return HttpResponseServerError()
-
 
 class RegisterView(GenericAPIView):
     permission_classes = [AllowAny]
@@ -829,6 +724,8 @@ class RegisterView(GenericAPIView):
 
 
 class UpdateUserView(APIView):
+
+
     """
     View to update the authenticated user's password or email address.
     """
@@ -849,15 +746,11 @@ class UpdateUserView(APIView):
             500: None
         }
     )
+
     def put(self, request):
         try:
             user = request.user
             data = request.data
-            session_key = f"update_user_{user.id}"
-
-            # Check if the result is already in the session
-            if session_key in request.session:
-                return JsonResponse(request.session[session_key], status=200)
 
             # Handle password change
             if "password" in data:
@@ -866,20 +759,20 @@ class UpdateUserView(APIView):
                     validate_password(new_password, user)
                     user.set_password(new_password)
                     user.save()
-                    response = serialize_succesful_or_failed_operation_reponse(
-                        SuccessfulOperationResponse(message="Password updated successfully."))
-                    request.session[session_key] = response
-                    return JsonResponse(response, status=status.HTTP_200_OK)
+                    return JsonResponse(
+                        serialize_succesful_or_failed_operation_reponse(
+                            SuccessfulOperationResponse(message="Password updated successfully.")),
+                        status=status.HTTP_200_OK)
                 except DjangoValidationError as e:
-                    response = serialize_succesful_or_failed_operation_reponse(
+                    return JsonResponse(serialize_succesful_or_failed_operation_reponse(
                         FailedOperationResponse(error="\n".join([message for message in e.messages]),
-                                                status_code=status.HTTP_400_BAD_REQUEST))
-                    return JsonResponse(response, status=status.HTTP_400_BAD_REQUEST)
+                                                status_code=status.HTTP_400_BAD_REQUEST)),
+                        status=status.HTTP_400_BAD_REQUEST)
                 except ValidationError as e:
-                    response = serialize_succesful_or_failed_operation_reponse(
+                    return JsonResponse(serialize_succesful_or_failed_operation_reponse(
                         FailedOperationResponse(error="\n".join([str(item) for item in e.detail]),
-                                                status_code=status.HTTP_400_BAD_REQUEST))
-                    return JsonResponse(response, status=status.HTTP_400_BAD_REQUEST)
+                                                status_code=status.HTTP_400_BAD_REQUEST)),
+                        status=status.HTTP_400_BAD_REQUEST)
 
             # Handle email change
             if "email" in data:
@@ -890,28 +783,27 @@ class UpdateUserView(APIView):
                     email_serializer.run_validation(new_email)
                     user.email = new_email
                     user.save()
-                    response = serialize_succesful_or_failed_operation_reponse(
-                        SuccessfulOperationResponse(message="Email updated successfully."))
-                    request.session[session_key] = response
-                    return JsonResponse(response, status=status.HTTP_200_OK)
+                    return JsonResponse(serialize_succesful_or_failed_operation_reponse(
+                        SuccessfulOperationResponse(message="Email updated successfully.")), status=status.HTTP_200_OK)
                 except DjangoValidationError as e:
-                    response = serialize_succesful_or_failed_operation_reponse(
+                    return JsonResponse(serialize_succesful_or_failed_operation_reponse(
                         FailedOperationResponse(error="\n".join([message for message in e.messages]),
-                                                status_code=status.HTTP_400_BAD_REQUEST))
-                    return JsonResponse(response, status=status.HTTP_400_BAD_REQUEST)
+                                                status_code=status.HTTP_400_BAD_REQUEST)),
+                        status=status.HTTP_400_BAD_REQUEST)
                 except ValidationError as e:
-                    response = serialize_succesful_or_failed_operation_reponse(
+                    return JsonResponse(serialize_succesful_or_failed_operation_reponse(
                         FailedOperationResponse(error="\n".join([str(item) for item in e.detail]),
-                                                status_code=status.HTTP_400_BAD_REQUEST))
-                    return JsonResponse(response, status=status.HTTP_400_BAD_REQUEST)
+                                                status_code=status.HTTP_400_BAD_REQUEST)),
+                        status=status.HTTP_400_BAD_REQUEST)
 
-            response = serialize_succesful_or_failed_operation_reponse(
+            return JsonResponse(serialize_succesful_or_failed_operation_reponse(
                 FailedOperationResponse(error="No valid fields provided for update.",
                                         status_code=status.HTTP_400_BAD_REQUEST))
-            return JsonResponse(response, status=status.HTTP_400_BAD_REQUEST)
+                                , status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             traceback.print_exc()
             return HttpResponseServerError()
+
 
 class UpdateBudgetEntryAmountView(APIView):
     permission_classes = [IsAuthenticated]
@@ -929,25 +821,19 @@ class UpdateBudgetEntryAmountView(APIView):
             body = json.loads(body)
             budget_tree_node_instance = BudgetTreeNode.objects.get(pk=body['budget_tree_node_id'])
 
-            session_key = f"update_budget_entry_amount_{budget_tree_node_instance.id}"
-
-            # Check if the result is already in the session
-            if session_key in request.session:
-                return JsonResponse(request.session[session_key], status=200)
-
             serializer = BudgetTreeNodeSerializer(budget_tree_node_instance, data=body)
             if serializer.is_valid(raise_exception=True):
                 serializer.save()
-                response = {}
-                request.session[session_key] = response
-                return JsonResponse(response, status=200)
+                return JsonResponse({}, status=200)
             else:
                 return JsonResponse({}, status=400)
         except Exception as e:
             traceback.print_exc()
             return JsonResponse({}, status=500)
 
+
 class FindOrCreateBudgetView(APIView):
+
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
@@ -958,26 +844,15 @@ class FindOrCreateBudgetView(APIView):
             500: {}
         })
     def post(self, request, *args, **kwargs):
-        try:
-            body = json.loads(request.body.decode('utf-8'))
-            bank_account_number = body.get('bank_account_number')
-            session_key = f"find_or_create_budget_{bank_account_number}"
-
-            # Check if the result is already in the session
-            if session_key in request.session:
-                budget_tree = request.session[session_key]
-            else:
-                bank_account = get_object_or_404(BankAccount, account_number=bank_account_number)
-                budget_tree = BudgetTreeProvider().provide(bank_account)
-                request.session[session_key] = budget_tree
-
-            json_data = BudgetTreeSerializer(budget_tree).data
-            return JsonResponse(json_data, status=200)
-        except Exception as e:
-            traceback.print_exc()
-            return HttpResponseServerError()
+        body = json.loads(request.body.decode('utf-8'))
+        bank_account_number = body.get('bank_account_number')
+        bank_account = get_object_or_404(BankAccount, account_number=bank_account_number)
+        budget_tree = BudgetTreeProvider().provide(bank_account)
+        json_data = BudgetTreeSerializer(budget_tree).data
+        return JsonResponse(json_data, status=200)
 
 class SaveRuleSetWrapperView(APIView):
+
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
@@ -994,22 +869,20 @@ class SaveRuleSetWrapperView(APIView):
             if serializer.is_valid():
                 validated_data = serializer.validated_data
                 users = validated_data.pop('users', None)
-                rule_set_wrapper = RuleSetWrapperSerializer().create(validated_data)
+                rule_set_wrapper =RuleSetWrapperSerializer().create(validated_data)
+                #rule_set_wrapper = RuleSetWrapper(**validated_data)
                 if users:
                     rule_set_wrapper.users.set(users)
                 get_rule_sets_service().save_rule_set(rule_set_wrapper)
-
-                session_key = f"save_rule_set_wrapper_{rule_set_wrapper.id}"
-                response = serialize_succesful_or_failed_operation_reponse(
-                    SuccessfulOperationResponse(message="Rule set wrapper saved successfully"))
-                request.session[session_key] = response
-
-                return JsonResponse(response, status=200)
+                return JsonResponse(data=
+                                    serialize_succesful_or_failed_operation_reponse(SuccessfulOperationResponse(
+                                        message="Rule set wrapper saved successfully")), status=200)
             else:
+                #bad request
                 return JsonResponse({}, status=400)
         except Exception as e:
-            traceback.print_exc()
             return HttpResponseServerError()
+
 
 class GetOrCreateRuleSetWrapperView(APIView):
     permission_classes = [IsAuthenticated]
@@ -1020,9 +893,11 @@ class GetOrCreateRuleSetWrapperView(APIView):
             200: RuleSetWrapperSerializer,
             500: None,
             400: None
+
         })
     def post(self, request):
         try:
+            # data = json.loads(request.body.decode('utf-8'))
             user = request.user
             if not isinstance(user, CustomUser):
                 raise ValueError(f"User must be an instance of CustomUser. Received {type(user)}")
@@ -1031,20 +906,14 @@ class GetOrCreateRuleSetWrapperView(APIView):
                 dto: GetOrCreateRuleSetWrapper = GetOrCreateRuleSetWrapper(**serializer.validated_data)
                 category_qualified_name = dto.category_qualified_name
                 transaction_type = dto.type
-
-                session_key = f"get_or_create_rule_set_wrapper_{transaction_type}_{user.id}_{category_qualified_name}"
-
-                # Check if the result is already in the session
-                if session_key in request.session:
-                    rule_set_wrapper = request.session[session_key]
-                else:
-                    rule_set_wrapper = get_rule_sets_service().get_or_create_rule_set_wrapper(transaction_type, user,
-                                                                                              category_qualified_name)
-                    request.session[session_key] = rule_set_wrapper
-
+                rule_set_wrapper = get_rule_sets_service().get_or_create_rule_set_wrapper(transaction_type, user,
+                                                                                                  category_qualified_name)
                 return JsonResponse(RuleSetWrapperSerializer(rule_set_wrapper).data, status=200)
+
             else:
                 return JsonResponse({}, status=400)
+
+
         except Exception as e:
             traceback.print_exc()
             return JsonResponse({}, status=500)
@@ -1063,21 +932,11 @@ class CategorizeTransactions(APIView):
             user = request.user
             if not isinstance(user, CustomUser):
                 raise ValueError(f"User must be an instance of CustomUser. Received {type(user)}")
-
-            session_key = f"categorize_transactions_{user.id}"
-
-            # Check if the result is already in the session
-            if session_key in request.session:
-                response = request.session[session_key]
-            else:
-                response: CategorizeTransactionsResponse = get_transactions_service().categorise_transactions(user)
-                request.session[session_key] = response
-
+            response: CategorizeTransactionsResponse = get_transactions_service().categorise_transactions(user)
             return JsonResponse(CategorizeTransactionsResponseSerializer(response).data, status=200)
         except Exception as e:
             traceback.print_exc()
             return JsonResponse({}, status=500)
-
 
 class SaveAliasView(APIView):
     permission_classes = [IsAuthenticated]
@@ -1093,23 +952,11 @@ class SaveAliasView(APIView):
             body = request.body.decode('utf-8')
             serializer = SaveAliasSerializer(data=json.loads(body))
             if serializer.is_valid():
-                save_alias_dto = SaveAlias(**serializer.validated_data)
+                save_alias_dto= SaveAlias(**serializer.validated_data)
                 alias = save_alias_dto.alias
                 account_number = save_alias_dto.bank_account
-
-                session_key = f"save_alias_{account_number}_{alias}"
-
-                # Check if the result is already in the session
-                if session_key in request.session:
-                    result = request.session[session_key]
-                else:
-                    get_bank_accounts_service().save_alias(account_number, alias)
-                    result = {}
-                    request.session[session_key] = result
-
-                return JsonResponse(result, status=200)
-            else:
-                return JsonResponse({}, status=400)
+                get_bank_accounts_service().save_alias(account_number, alias)
+                return JsonResponse({}, status=200)
         except Exception as e:
             return JsonResponse({}, status=500)
 
@@ -1122,26 +969,21 @@ class CategoryDetailsForPeriodView(APIView):
             200: CategoryDetailsForPeriodHandlerResultSerializer,
             500: None,
             400: None
+
         })
     def get(self, request):
         try:
+
             serializer = RevenueExpensesQueryWithCategorySerializer(data=request.GET)
             if serializer.is_valid(raise_exception=True):
                 validated_data = serializer.validated_data
                 query = RevenueExpensesQueryWithCategory(**validated_data)
                 category = query.category
-
-                session_key = f"category_details_for_period_{query}_{category}"
-
-                # Check if the result is already in the session
-                if session_key in request.session:
-                    result = request.session[session_key]
-                else:
-                    result = get_analysis_service().get_category_details_for_period(query, category)
-                    request.session[session_key] = result
-
+                result: CategoryDetailsForPeriodHandlerResult = get_analysis_service().get_category_details_for_period(
+                    query, category)
                 return JsonResponse(CategoryDetailsForPeriodHandlerResultSerializer(result).data, status=200)
             else:
+                # bad request
                 return JsonResponse({}, status=400)
         except Exception as e:
             traceback.print_exc()
@@ -1161,17 +1003,9 @@ class CategoriesForAccountAndTransactionTypeView(APIView):
             account_number = request.query_params.get('bank_account')
             transaction_type = request.query_params.get("transaction_type")
             transaction_type = TransactionTypeEnum.from_value(transaction_type)
-            session_key = f"categories_for_account_and_transaction_type_{account_number}_{transaction_type}"
-
-            # Check if the result is already in the session
-            if session_key in request.session:
-                result = request.session[session_key]
-            else:
-                bank_account_obj = get_bank_accounts_service().get_bank_account(account_number)
-                result = Transaction.objects.find_distinct_categories_by_bank_account_and_type(bank_account_obj, transaction_type)
-                request.session[session_key] = list(result)
-
-            return JsonResponse(request.session[session_key], safe=False, status=200)
+            bank_account_obj = get_bank_accounts_service().get_bank_account(account_number)
+            result = Transaction.objects.find_distinct_categories_by_bank_account_and_type(bank_account_obj, transaction_type)
+            return JsonResponse(list(result), safe=False, status=200)
         except Exception as e:
             traceback.print_exc()
             return JsonResponse({}, status=500)
