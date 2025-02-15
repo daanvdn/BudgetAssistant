@@ -47,11 +47,11 @@ jobs:
       - name: Generate OpenAPI Angular/Typescript client
         run: |
           openapi-generator-cli generate -i schema.yml -g typescript-angular -o ./api --additional-properties=modelPropertyNaming=camelCase,fileNaming=kebab-case,enumPropertyNaming=original,ngVersion=14.2.8,npmName=budget-assistant-client
-      - name: Compile TypeScript to JavaScript
-        run: |
-          cd ./api
-          npm install typescript
-          npx tsc
+
+#      - name: Install dependencies
+#        run: |
+#          npm install
+#          npm install @types/node@latest
       - name: Update package.json for npm
         run: |
           cd ./api
@@ -88,6 +88,12 @@ jobs:
         run: |
           cd ./api
           npm pack
+      - name: Compile TypeScript to JavaScript
+        run: |
+          cd ./api
+          #npm install typescript  
+          #npx tsc
+          tsc
       - name: Print all files in the current directory
         run: |
           echo "Files in the current directory:"
