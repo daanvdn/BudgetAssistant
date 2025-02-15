@@ -109,7 +109,7 @@ jobs:
         run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.GH_TOKEN }}" > ~/.npmrc
       - name: Publish npm package to GitHub Packages
         run: |
-          cd ./api
-          npm publish dist --access public --registry=https://npm.pkg.github.com/
+          cd ./api/dist
+          npm publish --access public --registry=https://npm.pkg.github.com/
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GH_TOKEN }}
