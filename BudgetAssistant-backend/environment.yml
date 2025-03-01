@@ -19,5 +19,6 @@ dependencies:
     - django-choice-enumfields==1.1.3
     - mysqlclient==2.2.4
     - jsonpickle==4.0.1
+    - whitenoise==6.9.0
 
 

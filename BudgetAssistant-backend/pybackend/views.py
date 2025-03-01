@@ -666,7 +666,7 @@ class ResolveStartEndDateShortcutView(APIView):
             return HttpResponseServerError()
 
 @extend_schema(auth=[])
-class RegisterView(GenericAPIView):
+class RegisterView(APIView):
     permission_classes = [AllowAny]
 
     @extend_schema(request=RegisterUserSerializer,
