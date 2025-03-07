@@ -274,4 +274,5 @@ BudgetAssistant-backend/node_modules
 BudgetAssistant-frontend/node_modules
 BudgetAssistant-frontend/.idea
 .idea/
-workspace/
+/BudgetAssistant-frontend/BudgetAssistant-frontend.iml
+.project
