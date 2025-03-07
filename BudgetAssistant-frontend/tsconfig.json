@@ -2,7 +2,6 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
-
     "baseUrl": "./",
     "outDir": "./dist/out-tsc",
     "forceConsistentCasingInFileNames": true,
@@ -18,15 +17,18 @@
     "emitDecoratorMetadata": true,
     "moduleResolution": "node",
     "importHelpers": true,
-    "target": "es2020",
+    "target": "ES2022",
     "module": "es2020",
     "lib": [
       "es2020",
       "dom"
     ],
     "paths": {
-      "@daanvdn/budget-assistant-client": ["node_modules/@daanvdn/budget-assistant-client"]
-    }
+      "@daanvdn/budget-assistant-client": [
+        "node_modules/@daanvdn/budget-assistant-client"
+      ]
+    },
+    "useDefineForClassFields": false
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,
