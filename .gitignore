@@ -276,3 +276,5 @@ BudgetAssistant-frontend/.idea
 .idea/
 /BudgetAssistant-frontend/BudgetAssistant-frontend.iml
 .project
+/BudgetAssistant-frontend/.angular/
+/BudgetAssistant-backend/BudgetAssistant-backend.iml
