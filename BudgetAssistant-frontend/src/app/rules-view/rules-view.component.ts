@@ -4,7 +4,7 @@ import {AppService} from "../app.service";
 import {MatTreeNestedDataSource} from "@angular/material/tree";
 import {faNetworkWired, faPlay} from "@fortawesome/free-solid-svg-icons";
 import {MatButtonToggleChange} from "@angular/material/button-toggle";
-import {MAT_DIALOG_DATA, MatDialog, MatDialogRef} from "@angular/material/dialog";
+import {MAT_LEGACY_DIALOG_DATA as MAT_DIALOG_DATA, MatLegacyDialog as MatDialog, MatLegacyDialogRef as MatDialogRef} from "@angular/material/legacy-dialog";
 import {ActiveView, CategoryNode, TransactionsCategorizationResponse} from "../model";
 import {ErrorDialogService} from "../error-dialog/error-dialog.service";
 import {AuthService} from "../auth/auth.service";

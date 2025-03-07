@@ -5,7 +5,7 @@ import {TransactionType} from '../model';
 import {Criteria} from "../insights/insights.component";
 // @ts-ignore
 import autocolors from 'chartjs-plugin-autocolors';
-import {MatTableDataSource} from "@angular/material/table";
+import {MatLegacyTableDataSource as MatTableDataSource} from "@angular/material/legacy-table";
 import {TreeNode} from "primeng/api";
 import {
     ApiBudgetAssistantBackendClientService,
