@@ -3,9 +3,9 @@ import {
   DEFAULT_QUERY_BUILDER_CONFIG, QueryBuilderConfig, RuleSet, RuleSetWrapper
 } from "../query-builder/query-builder.interfaces";
 import {AppService} from "../app.service";
-import {CategoryNode, CategoryType} from "../category-tree-dropdown/category-tree-dropdown.component";
 import {AuthService} from "../auth/auth.service";
 import {ErrorDialogService} from "../error-dialog/error-dialog.service";
+import {CategoryNode, CategoryType} from "../model";
 
 
 @Component({

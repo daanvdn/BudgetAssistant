@@ -7,58 +7,7 @@ import {AppService} from '../app.service';
 import {FormBuilder, FormGroup} from "@angular/forms";
 import {MatFormField} from "@angular/material/form-field";
 import {MatAutocompleteTrigger} from "@angular/material/autocomplete";
-
-export type CategoryType = "EXPENSES" | "REVENUE";
-
-export interface CategoryNode {
-
-  children: CategoryNode[];
-  name: string;
-  qualifiedName: string;
-  type: CategoryType | undefined;
-
-
-}
-
-
-
-export function inferAmountType(amount: Number) {
-  if (amount >= 0) {
-    return AmountType.REVENUE;
-  } else if (amount < 0) {
-    return AmountType.EXPENSES;
-  } else {
-    throw new Error("Unknown amount type " + amount);
-  }
-}
-
-export enum AmountType {
-  REVENUE = "REVENUE",
-  EXPENSES = "EXPENSES",
-  BOTH = "BOTH",
-}
-
-export class FlatCategoryNode {
-  level!: number;
-  expandable!: boolean;
-  name!: string;
-  qualifiedName!: string;
-  type: CategoryType | undefined;
-}
-
-
-const DUMMY_CATEGORY: CategoryNode = {
-  children: [],
-  name: "DUMMY CATEGORY",
-  qualifiedName: "DUMMY CATEGORY",
-  type: undefined
-}
-const NO_CATEGORY: CategoryNode = {
-  children: [],
-  name: "NO CATEGORY",
-  qualifiedName: "NO CATEGORY",
-  type: undefined
-}
+import {AmountType, CategoryNode, FlatCategoryNode, NO_CATEGORY} from "../model";
 
 
 // @Injectable({ providedIn: "root" })

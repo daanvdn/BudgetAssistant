@@ -1,13 +1,21 @@
 import {Component, Input, OnChanges, OnInit, SimpleChanges} from '@angular/core';
 
 import {AppService} from '../app.service';
-import {RevenueExpensesQuery, TransactionType} from '../model';
+import {TransactionType} from '../model';
 import {Criteria} from "../insights/insights.component";
 // @ts-ignore
 import autocolors from 'chartjs-plugin-autocolors';
 import {MatTableDataSource} from "@angular/material/table";
 import {TreeNode} from "primeng/api";
-
+import {
+    ApiBudgetAssistantBackendClientService,
+    BudgetTrackerResult,
+    ExpensesRecurrenceEnum,
+    RevenueExpensesQuery,
+    TransactionTypeEnum
+} from "@daanvdn/budget-assistant-client";
+import {RevenueRecurrenceEnum} from "@daanvdn/budget-assistant-client/model/revenue-recurrence-enum";
+import {catchError, throwError} from "rxjs";
 
 @Component({
     selector: 'budget-tracking',
@@ -26,7 +34,7 @@ export class BudgetTrackingComponent implements OnInit, OnChanges {
     displayedColumns!: string[];
 
 
-    constructor(private appService: AppService) {
+    constructor(private appService: AppService, private apiBudgetAssistantBackendClientService: ApiBudgetAssistantBackendClientService) {
 
 
     }
@@ -39,16 +47,19 @@ export class BudgetTrackingComponent implements OnInit, OnChanges {
         let query: RevenueExpensesQuery = {
             accountNumber: this.criteria.bankAccount.accountNumber,
             grouping: this.criteria.grouping,
-            transactionType: TransactionType.BOTH,
-            start: this.criteria.startDate,
-            end: this.criteria.endDate,
-            expensesRecurrence: 'both',
-            revenueRecurrence: 'both'
+            transactionType: TransactionTypeEnum.BOTH,
+            start: JSON.stringify(this.criteria.startDate),
+            end: JSON.stringify(this.criteria.endDate),
+            expensesRecurrence: ExpensesRecurrenceEnum.BOTH,
+            revenueRecurrence: RevenueRecurrenceEnum.BOTH
 
         };
-
-
-        this.appService.trackBudget(query).subscribe(res => {
+        this.apiBudgetAssistantBackendClientService.apiTrackBudgetCreate(query).pipe(
+            catchError(error => {
+                console.error('Error occurred:', error);
+                return throwError(error);
+            })
+        ).subscribe((res: BudgetTrackerResult) => {
             /*this.treeNodes= res.data;
             this.columns = res.columns;
              this.datatIsLoaded = true;*/

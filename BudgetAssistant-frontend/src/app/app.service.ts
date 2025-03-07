@@ -3,28 +3,43 @@ import {Injectable} from '@angular/core';
 import {BehaviorSubject, catchError, map, Observable, of, Subject, tap, throwError} from 'rxjs';
 
 import {Page, PageRequest} from 'ngx-pagination-data-source';
-import {CategoryNode, CategoryType} from './category-tree-dropdown/category-tree-dropdown.component';
 import {
-    BankAccount,
     BudgetTrackerResult,
-    CategoryDetailsForPeriodHandlerResult,
+    CategoryDetailsForPeriodHandlerResult, CategoryMap, CategoryNode, CategoryType,
     CompositeTransactionsFileUploadResponse,
     DistributionByCategoryForPeriodHandlerResult2,
-    DistributionByTransactionTypeForPeriod,
     FileWrapper,
-    Grouping,
     ResolvedStartEndDateShortcut,
-    RevenueExpensesQuery,
     StartEndDateShortcut,
-    Transaction,
-    TransactionQuery,
-    TransactionsCategorizationResponse, TransactionsInContextQuery,
+    TransactionsCategorizationResponse,
     TransactionType
 } from './model';
 import {AuthService} from "./auth/auth.service";
 import {BudgetTreeNode, UpdateBudgetEntryResponse} from "./budget/budget.component";
 import {deserializeRuleSet, RuleSetWrapper} from "./query-builder/query-builder.interfaces";
 import {environment} from "../environments/environment";
+import {
+    ApiBudgetAssistantBackendClientService,
+    BankAccount,
+    GroupingEnum,
+    RevenueExpensesQuery,
+    SimplifiedCategory,
+    Transaction,
+    TransactionQuery,
+    TransactionTypeEnum, PageTransactionsToManuallyReviewRequest, PageTransactionsInContextRequest
+} from "@daanvdn/budget-assistant-client";
+import {
+    RevenueAndExpensesPerPeriodResponse
+} from "@daanvdn/budget-assistant-client/model/revenue-and-expenses-per-period-response";
+import {ExpensesAndRevenueForPeriod} from "@daanvdn/budget-assistant-client/model/expenses-and-revenue-for-period";
+import {PageTransactionsRequest} from "@daanvdn/budget-assistant-client/model/page-transactions-request";
+import {SortOrderEnum} from "@daanvdn/budget-assistant-client/model/sort-order-enum";
+import {SortPropertyEnum} from "@daanvdn/budget-assistant-client/model/sort-property-enum";
+import {TransactionsPage} from "@daanvdn/budget-assistant-client/model/transactions-page";
+import {TransactionInContextQuery} from "@daanvdn/budget-assistant-client/model/transaction-in-context-query";
+import {
+    RevenueAndExpensesPerPeriodAndCategory
+} from "@daanvdn/budget-assistant-client/model/revenue-and-expenses-per-period-and-category";
 
 
 @Injectable({
@@ -39,9 +54,9 @@ export class AppService {
     selectedStartDate$ = this.startDate$.asObservable();
     private endDate$ = new BehaviorSubject<Date |undefined>(undefined);
     selectedEndDate$ = this.endDate$.asObservable();
-    private grouping$ = new BehaviorSubject<Grouping | undefined>(undefined);
+    private grouping$ = new BehaviorSubject<GroupingEnum | undefined>(undefined);
     selectedGrouping$ = this.grouping$.asObservable();
-    private transactionType$ = new BehaviorSubject<TransactionType |undefined>(undefined);
+    private transactionType$ = new BehaviorSubject<TransactionTypeEnum | undefined>(undefined);
     public selectedTransactionType$ = this.transactionType$.asObservable();
     private expensesRecurrence$ = new BehaviorSubject<string  | undefined>(undefined);
     selectedExpensesRecurrence$ = this.expensesRecurrence$.asObservable();
@@ -56,60 +71,76 @@ export class AppService {
     public fileUploadComplete$ = new Subject<void>();
     public selectedBankAccount$ = new BehaviorSubject<BankAccount | undefined>(undefined);
     public selectedBankAccountObservable$ = this.selectedBankAccount$.asObservable();
-
-    private backendUrl = environment.backendUrl;
-
-    constructor(private http: HttpClient, private authService: AuthService) {
+    public categoryMapSubject = new BehaviorSubject<CategoryMap | undefined >(undefined);
+    public categoryMapObservable$ = this.categoryMapSubject.asObservable();
 
 
-        this.sharedCategoryTreeExpensesObservable$ = this.http.get<CategoryNode[]>(
-            `${this.backendUrl}/category_tree_expenses`, {})
-            .pipe(map(nodes => {
-                //remove nodes with name "DUMMY CATEGORY" or "NO CATEGORY"
-                nodes = nodes.filter(node => !(node.name === "NO CATEGORY" || node.name === "DUMMY CATEGORY"));
-                return this.setCategoryType(nodes, "EXPENSES");
-            }));
 
-        this.sharedCategoryTreeRevenueObservable$ = this.http.get<CategoryNode[]>(
-            `${this.backendUrl}/category_tree_revenue`, {})
-            .pipe(map(revenueNodes => {
-                //remove nodes with name "DUMMY CATEGORY" or "NO CATEGORY"
-                revenueNodes = revenueNodes.filter(
-                    node => !(node.name === "NO CATEGORY" || node.name === "DUMMY CATEGORY"));
-                return this.setCategoryType(revenueNodes, "REVENUE");
-            }));
+    private backendUrl = environment.API_BASE_PATH;
 
+    constructor(private http: HttpClient, private authService: AuthService,
+                private apiBudgetAssistantBackendClientService: ApiBudgetAssistantBackendClientService) {
+
+
+        this.sharedCategoryTreeExpensesObservable$ = this.getSharedCategoryTreeExpensesObservable$();
+        this.sharedCategoryTreeRevenueObservable$ = this.getSharedCategoryTreeRevenueObservable$();
         (async () => {
             let categoryNodes: CategoryNode[] = await this.getMergedCategoryTreeData();
+            this.categoryMapSubject.next(new CategoryMap(categoryNodes));
             this.sharedCategoryTreeObservable$ = of(categoryNodes);
         })();
 
 
     }
 
+    private getSharedCategoryTreeRevenueObservable$() {
+        return this.apiBudgetAssistantBackendClientService.apiCategoryTreeRetrieve('REVENUE').pipe(
+            map(categoryTree => {
+                const nodes: CategoryNode[] = [];
+                const rootNode = this.convertSimplifiedCategoryToCategoryNode(categoryTree.root, "REVENUE");
+                nodes.push(...rootNode.children);
+                return nodes;
+            })
+        );
+    }
+
+    private getSharedCategoryTreeExpensesObservable$() {
+        return this.apiBudgetAssistantBackendClientService.apiCategoryTreeRetrieve('EXPENSES').pipe(
+            map(categoryTree => {
+                const nodes: CategoryNode[] = [];
+                const rootNode = this.convertSimplifiedCategoryToCategoryNode(categoryTree.root, "EXPENSES");
+                nodes.push(...rootNode.children);
+                return nodes;
+            })
+        );
+    }
+
+    private convertSimplifiedCategoryToCategoryNode(simplified: SimplifiedCategory, type: CategoryType): CategoryNode {
+        const children: CategoryNode[] = simplified.children.map(childObj => {
+            const [name, value] = Object.entries(childObj)[0];
+            return this.convertSimplifiedCategoryToCategoryNode({
+                name: name,
+                qualifiedName: (value as unknown as SimplifiedCategory).qualifiedName,
+                children: (value as unknown as SimplifiedCategory).children || [],
+            id : (value as unknown as SimplifiedCategory).id
+            }, type);
+        });
+
+        return {
+            name: simplified.name,
+            qualifiedName: simplified.qualifiedName,
+            children: children,
+            type: type, id : simplified.id
+        };
+    }
+
 
     private async getMergedCategoryTreeData(): Promise<CategoryNode[]> {
 
-        function setCategoryType(nodes: CategoryNode[], value: CategoryType): CategoryNode[] {
-            nodes.forEach(node => {
-                node.type = value;
-                if (node.children) {
-                    setCategoryType(node.children, value);
-                }
-            });
-            return nodes;
-        }
-
         let allData: CategoryNode[] = [];
-        let expenses = await this.http.get<CategoryNode[]>(`${this.backendUrl}/category_tree_expenses`, {})
-            .pipe(map(nodes => {
-                return setCategoryType(nodes, "EXPENSES");
-            })).toPromise();
+        let expenses = await this.getSharedCategoryTreeExpensesObservable$().toPromise();
+        let revenue = await this.getSharedCategoryTreeRevenueObservable$().toPromise();
 
-        let revenue = await this.http.get<CategoryNode[]>(`${this.backendUrl}/category_tree_revenue`, {})
-            .pipe(map(revenueNodes => {
-                return setCategoryType(revenueNodes, "REVENUE");
-            })).toPromise();
         if (expenses == undefined || revenue == undefined) {
             throw new Error("expenses or revenue is undefined!");
         }
@@ -125,18 +156,6 @@ export class AppService {
 
 
     }
-
-
-    private setCategoryType(nodes: CategoryNode[], value: CategoryType): CategoryNode[] {
-        nodes.forEach(node => {
-            node.type = value;
-            if (node.children) {
-                this.setCategoryType(node.children, value);
-            }
-        });
-        return nodes;
-    }
-
 
     setBankAccount(bankAccount: BankAccount) {
         this.selectedBankAccount$.next(bankAccount);
@@ -163,38 +182,22 @@ export class AppService {
         this.revenueRecurrence$.next(selectedType)
     }
 
-    setTransactionType(transactionType: TransactionType) {
+    setTransactionType(transactionType: TransactionTypeEnum) {
         this.transactionType$.next(transactionType);
     }
 
-    setGrouping(grouping: Grouping) {
+    setGrouping(grouping: GroupingEnum) {
         this.grouping$.next(grouping);
     }
 
 
     public fetchBankAccountsForUser(): Observable<BankAccount[]> {
 
-        let user = this.authService.getUser();
-        if (!user || !user.userName) {
-            throw new Error("User is not defined!");
-        }
 
-        const params = {
-            userName: user.userName
+        this.apiBudgetAssistantBackendClientService.apiBankAccountsList().subscribe(result => {
+            this.currentBankAccounts$.next(result);
+        })
 
-        }
-        this.http.get<BankAccount[]>(`${this.backendUrl}/bank_accounts_for_user`, {params}).subscribe(result => {
-            let accounts = result.map(ba => {
-                let copy = {...ba};
-                if (!copy.alias) {
-                    copy.alias = null;
-                }
-                copy.editAlias = false;
-
-                return copy;
-            })
-            this.currentBankAccounts$.next(accounts)
-        });
 
         return this.currentBankAccountsObservable$;
 
@@ -202,29 +205,29 @@ export class AppService {
     }
 
     public countTransactionToManuallyReview(bankAccount: BankAccount): Observable<Number> {
-        const params = {
-            bankAccount: bankAccount.accountNumber
-        }
-        let result = this.http.get<Number>(
-            `${this.backendUrl}/count_transactions_to_manually_review`, {params})
-        return result;
+        return this.apiBudgetAssistantBackendClientService.apiTransactionsCountTransactionsToManuallyReviewRetrieve(
+            bankAccount.accountNumber).pipe(map(count => count.count));
 
 
     }
 
 
-    public getRevenueAndExpensesByYear(restQuery: RevenueExpensesQuery): Observable<Page<DistributionByTransactionTypeForPeriod>> {
+    public getRevenueAndExpensesByYear(restQuery: RevenueExpensesQuery): Observable<Page<ExpensesAndRevenueForPeriod>> {
 
-        const params = {
-            query: JSON.stringify(restQuery),
-            responseType: "json"
+        return this.apiBudgetAssistantBackendClientService.apiRevenueExpensesPerPeriodCreate(restQuery)
+            .pipe(map((response: RevenueAndExpensesPerPeriodResponse) => {
+                    let page: Page<ExpensesAndRevenueForPeriod> = {
+                        content: response.content,
+                        number: response.number,
+                        size: response.size,
+                        totalElements: response.totalElements
 
-        }
+                    }
+                    return page;
 
-        let result = this.http.get<Page<DistributionByTransactionTypeForPeriod>>(
-            `${this.backendUrl}/revenue_and_expenses_by_year`, {params})
-        return result;
 
+                }
+            ));
 
     }
 
@@ -243,38 +246,29 @@ export class AppService {
 
     }
 
-    public saveTransaction(transaction: Transaction) {
+    public saveTransaction(transaction: Transaction): void {
 
-        let copy: Transaction = {
+        this.apiBudgetAssistantBackendClientService.apiTransactionsSaveTransactionCreate(transaction).subscribe({
+            next: () => {
+            },
+            error: (error) => console.error('Error saving transaction:', error)
+        });
 
-            transaction_id: transaction.transaction_id,
-            bankAccount: null,
-            bookingDate: null,
-            statementNumber: null,
-            transactionNumber: null,
-            counterparty: null,
-            transaction: null,
-            currencyDate: null,
-            amount: null,
-            currency: null,
-            bic: null,
-            countryCode: null,
-            communications: null,
-            category: transaction.category,
-            isRecurring: transaction.isRecurring,
-            isAdvanceSharedAccount: transaction.isAdvanceSharedAccount,
-            manuallyAssignedCategory: null,
-            isManuallyReviewed: null
+
+
+    }
+
+    private camelToSnake(str: string): string {
+        return str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+    }
+
+    private toPage(transactionsPage: TransactionsPage): Page<Transaction> {
+        return {
+            content: transactionsPage.content,
+            number: transactionsPage.number,
+            size: transactionsPage.size,
+            totalElements: transactionsPage.totalElements
         };
-
-        let transactionJsonVar: string = JSON.stringify(copy)
-        const headers = new HttpHeaders().set('Content-Type', 'application/json; charset=utf-8');
-        const options = {headers: headers};
-
-        let result = this.http.post<string>(`${this.backendUrl}/save_transaction`, transactionJsonVar, options)
-        result.subscribe(); //fixme: pass result to caller
-
-
     }
 
     public pageTransactions(request: PageRequest<Transaction>,
@@ -289,57 +283,28 @@ export class AppService {
 
             tmpSortProperty = request.sort.property;
         }
-        let params;
-        if (transactionQuery == null) {
-            params = {
-                page: request.page,
-                size: request.size,
-                sortOrder: tmpSortOrder,
-                sortProperty: tmpSortProperty,
-                responseType: "json"
-            }
+        let pageTransactionsRequest: PageTransactionsRequest = {
+            page: request.page,
+            size: request.size,
+            sortOrder: tmpSortOrder as SortOrderEnum,
+            sortProperty: this.camelToSnake(tmpSortProperty) as SortPropertyEnum,
+            query: transactionQuery
+
         }
-        else {
-            params = {
-                page: request.page,
-                size: request.size,
-                sortOrder: tmpSortOrder,
-                sortProperty: tmpSortProperty,
-                query: JSON.stringify(transactionQuery),
-                responseType: "json"
-            }
-        }
+        return this.apiBudgetAssistantBackendClientService.apiTransactionsPageTransactionsCreate(
+            pageTransactionsRequest).pipe(map((result: TransactionsPage) => {
+
+            return this.toPage(result);
 
 
-        let orig = this.http.get<Page<string>>(`${this.backendUrl}/page_transactions`, {params})
+        }));
 
-        return orig.pipe(map(p => {
-
-            let newContent: Transaction[] = p.content.map(t => JSON.parse(t, (k, v) => {
-
-                if (k == "bookingDate" || k == "currencyDate") {
-                    return this.parseDate(v)
-                }
-                else {
-                    return v;
-                }
-
-            }))
-
-
-            let newPage: Page<Transaction> = {
-                content: newContent, number: p.number, size: p.size, totalElements: p.totalElements
-
-            }
-
-            return newPage;
-
-        }))
 
 
     }
 
-    public pageTransactionsInContext(request: PageRequest<Transaction>, query: TransactionsInContextQuery): Observable<Page<Transaction>>{
+    public pageTransactionsInContext(request: PageRequest<Transaction>,
+                                     query: TransactionInContextQuery): Observable<Page<Transaction>> {
         let tmpSortOrder = "asc";
         if (request.sort && request.sort.order) {
             tmpSortOrder = request.sort.order;
@@ -350,16 +315,19 @@ export class AppService {
 
             tmpSortProperty = request.sort.property;
         }
-        let params = {
+        let pageTransactionsInContextRequest: PageTransactionsInContextRequest = {
             page: request.page,
             size: request.size,
-            sortOrder: tmpSortOrder,
-            sortProperty: tmpSortProperty,
-            query: JSON.stringify(query),
-            responseType: "json"
-        }
+            sortOrder: tmpSortOrder as SortOrderEnum,
+            sortProperty: this.camelToSnake(tmpSortProperty) as SortPropertyEnum,
+            query: query
 
-        let orig = this.http.get<Page<string>>(`${this.backendUrl}/page_transactions_in_context`, {params});
+        }
+        return this.apiBudgetAssistantBackendClientService.apiTransactionsPageTransactionsInContextCreate(
+            pageTransactionsInContextRequest).pipe( map(result => {
+            return this.toPage(result);
+        }));
+/*        let orig = this.http.get<Page<string>>(`${this.backendUrl}/page_transactions_in_context`, {params});
         return orig.pipe(map(p => {
 
             let newContent: Transaction[] = p.content.map(t => JSON.parse(t, (k, v) => {
@@ -381,11 +349,11 @@ export class AppService {
 
             return newPage;
 
-        }))
+        }))*/
     }
 
     public pageTransactionsToManuallyReview(request: PageRequest<Transaction>,
-                                            transactionType: TransactionType): Observable<Page<Transaction>> {
+                                            transactionType: TransactionTypeEnum): Observable<Page<Transaction>> {
         let bankAccount = this.selectedBankAccount$.getValue();
         if (bankAccount == null) {
             throw new Error("Bank account is not defined!");
@@ -401,16 +369,25 @@ export class AppService {
             tmpSortProperty = request.sort.property;
         }
 
-        let params = {
+
+        let pageTransactionsToManuallyReviewRequest : PageTransactionsToManuallyReviewRequest = {
             page: request.page,
             size: request.size,
-            sortOrder: tmpSortOrder,
-            sortProperty: tmpSortProperty,
+            sortOrder: tmpSortOrder as SortOrderEnum,
+            sortProperty: this.camelToSnake(tmpSortProperty) as SortPropertyEnum,
             bankAccount: bankAccount.accountNumber,
-            transactionType: transactionType,
-            responseType: "json"
+            transactionType: transactionType
+
+
         }
-        let orig = this.http.get<Page<string>>(`${this.backendUrl}/page_transactions_to_manually_review`, {params});
+        return this.apiBudgetAssistantBackendClientService.apiTransactionsPageTransactionsToManuallyReviewCreate(pageTransactionsToManuallyReviewRequest).pipe(
+            map(result => {
+                return this.toPage(result);
+            })
+
+        );
+
+        /*
 
         return orig.pipe(map(p => {
 
@@ -434,21 +411,10 @@ export class AppService {
             return newPage;
 
         }))
-
-
-    }
-
-    public getRevenueExpensesPerPeriodAndCategory(restQuery: RevenueExpensesQuery): Observable<DistributionByCategoryForPeriodHandlerResult2> {
-
-
-        const params = {
-            query: JSON.stringify(restQuery), responseType: "json"
-
-        }
-        return this.http.get<DistributionByCategoryForPeriodHandlerResult2>(
-            `${this.backendUrl}/revenue_expenses_per_period_and_category`, {params})
+*/
 
     }
+
 
     public trackBudget(restQuery: RevenueExpensesQuery): Observable<BudgetTrackerResult> {
         const params = {

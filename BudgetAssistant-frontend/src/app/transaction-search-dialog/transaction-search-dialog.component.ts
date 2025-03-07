@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, Inject, OnInit, ViewChild } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import {AmountType, CategoryTreeDropdownComponent} from '../category-tree-dropdown/category-tree-dropdown.component';
-import { TransactionQuery, TransactionType } from '../model';
+import {CategoryTreeDropdownComponent} from '../category-tree-dropdown/category-tree-dropdown.component';
+import {AmountType, TransactionQuery, TransactionType} from '../model';
 import { PeriodSelectionComponent } from '../period-selection/period-selection.component';
 import { CounterpartyAccountNumberSelectionComponent } from '.././counterparty-account-number-selection/counterparty-account-number-selection.component';
 import { CounterpartyNameSelectionComponent } from '.././counterparty-name-selection/counterparty-name-selection.component';

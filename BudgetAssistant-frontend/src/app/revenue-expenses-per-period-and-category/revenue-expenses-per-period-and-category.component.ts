@@ -2,21 +2,25 @@ import {Component, Input, OnChanges, OnInit, SimpleChanges, ViewChild} from '@an
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 
 import {AppService} from '../app.service';
-import {
-  DistributionByCategoryForPeriodChartData,
-  DistributionByCategoryForPeriodTableData,
-  Period,
-  RevenueExpensesQuery, TransactionsInContextQuery,
-  TransactionType
-} from '../model';
+import {CategoryMap} from '../model';
 import {Criteria} from "../insights/insights.component";
 // @ts-ignore
 import autocolors from 'chartjs-plugin-autocolors';
 import {MatTable, MatTableDataSource} from "@angular/material/table";
-import {CategoryAndPeriod, ContextMenuService} from "./context-menu.service";
 import {MatDialog} from "@angular/material/dialog";
 import {TransactionsInContextDialogComponent} from "../transaction-dialog/transactions-in-context-dialog.component";
-
+import {
+  ApiBudgetAssistantBackendClientService,
+  DistributionByCategoryForPeriodChartData,
+  DistributionByCategoryForPeriodTableData,
+  ExpensesRecurrenceEnum,
+  Period,
+  RevenueAndExpensesPerPeriodAndCategory,
+  RevenueExpensesQuery,
+  RevenueRecurrenceEnum,
+  TransactionInContextQuery,
+  TransactionTypeEnum
+} from "@daanvdn/budget-assistant-client";
 
 @Component({
   selector: 'revenue-expenses-per-period-and-category',
@@ -49,9 +53,15 @@ export class RevenueExpensesPerPeriodAndCategoryComponent implements OnInit, OnC
       " standard deviations a data point is from the mean. Anomalies are marked in red"
 
 
-  currentTransactionInContextQuery!: TransactionsInContextQuery;
+  currentTransactionInContextQuery!: TransactionInContextQuery;
+  categoryMap!: CategoryMap;
 
-  constructor(private appService: AppService, public dialog: MatDialog) {
+  constructor(private appService: AppService, public dialog: MatDialog, private apiBudgetAssistantBackendClientService: ApiBudgetAssistantBackendClientService) {
+    this.appService.categoryMapObservable$.subscribe((categoryMap) => {
+      if (categoryMap) {
+        this.categoryMap = categoryMap;
+      }
+    });
 
 
 
@@ -103,21 +113,23 @@ export class RevenueExpensesPerPeriodAndCategoryComponent implements OnInit, OnC
     let query: RevenueExpensesQuery = {
       accountNumber: this.criteria.bankAccount.accountNumber,
       grouping: this.criteria.grouping,
-      transactionType: TransactionType.BOTH,
-      start: this.criteria.startDate,
-      end: this.criteria.endDate,
-      expensesRecurrence: 'both',
-      revenueRecurrence: 'both'
+      transactionType: TransactionTypeEnum.BOTH,
+      start: JSON.stringify(this.criteria.startDate),
+      end: JSON.stringify(this.criteria.endDate),
+      expensesRecurrence: ExpensesRecurrenceEnum.BOTH,
+      revenueRecurrence: RevenueRecurrenceEnum.BOTH
 
     };
 
 
-    this.appService.getRevenueExpensesPerPeriodAndCategory(query).subscribe(res => {
+    this.apiBudgetAssistantBackendClientService.apiAnalysisRevenueExpensesPerPeriodAndCategoryCreate(query)
+        .subscribe((res: RevenueAndExpensesPerPeriodAndCategory) => {
       this.expensesData = this.transformChartDataToPrimeNgFormat(res.chartDataExpenses);
       this.revenueData = this.transformChartDataToPrimeNgFormat(res.chartDataRevenue);
       let tableDataRevenue: DistributionByCategoryForPeriodTableData[] = res.tableDataRevenue;
       let tableDataExpenses: DistributionByCategoryForPeriodTableData[] = res.tableDataExpenses;
-      this.displayedColumns = res.tableColumnNames.filter(column => column !== 'categoryId');
+          let tableColumnNames = [...res.tableColumnNamesRevenue, ...res.tableColumnNamesExpenses];
+          this.displayedColumns = tableColumnNames.filter(column => column !== 'categoryId');
       this.displayedColumnsExceptFirst = this.displayedColumns.slice(1);
       this.firstColumn = this.displayedColumns[0];
       this.expensesDataSource = new MatTableDataSource<DistributionByCategoryForPeriodTableData>(tableDataExpenses);
@@ -137,8 +149,8 @@ export class RevenueExpensesPerPeriodAndCategoryComponent implements OnInit, OnC
     let allCategories: string[] = [];
     chartData.forEach(data => {
       data.entries.forEach(entry => {
-        if (!allCategories.includes(entry.category)) {
-          allCategories.push(entry.category);
+        if (!allCategories.includes(entry.category.qualifiedName as string)) {
+          allCategories.push(entry.category.qualifiedName as string);
         }
       });
     });
@@ -159,7 +171,7 @@ export class RevenueExpensesPerPeriodAndCategoryComponent implements OnInit, OnC
       // Initialize a map to store the amount for each category in this period
       let categoryAmountMap: { [key: string]: number } = {};
       data.entries.forEach(entry => {
-        categoryAmountMap[entry.category] = Math.abs(entry.amount);
+        categoryAmountMap[entry.category.qualifiedName as string] = Math.abs(entry.amount);
       });
 
       // Fill in the data for each dataset
@@ -176,7 +188,7 @@ export class RevenueExpensesPerPeriodAndCategoryComponent implements OnInit, OnC
   }
 
 
-  protected readonly TransactionType = TransactionType;
+  protected readonly TransactionType = TransactionTypeEnum;
 
 
   ngOnInit(): void {
@@ -192,7 +204,7 @@ export class RevenueExpensesPerPeriodAndCategoryComponent implements OnInit, OnC
   handleDataSelect($event: any) {
     console.log($event);
     let datasetIndex = $event.element.datasetIndex;
-    if (this.criteria.transactionType === TransactionType.EXPENSES) {
+    if (this.criteria.transactionType === TransactionTypeEnum.EXPENSES) {
       let label = this.expensesData.labels[datasetIndex];
       let data = this.expensesData.datasets[datasetIndex].data;
 
@@ -206,9 +218,9 @@ export class RevenueExpensesPerPeriodAndCategoryComponent implements OnInit, OnC
 
     this.currentTransactionInContextQuery = {
       period: period,
-      category: category,
+      categoryId: category,
       bankAccount: this.criteria.bankAccount.accountNumber,
-      transactionType : this.criteria.transactionType as TransactionType
+      transactionType: this.criteria.transactionType as TransactionTypeEnum
     }
 
 
@@ -227,6 +239,7 @@ export class RevenueExpensesPerPeriodAndCategoryComponent implements OnInit, OnC
   }
 
 
+  protected readonly TransactionTypeEnum = TransactionTypeEnum;
 }
 
 

@@ -1,7 +1,8 @@
 import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {faXmark} from "@fortawesome/free-solid-svg-icons";
-import {anyIsUndefinedOrEmpty, BankAccount, Grouping, TransactionType} from "../model";
+import {anyIsUndefinedOrEmpty, Grouping, TransactionType} from "../model";
 import {Criteria} from "../insights/insights.component";
+import {BankAccount} from "@daanvdn/budget-assistant-client";
 
 
 @Component({

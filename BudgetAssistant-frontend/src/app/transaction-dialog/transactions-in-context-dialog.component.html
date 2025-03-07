@@ -1,4 +1,5 @@
-<div mat-dialog-title style="text-align: center;">Transactions for category <span style="font-style: italic">{{ query.category }} and period {{query.period}}</span> </div>
+<div mat-dialog-title style="text-align: center;">Transactions for category <span style="font-style: italic">{{ query.categoryId }} and period {{query.period}}</span> </div>
+<!--fixme: we need the actual category and not the categoryId-->
 <div mat-dialog-content style="background-color:white; overflow-y: scroll; height: 100%; width: 100%; display: flex; flex-direction: column; align-items: center;">
     <div>
         <table mat-table [dataSource]="dataSource" matSort (matSortChange)="sortBy($event)" class="mat-z8"

@@ -46,7 +46,7 @@ export class RegisterComponent implements OnInit {
 
       firstName: ['', [Validators.required, this.trimAndNotEmptyValidator()]],
       lastName: ['', [Validators.required, this.trimAndNotEmptyValidator()]],
-      userName: ['', [Validators.required, this.trimAndNotEmptyValidator()]],
+      email: ['', [Validators.required, this.trimAndNotEmptyValidator()]],
       password: ['', [Validators.required, this.trimAndNotEmptyValidator()]]
     });
   }
@@ -81,7 +81,7 @@ export class RegisterComponent implements OnInit {
       this.authService.register(user).subscribe(response => {
         if (response.response == Response.FAILED) {
 
-          this.errorDialogService.openErrorDialog("Registreren is mislukt!", this.getFailureErrorMessage(response))
+          this.errorDialogService.openErrorDialog("Registration failed!", this.getFailureErrorMessage(response))
            }
       });
 
@@ -92,12 +92,12 @@ export class RegisterComponent implements OnInit {
 
   getFailureErrorMessage(response: RegisterResponse): string {
     if (response.failureReason == RegisterFailureReason.EMPTY_FIELDS) {
-      return "Sommige velden zijn leeg! Alle velden moeten ingevuld zijn!"
+      return "Some fields are empty! All fields need to be filled out!"
 
     } else if (response.failureReason == RegisterFailureReason.USER_ALREADY_EXISTS) {
-      return `Gebruiker met naam ${response.user.userName} bestaat reeds! Kies een andere naam!`
+      return `User with email ${response.user.userName} already exists! Please choose another email!`
     } else if (response.failureReason == RegisterFailureReason.SERVER_ERROR) {
-      return "Er is een probleem met de server!"
+      return "There is a server error!"
     }
 
     throw new Error();

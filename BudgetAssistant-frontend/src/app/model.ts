@@ -280,15 +280,17 @@ export interface User {
     lastName: string | undefined
     userName: string | undefined;
     password: string | undefined;
+    email: string | undefined;
     bankAccounts: string[] | undefined;
 }
 
 export const DUMMY_USER: User = {
     firstName: undefined,
     lastName: undefined,
-    userName: undefined,
+    email: undefined,
     password: undefined,
-    bankAccounts: undefined
+    bankAccounts: undefined,
+    userName: undefined
 }
 
 export enum Type {
@@ -329,3 +331,97 @@ export interface BudgetTrackerResult {
 
 }
 
+
+export type CategoryType = "EXPENSES" | "REVENUE";
+
+export interface CategoryNode {
+
+    children: CategoryNode[];
+    name: string;
+    qualifiedName: string;
+    type: CategoryType | undefined;
+    id: number;
+
+
+}
+
+export function inferAmountType(amount: Number) {
+    if (amount >= 0) {
+        return AmountType.REVENUE;
+    }
+    else if (amount < 0) {
+        return AmountType.EXPENSES;
+    }
+    else {
+        throw new Error("Unknown amount type " + amount);
+    }
+}
+
+export enum AmountType {
+    REVENUE = "REVENUE",
+    EXPENSES = "EXPENSES",
+    BOTH = "BOTH",
+}
+
+export class FlatCategoryNode {
+    level!: number;
+    expandable!: boolean;
+    name!: string;
+    qualifiedName!: string;
+    type: CategoryType | undefined;
+}
+
+const DUMMY_CATEGORY: CategoryNode = {
+    children: [],
+    name: "DUMMY CATEGORY",
+    qualifiedName: "DUMMY CATEGORY",
+    type: undefined,
+    id: -1
+}
+export const NO_CATEGORY: CategoryNode = {
+    children: [],
+    name: "NO CATEGORY",
+    qualifiedName: "NO CATEGORY",
+    type: undefined ,
+    id: -1
+}
+
+export class CategoryMap {
+
+    private idToNameMap: Map<number, string> = new Map<number, string>();
+    private qualifiedNameToIdMap: Map<string, number> = new Map<string, number>();
+    private qualifiedNameToNameMap: Map<string, string> = new Map<string, string>();
+
+    constructor(nodes: CategoryNode[]) {
+        for (let node of nodes) {
+            this.populateMaps(node);
+        }
+    }
+
+    private populateMaps(node: CategoryNode) {
+        this.idToNameMap.set(node.id, node.name);
+        this.qualifiedNameToIdMap.set(node.qualifiedName, node.id);
+        this.qualifiedNameToNameMap.set(node.qualifiedName, node.name);
+        for (let child of node.children) {
+            this.populateMaps(child);
+        }
+    }
+
+    public getName(id: number): string {
+        let name = this.idToNameMap.get(id);
+        if (name === undefined) {
+            throw new Error("No name found for id " + id);
+        }
+        return name;
+    }
+
+    public getId(qualifiedName: string): number {
+        let id = this.qualifiedNameToIdMap.get(qualifiedName);
+        if (id === undefined) {
+            throw new Error("No id found for qualified name " + qualifiedName);
+        }
+        return id;
+    }
+
+
+}

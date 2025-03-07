@@ -1,19 +1,21 @@
 import {Component, Input, OnChanges, OnInit, SimpleChanges} from '@angular/core';
-import {BankAccount, Dataset, RevenueExpensesQuery, TransactionType} from "../model";
+import {Dataset, TransactionType} from "../model";
 import {AppService} from "../app.service";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import {Observable} from "rxjs";
 import {MatSelectionListChange} from "@angular/material/list";
 // @ts-ignore
 import autocolors from 'chartjs-plugin-autocolors';
-
+import {ExpensesRecurrenceEnum, RevenueExpensesQuery, TransactionTypeEnum} from "@daanvdn/budget-assistant-client";
 
 import {Criteria} from "../insights/insights.component";
+import {BankAccount} from "@daanvdn/budget-assistant-client";
+import {RevenueRecurrenceEnum} from "@daanvdn/budget-assistant-client";
 
 
 interface Category {
     name: string;
-    transactionType: TransactionType;
+    transactionType: TransactionTypeEnum;
 
 }
 @Component({
@@ -51,14 +53,14 @@ export class CategoryDetailsComponent implements OnInit, OnChanges {
 
 
     private initCategoryLists(bankAccount: BankAccount) {
-        this.getCategories(bankAccount, TransactionType.EXPENSES).subscribe((data) => {
+        this.getCategories(bankAccount, TransactionTypeEnum.EXPENSES).subscribe((data) => {
             this.expensesCategories = data.map((category: string) => {
-                return {name: category, transactionType: TransactionType.EXPENSES};
+                return {name: category, transactionType: TransactionTypeEnum.EXPENSES};
             });
         });
-        this.getCategories(bankAccount, TransactionType.REVENUE).subscribe((data) => {
+        this.getCategories(bankAccount, TransactionTypeEnum.REVENUE).subscribe((data) => {
             this.revenueCategories = data.map((category: string) => {
-                return {name: category, transactionType: TransactionType.REVENUE};
+                return {name: category, transactionType: TransactionTypeEnum.REVENUE};
             });
         });
     }
@@ -125,10 +127,10 @@ export class CategoryDetailsComponent implements OnInit, OnChanges {
             accountNumber: this.criteria.bankAccount.accountNumber,
             grouping: this.criteria.grouping,
             transactionType: this.criteria.transactionType,
-            start: this.criteria.startDate,
-            end: this.criteria.endDate,
-            expensesRecurrence: 'both',
-            revenueRecurrence: 'both'
+            start: JSON.stringify(this.criteria.startDate),
+            end: JSON.stringify(this.criteria.endDate),
+            expensesRecurrence: ExpensesRecurrenceEnum.BOTH,
+            revenueRecurrence: RevenueRecurrenceEnum.BOTH
 
         };
 
@@ -146,9 +148,9 @@ export class CategoryDetailsComponent implements OnInit, OnChanges {
     }
 
 
-    private getCategories(bankAccount: BankAccount, transactionType: TransactionType):
+    private getCategories(bankAccount: BankAccount, transactionType: TransactionTypeEnum):
         Observable<string[]> {
-        if (transactionType === TransactionType.BOTH) {
+        if (transactionType === TransactionTypeEnum.BOTH) {
             throw new Error("TransactionType.BOTH is not supported");
         }
 

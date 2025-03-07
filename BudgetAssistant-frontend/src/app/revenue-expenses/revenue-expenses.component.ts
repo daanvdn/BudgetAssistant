@@ -3,12 +3,13 @@ import {MatPaginator} from "@angular/material/paginator";
 import {MatSort} from "@angular/material/sort";
 import {MatTable, MatTableDataSource} from "@angular/material/table";
 import ChartDataLabels from 'chartjs-plugin-datalabels';
-import {DistributionByTransactionTypeForPeriod, RevenueExpensesQuery, TransactionType} from '../model';
 import {parse} from 'date-fns';
 import {isNaN} from "lodash";
 import {AppService} from "../app.service";
 import {Criteria} from "../insights/insights.component";
-
+import {ExpensesRecurrenceEnum, RevenueExpensesQuery, TransactionTypeEnum} from "@daanvdn/budget-assistant-client";
+import {RevenueRecurrenceEnum} from "@daanvdn/budget-assistant-client/model/revenue-recurrence-enum";
+import {ExpensesAndRevenueForPeriod} from "@daanvdn/budget-assistant-client/model/expenses-and-revenue-for-period";
 
 @Component({
   selector: 'expenses-revenue',
@@ -22,8 +23,8 @@ export class ExpensesRevenueComponent  implements OnInit, OnChanges {
   //table stuff
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
-  @ViewChild(MatTable) table!: MatTable<DistributionByTransactionTypeForPeriod>;
-  dataSource!: MatTableDataSource<DistributionByTransactionTypeForPeriod>;
+  @ViewChild(MatTable) table!: MatTable<ExpensesAndRevenueForPeriod>;
+  dataSource!: MatTableDataSource<ExpensesAndRevenueForPeriod>;
   displayedColumns = ["period", "revenue", "expenses", "balance"];
 
   tableIsHidden: boolean = true;
@@ -53,17 +54,17 @@ export class ExpensesRevenueComponent  implements OnInit, OnChanges {
     let query: RevenueExpensesQuery = {
       accountNumber: this.criteria.bankAccount.accountNumber,
       grouping: this.criteria.grouping,
-      transactionType: TransactionType.BOTH,
-      start: this.criteria.startDate,
-      end: this.criteria.endDate,
-      expensesRecurrence: 'both',
-      revenueRecurrence: 'both'
+      transactionType: TransactionTypeEnum.BOTH,
+      start: JSON.stringify(this.criteria.startDate),
+      end: JSON.stringify(this.criteria.endDate),
+      expensesRecurrence: ExpensesRecurrenceEnum.BOTH,
+      revenueRecurrence: RevenueRecurrenceEnum.BOTH
 
     };
 
 
     this.appService.getRevenueAndExpensesByYear(query).subscribe(result => {
-      let content: DistributionByTransactionTypeForPeriod[] = result.content;
+      let content: Array<ExpensesAndRevenueForPeriod> = result.content;
       this.dataSource = new MatTableDataSource(content);
       this.dataSource.sort = this.sort;
       this.dataSource.paginator = this.paginator;
@@ -75,7 +76,7 @@ export class ExpensesRevenueComponent  implements OnInit, OnChanges {
 
   }
 
-  handleChart(content: DistributionByTransactionTypeForPeriod[]) {
+  handleChart(content: Array<ExpensesAndRevenueForPeriod>) {
 
     let chartData: any[] = []
 

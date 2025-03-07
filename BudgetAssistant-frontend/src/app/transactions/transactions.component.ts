@@ -8,16 +8,17 @@ import {MatTable} from '@angular/material/table';
 import {PaginationDataSource} from 'ngx-pagination-data-source';
 import {AppService} from '../app.service';
 import {
-  CompositeTransactionsFileUploadResponse, EMPTY_TRANSACTION_QUERY, FileWrapper, Transaction, TransactionQuery
+  AmountType,
+  CompositeTransactionsFileUploadResponse, EMPTY_TRANSACTION_QUERY, FileWrapper, inferAmountType
 } from '../model';
 import {BankAccountSelectionComponent} from '../bank-account-selection/bank-account-selection.component';
 import {TransactionSearchDialogComponent} from '../transaction-search-dialog/transaction-search-dialog.component';
 import {AuthService} from "../auth/auth.service";
-import {AmountType, inferAmountType} from "../category-tree-dropdown/category-tree-dropdown.component";
 import {HttpEventType, HttpResponse} from "@angular/common/http";
 import {ErrorDialogService} from "../error-dialog/error-dialog.service";
 import {faTag} from "@fortawesome/free-solid-svg-icons";
 import {Router} from "@angular/router";
+import {Transaction, TransactionQuery, TransactionTypeEnum} from '@daanvdn/budget-assistant-client';
 
 
 enum ViewType {
@@ -128,14 +129,12 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
         }
 
         let transactionQuery: TransactionQuery = {
-          revenue: undefined,
-          expenses: undefined,
+          transactionType: TransactionTypeEnum.BOTH,
           counterpartyName: undefined,
           minAmount: undefined,
           maxAmount: undefined,
           accountNumber: undefined,
           category: undefined,
-          freeText: undefined,
           counterpartyAccountNumber: undefined,
           startDate: undefined,
           endDate: undefined,
@@ -241,15 +240,13 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
     if (this.selectedAccount === undefined || this.selectedAccount === this.appService.DUMMY_BANK_ACCOUNT) {
       return;
     }
-    this.transactionQuery = {
-      revenue: undefined,
-      expenses: undefined,
+    this.transactionQuery  = {
+      transactionType: TransactionTypeEnum.BOTH,
       counterpartyName: undefined,
       minAmount: undefined,
       maxAmount: undefined,
       accountNumber: this.selectedAccount,
       category: undefined,
-      freeText: undefined,
       counterpartyAccountNumber: undefined,
       startDate: undefined,
       endDate: undefined,
@@ -278,10 +275,10 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
 
 
 
-  private initDataSource(rekening:string | undefined): PaginationDataSource<Transaction, TransactionQuery> {
-    let query = EMPTY_TRANSACTION_QUERY;
-    if(rekening !== undefined){
-      query.accountNumber = rekening;
+  private initDataSource(account:string | undefined): PaginationDataSource<Transaction, TransactionQuery> {
+    let query = {} as TransactionQuery;
+    if(account !== undefined){
+      query.accountNumber = account;
 
     }
     return new PaginationDataSource<Transaction, TransactionQuery>(
@@ -299,21 +296,21 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
   }
 
   setIsRecurring(transaction: Transaction, event: MatRadioChange) {
-    let value: Boolean = event.value;
+    let value: boolean = event.value;
     transaction.isRecurring = value;
     this.saveTransaction(transaction);
   }
 
 
   setIsAdvanceSharedAccount(transaction: Transaction, event: MatRadioChange) {
-    let value: Boolean = event.value;
+    let value: boolean = event.value;
     transaction.isAdvanceSharedAccount = value;
     this.saveTransaction(transaction);
   }
 
 
   setCategory(transaction: Transaction, selectedCategoryQualifiedNameStr: string) {
-    transaction.category = selectedCategoryQualifiedNameStr;
+    transaction.category = {qualifiedName:selectedCategoryQualifiedNameStr};
     this.saveTransaction(transaction);
   }
 

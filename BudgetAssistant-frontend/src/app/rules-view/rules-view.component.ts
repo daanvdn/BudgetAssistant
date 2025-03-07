@@ -1,12 +1,11 @@
 import {NestedTreeControl} from '@angular/cdk/tree';
 import {Component, Inject, OnInit} from '@angular/core';
 import {AppService} from "../app.service";
-import {CategoryNode} from "../category-tree-dropdown/category-tree-dropdown.component";
 import {MatTreeNestedDataSource} from "@angular/material/tree";
 import {faNetworkWired, faPlay} from "@fortawesome/free-solid-svg-icons";
 import {MatButtonToggleChange} from "@angular/material/button-toggle";
 import {MAT_DIALOG_DATA, MatDialog, MatDialogRef} from "@angular/material/dialog";
-import {ActiveView, TransactionsCategorizationResponse} from "../model";
+import {ActiveView, CategoryNode, TransactionsCategorizationResponse} from "../model";
 import {ErrorDialogService} from "../error-dialog/error-dialog.service";
 import {AuthService} from "../auth/auth.service";
 import {faSearch} from "@fortawesome/free-solid-svg-icons/faSearch";

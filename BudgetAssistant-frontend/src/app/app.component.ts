@@ -10,7 +10,7 @@ import {AfterViewInit, Component} from '@angular/core';
 })
 export class AppComponent implements AfterViewInit {
 
-  title:string = 'budget-assistent-analysis-ui';
+  title:string = 'BudgetAssistant';
 
 
 

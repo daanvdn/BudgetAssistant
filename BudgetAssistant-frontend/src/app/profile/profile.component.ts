@@ -1,10 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import {AuthService} from "../auth/auth.service";
-import {BankAccount, User} from "../model";
+import { User} from "../model";
 import {FormArray, FormBuilder, FormControl, FormGroup} from "@angular/forms";
 import {AppService} from "../app.service";
 import {MatTableDataSource} from "@angular/material/table";
 import {faSearch} from "@fortawesome/free-solid-svg-icons/faSearch";
+import {BankAccount} from "@daanvdn/budget-assistant-client";
 
 @Component({
   selector: 'app-profile',
@@ -46,7 +47,7 @@ export class ProfileComponent implements OnInit {
 
   saveAlias(bankAccount: BankAccount): void {
 
-    bankAccount.editAlias = false;
+
     this.appService.saveBankAccountAlias(bankAccount).subscribe(() => {});
   }
 

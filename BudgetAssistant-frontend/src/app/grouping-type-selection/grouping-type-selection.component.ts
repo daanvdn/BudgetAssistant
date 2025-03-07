@@ -1,7 +1,7 @@
 import {Component, EventEmitter, OnInit, Output} from '@angular/core';
 import {FormBuilder, FormGroup} from '@angular/forms';
 import {AppService} from '../app.service';
-import {Grouping} from '../model';
+import {GroupingEnum} from "@daanvdn/budget-assistant-client";
 
 @Component({
   selector: 'grouping-type-selection',
@@ -12,21 +12,21 @@ export class GroupingTypeSelectionComponent implements OnInit {
 
   groupingTypesFormFieldGroup: FormGroup;
 
-  groupingTypes: Map<string, Grouping> = new Map<string, Grouping>();
+  groupingTypes: Map<string, GroupingEnum> = new Map<string, GroupingEnum>();
   groupingTypeStringValues: string[];
-  selectedGrouping!: Grouping;
-  @Output() change: EventEmitter<Grouping> = new EventEmitter<Grouping>(true);
+  selectedGrouping!: GroupingEnum;
+  @Output() change: EventEmitter<GroupingEnum> = new EventEmitter<GroupingEnum>(true);
 
 
 
   constructor(formBuilder: FormBuilder, private appService: AppService) {
 
     this.groupingTypesFormFieldGroup = formBuilder.group({ queryForm: "" });
-    this.groupingTypes.set("month", Grouping.MONTH)
-    this.groupingTypes.set("year", Grouping.YEAR)
-    this.groupingTypes.set("quarter", Grouping.QUARTER)
+    this.groupingTypes.set("month", GroupingEnum.month)
+    this.groupingTypes.set("year", GroupingEnum.year)
+    this.groupingTypes.set("quarter", GroupingEnum.quarter)
     this.groupingTypeStringValues = Array.from(this.groupingTypes.keys());
-    this.selectedGrouping = Grouping.MONTH;
+    this.selectedGrouping = GroupingEnum.month;
 
   }
 
@@ -42,9 +42,9 @@ export class GroupingTypeSelectionComponent implements OnInit {
 
   onGroupingChange(groupingStr: string) {
 
-    var groupingType: Grouping | undefined = this.groupingTypes.get(groupingStr)
+    var groupingType: GroupingEnum | undefined = this.groupingTypes.get(groupingStr)
     if (groupingType == undefined) {
-      this.selectedGrouping = Grouping.MONTH;
+      this.selectedGrouping = GroupingEnum.month;
     } else {
       this.selectedGrouping = groupingType;
     }

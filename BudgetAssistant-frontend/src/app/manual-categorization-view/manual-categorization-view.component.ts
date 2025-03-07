@@ -2,12 +2,12 @@ import {Component, ElementRef, OnInit, ViewChild} from '@angular/core';
 import {MatPaginator} from "@angular/material/paginator";
 import {MatSort} from "@angular/material/sort";
 import {MatTable} from "@angular/material/table";
-import {BankAccount, Transaction, TransactionType} from "../model";
 import {PaginationDataSource, SimpleDataSource} from "ngx-pagination-data-source";
 import {AppService} from "../app.service";
-import {AmountType, inferAmountType} from "../category-tree-dropdown/category-tree-dropdown.component";
 import {BehaviorSubject, map, Observable} from "rxjs";
 import {MatButtonToggleChange} from "@angular/material/button-toggle";
+import {BankAccount, Transaction, TransactionTypeEnum} from "@daanvdn/budget-assistant-client";
+import {AmountType, inferAmountType} from "../model";
 
 
 interface GroupBy {
@@ -30,7 +30,7 @@ class GroupByCounterpartyDataSource implements SimpleDataSource<Transaction | Gr
       let mapByCounterpartyName = new Map<string, Transaction[]>();
 
       for (const transaction of data) {
-        let name = transaction.counterparty?.name;
+        let name = transaction.counterparty;
         if (!name) {
           name = "";
         }
@@ -87,7 +87,7 @@ export class ManualCategorizationViewComponent implements OnInit {
     "amount",
     "category"
   ];
-  private activeView: BehaviorSubject<TransactionType> = new BehaviorSubject<TransactionType>(TransactionType.EXPENSES);
+  private activeView: BehaviorSubject<TransactionTypeEnum> = new BehaviorSubject<TransactionTypeEnum>(TransactionTypeEnum.EXPENSES);
   private activeViewObservable = this.activeView.asObservable();
   constructor(private appService: AppService) {
     appService.selectedBankAccountObservable$.subscribe(account => {
@@ -106,12 +106,12 @@ export class ManualCategorizationViewComponent implements OnInit {
   ngOnInit( ): void {
   }
 
-  private initDataSource(account: BankAccount, transactionType: TransactionType): GroupByCounterpartyDataSource {
-    if (transactionType == TransactionType.BOTH){
+  private initDataSource(account: BankAccount, transactionType: TransactionTypeEnum): GroupByCounterpartyDataSource {
+    if (transactionType == TransactionTypeEnum.BOTH){
       throw new Error("TransactionType.BOTH not supported")
     }
 
-    let isExpense = transactionType === TransactionType.EXPENSES;
+    let isExpense = transactionType === TransactionTypeEnum.EXPENSES;
 
     let paginationDataSource = new PaginationDataSource<Transaction, BankAccount>(
       (request, query) => {
@@ -132,13 +132,13 @@ export class ManualCategorizationViewComponent implements OnInit {
     //check if row is an interface that has key  'isGroupBy'
     if ("isGroupBy" in row) {
       (row as GroupBy).transactions.forEach(transaction => {
-        transaction.category = selectedCategoryQualifiedNameStr;
+        transaction.category = {qualifiedName:selectedCategoryQualifiedNameStr};
         this.saveTransaction(transaction);
       })
       return;
     } else {
       let transaction = row as Transaction;
-      transaction.category = selectedCategoryQualifiedNameStr;
+      transaction.category = {qualifiedName:selectedCategoryQualifiedNameStr};
       this.saveTransaction(transaction);
     }
 
@@ -165,9 +165,9 @@ export class ManualCategorizationViewComponent implements OnInit {
     this.tableElement.nativeElement.scrollIntoView({behavior: 'smooth', block: 'start'});
     const value = $event.value;
     if (value === "expenses") {
-      this.activeView.next(TransactionType.EXPENSES);
+      this.activeView.next(TransactionTypeEnum.EXPENSES);
     } else if (value === "revenue") {
-      this.activeView.next(TransactionType.REVENUE);
+      this.activeView.next(TransactionTypeEnum.REVENUE);
     } else {
       throw new Error("Unknown value " + value);
     }

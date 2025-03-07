@@ -1,5 +1,6 @@
 import {FormGroup} from "@angular/forms";
-import {CategoryType} from "../category-tree-dropdown/category-tree-dropdown.component";
+
+import {CategoryType} from "../model";
 
 
 export type FieldType = 'string' | 'number' | 'categorical' | 'null';

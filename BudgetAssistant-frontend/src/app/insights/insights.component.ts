@@ -1,6 +1,7 @@
 import {Component, OnInit} from '@angular/core';
 import {faSearch} from "@fortawesome/free-solid-svg-icons/faSearch";
-import {BankAccount, Grouping, TransactionType} from "../model";
+import {Grouping, TransactionType} from "../model";
+import {BankAccount, TransactionTypeEnum} from "@daanvdn/budget-assistant-client";
 
 
 export class Criteria {
@@ -8,10 +9,10 @@ export class Criteria {
     grouping: Grouping;
     startDate: Date;
     endDate: Date;
-    transactionType: TransactionType | undefined;
+    transactionType: TransactionTypeEnum | undefined;
 
     constructor(bankAccount: BankAccount, grouping: Grouping, startDate: Date, endDate: Date,
-                transactionType: TransactionType | undefined) {
+                transactionType: TransactionTypeEnum | undefined) {
         this.bankAccount = bankAccount;
         this.grouping = grouping;
         this.startDate = startDate;

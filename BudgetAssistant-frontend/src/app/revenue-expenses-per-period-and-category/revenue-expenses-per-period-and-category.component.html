@@ -14,7 +14,7 @@
     <div style=" padding-top: 10px; width: 100%; overflow-x: auto">
         <h2 [matTooltip]="anomaliesToolTip"  matTooltipPosition="above" style="text-align: center; color: rgba(0, 0, 0, 0.50)">Anomalies</h2>
         <table style="width: 99%" mat-table
-               [dataSource]="this.criteria.transactionType == TransactionType.EXPENSES ? expensesDataSource : revenueDataSource"
+               [dataSource]="this.criteria.transactionType == TransactionTypeEnum.EXPENSES ? expensesDataSource : revenueDataSource"
                class="mat-z8 full-width-table wrapper">
             <!-- Category Column -->
 

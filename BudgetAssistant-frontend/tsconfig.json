@@ -23,7 +23,10 @@
     "lib": [
       "es2020",
       "dom"
-    ]
+    ],
+    "paths": {
+      "@daanvdn/budget-assistant-client": ["node_modules/@daanvdn/budget-assistant-client"]
+    }
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,

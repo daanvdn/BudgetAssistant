@@ -2,8 +2,7 @@ import {Component, EventEmitter, OnDestroy, OnInit, Output} from '@angular/core'
 import {AppService} from "../app.service";
 import {Subject, takeUntil} from "rxjs";
 import {FormBuilder, FormGroup, FormArray} from "@angular/forms";
-import {BankAccount} from "../model";
-import {BankAccountSelectionComponent} from "../bank-account-selection/bank-account-selection.component";
+import { BankAccount } from '@daanvdn/budget-assistant-client';
 
 @Component({
   selector: 'bank-account-check-boxes',

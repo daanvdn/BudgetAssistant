@@ -1,9 +1,9 @@
 import {AfterViewInit, Component, Inject, OnInit} from '@angular/core';
 import {PaginationDataSource} from "ngx-pagination-data-source";
-import {Transaction, TransactionQuery, TransactionsInContextQuery} from "../model";
 import {AppService} from "../app.service";
-import {AmountType, inferAmountType} from "../category-tree-dropdown/category-tree-dropdown.component";
 import {MAT_DIALOG_DATA, MatDialogRef} from "@angular/material/dialog";
+import {Transaction, TransactionQuery, TransactionInContextQuery} from "@daanvdn/budget-assistant-client";
+import {AmountType, inferAmountType} from "../model";
 
 @Component({
     selector: 'transactions-in-context-dialog',
@@ -11,7 +11,7 @@ import {MAT_DIALOG_DATA, MatDialogRef} from "@angular/material/dialog";
     styleUrls: ['./transactions-in-context-dialog.component.scss']
 })
 export class TransactionsInContextDialogComponent implements OnInit, AfterViewInit {
-    dataSource!: PaginationDataSource<Transaction, TransactionQuery>;
+    dataSource!: PaginationDataSource<Transaction, TransactionInContextQuery>;
     displayedColumns = [
         "bookingDate",
         "counterparty",
@@ -22,7 +22,7 @@ export class TransactionsInContextDialogComponent implements OnInit, AfterViewIn
     private currentSort?: any;
 
     constructor(private appService: AppService, public dialogRef: MatDialogRef<TransactionsInContextDialogComponent>,
-                @Inject(MAT_DIALOG_DATA) public query: TransactionsInContextQuery) {
+                @Inject(MAT_DIALOG_DATA) public query: TransactionInContextQuery) {
     }
 
     ngOnInit(): void {
@@ -40,7 +40,7 @@ export class TransactionsInContextDialogComponent implements OnInit, AfterViewIn
         this.dataSource.sortBy(this.currentSort);
     }
 
-    doQuery(transactionQuery: TransactionsInContextQuery | undefined): void {
+    doQuery(transactionQuery: TransactionInContextQuery | undefined): void {
         if (transactionQuery === undefined) {
             return;
         }
@@ -55,7 +55,7 @@ export class TransactionsInContextDialogComponent implements OnInit, AfterViewIn
             this.currentSort = newSort;
         }
 
-        this.dataSource = new PaginationDataSource<Transaction, TransactionsInContextQuery>(
+        this.dataSource = new PaginationDataSource<Transaction, TransactionInContextQuery>(
             (request, query) => {
                 request.size = 50;
                 return this.appService.pageTransactionsInContext(request, query);
@@ -67,7 +67,7 @@ export class TransactionsInContextDialogComponent implements OnInit, AfterViewIn
     }
 
     setCategory(transaction: Transaction, selectedCategoryQualifiedNameStr: string) {
-        transaction.category = selectedCategoryQualifiedNameStr;
+        transaction.category = {qualifiedName:selectedCategoryQualifiedNameStr};
         this.saveTransaction(transaction);
     }
 

@@ -4,7 +4,7 @@ import {AppRoutingModule} from './app-routing.module';
 import {AppComponent} from './app.component';
 import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
-import {HttpClientModule} from '@angular/common/http';
+import {HTTP_INTERCEPTORS, HttpClientModule} from '@angular/common/http';
 import {A11yModule} from '@angular/cdk/a11y';
 import {CdkAccordionModule} from '@angular/cdk/accordion';
 import {ClipboardModule} from '@angular/cdk/clipboard';
@@ -112,7 +112,17 @@ import {ExpensesRevenueToggleComponent} from './expenses-revenue-toggle/expenses
 import {CriteriaToolbarComponent} from './criteria-toolbar/criteria-toolbar.component';
 import {BudgetTrackingComponent} from './budget-tracking/budget-tracking.component';
 import {TreeTableModule} from "primeng/treetable";
-import { TransactionsInContextDialogComponent } from './transaction-dialog/transactions-in-context-dialog.component';
+import {TransactionsInContextDialogComponent} from './transaction-dialog/transactions-in-context-dialog.component';
+import {
+
+    BASE_PATH,
+    Configuration,
+
+    ApiModule, ApiBudgetAssistantBackendClientService
+} from '@daanvdn/budget-assistant-client';
+
+import {AuthInterceptor} from "./auth.interceptor";
+import {environment} from "../environments/environment";
 
 
 @NgModule({
@@ -204,7 +214,12 @@ import { TransactionsInContextDialogComponent } from './transaction-dialog/trans
         MatExpansionModule,
         MatBadgeModule,
         ChartModule,
-        TreeTableModule
+        TreeTableModule,
+        ApiModule.forRoot(() => {
+            return new Configuration({
+                basePath: environment.API_BASE_PATH,
+            });
+        }),
 
 
     ],
@@ -266,9 +281,17 @@ import { TransactionsInContextDialogComponent } from './transaction-dialog/trans
     MatTabsModule,
 
   ],
-  providers: [AuthService, AuthGuard,
-    // { provide: HTTP_INTERCEPTORS, useClass: JsonDateInterceptor, multi: true }
-    DatePipe
+  providers: [
+      ApiBudgetAssistantBackendClientService,
+      AuthService, AuthGuard,
+    DatePipe,
+      { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
+      {
+          provide: Configuration,
+          useFactory: () => new Configuration(),
+      },
+      { provide: BASE_PATH, useValue: environment.API_BASE_PATH }
+
 
   ],
   bootstrap: [AppComponent]

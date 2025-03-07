@@ -1,11 +1,12 @@
 import {Component, OnInit} from '@angular/core';
 import {FormBuilder, FormControl, FormGroup} from '@angular/forms';
 import {AppService} from '../app.service';
-import {BankAccount, Grouping, StartEndDateShortcut, TransactionType} from '../model';
+import {StartEndDateShortcut} from '../model';
 
 import {DateAdapter, MAT_DATE_FORMATS, NativeDateAdapter} from '@angular/material/core';
 import {formatDate} from '@angular/common';
 import {Subject, takeUntil} from "rxjs";
+import {BankAccount, GroupingEnum, TransactionTypeEnum} from "@daanvdn/budget-assistant-client";
 
 export const PICK_FORMATS = {
   parse: {dateInput: {month: 'short', year: 'numeric', day: 'numeric'}},
@@ -50,12 +51,12 @@ export class FiltersComponent implements OnInit {
 
   groupingTypesFormFieldGroup: FormGroup;
 
-  groupingTypes: Map<string, Grouping> = new Map<string, Grouping>();
+  groupingTypes: Map<string, GroupingEnum> = new Map<string, GroupingEnum>();
   groupingTypeStringValues: string[];
 
 
   transactionTypeFormFieldGroup: FormGroup;
-  transactionTypes: Map<string, TransactionType> = new Map<string, TransactionType>();
+  transactionTypes: Map<string, TransactionTypeEnum> = new Map<string, TransactionTypeEnum>();
   transactionTypeStringValues: string[];
 
   startEndDateShortCuts: Map<string, StartEndDateShortcut> = new Map<string, StartEndDateShortcut>();
@@ -84,9 +85,9 @@ export class FiltersComponent implements OnInit {
     this.transactionTypeFormFieldGroup = formBuilder.group({queryForm: ""});
     this.groupingTypesFormFieldGroup = formBuilder.group({queryForm: ""});
 
-    this.groupingTypes.set("month", Grouping.MONTH)
-    this.groupingTypes.set("year", Grouping.YEAR)
-    this.groupingTypes.set("quarter", Grouping.QUARTER)
+    this.groupingTypes.set("month", GroupingEnum.month)
+    this.groupingTypes.set("year", GroupingEnum.year)
+    this.groupingTypes.set("quarter", GroupingEnum.quarter)
     this.groupingTypeStringValues = Array.from(this.groupingTypes.keys());
 
 
@@ -97,9 +98,9 @@ export class FiltersComponent implements OnInit {
     this.startEndDateShortCutStringValues = Array.from(this.startEndDateShortCuts.keys());
 
 
-    this.transactionTypes.set("in- & uitkomsten", TransactionType.BOTH)
-    this.transactionTypes.set("uitgaven", TransactionType.EXPENSES)
-    this.transactionTypes.set("inkomsten", TransactionType.REVENUE)
+    this.transactionTypes.set("in- & uitkomsten", TransactionTypeEnum.BOTH)
+    this.transactionTypes.set("uitgaven", TransactionTypeEnum.EXPENSES)
+    this.transactionTypes.set("inkomsten", TransactionTypeEnum.REVENUE)
     this.transactionTypeStringValues = Array.from(this.transactionTypes.keys());
 
 
@@ -132,18 +133,18 @@ export class FiltersComponent implements OnInit {
 
   onTransactionTypeChange(transactionTypeStr: string) {
     console.log(transactionTypeStr);
-    var transactionType: TransactionType | undefined = this.transactionTypes.get(transactionTypeStr)
+    var transactionType: TransactionTypeEnum | undefined = this.transactionTypes.get(transactionTypeStr)
     if (transactionType == undefined) {
-      transactionType = TransactionType.BOTH;
+      transactionType = TransactionTypeEnum.BOTH;
     }
     this.appService.setTransactionType(transactionType);
   }
 
   onGroupingChange(groupingStr: string) {
     console.log(groupingStr);
-    var groupingType: Grouping | undefined = this.groupingTypes.get(groupingStr)
+    var groupingType: GroupingEnum | undefined = this.groupingTypes.get(groupingStr)
     if (groupingType == undefined) {
-      groupingType = Grouping.MONTH;
+      groupingType = GroupingEnum.month;
     }
     this.appService.setGrouping(groupingType);
   }
