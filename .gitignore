@@ -261,3 +261,17 @@ cython_debug/
 /budget-assistant-backend-django.iml
 
 .npmrc
+.env-nondocker
+.idea
+node_modules
+generated-api
+.qodo
+BudgetAssistant-backend/package.json
+BudgetAssistant-backend/package-lock.json
+BudgetAssistant-backend/schema.yml
+BudgetAssistant-backend/.idea
+BudgetAssistant-backend/node_modules
+BudgetAssistant-frontend/node_modules
+BudgetAssistant-frontend/.idea
+.idea/
+workspace/

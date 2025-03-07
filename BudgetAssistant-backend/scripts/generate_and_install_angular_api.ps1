@@ -1,6 +1,21 @@
 #get the absolute path of the pwd and assign to variable
+#check if conda env budget-assistant-backend-django is activated. if not then activate it
+$envName = "budget-assistant-backend-django"
+
+# Get the currently active Conda environment
+$activeEnv = $env:CONDA_DEFAULT_ENV
+
+if ($activeEnv -ne $envName) {
+    Write-Output "Activating Conda environment: $envName"
+    conda activate $envName
+} else {
+    Write-Output "Conda environment '$envName' is already active."
+}
+
 
 $pwd_absolute_path = (Get-Location).Path
+if (Test-Path ..\generated-api) { Remove-Item ..\generated-api -Recurse -Force }
+
 
 echo "Initializing local npm registry (Verdaccio)"
 ..\..\BudgetAssistant-frontend\scripts\start-verdaccio.ps1
@@ -51,10 +66,10 @@ if (Test-Path ..\api)
 {
     Remove-Item ..\api -Recurse -Force
 }
-openapi-generator-cli generate -i schema.yml -g typescript-angular -o ../generated-api --additional-properties=modelPropertyNaming=camelCase,fileNaming=kebab-case,enumPropertyNaming=original,ngVersion=14.2.8,npmName=budget-assistant-client
+openapi-generator-cli generate -i schema.yml -g typescript-angular -o ../generated-api --additional-properties=modelPropertyNaming=camelCase,fileNaming=kebab-case,enumPropertyNaming=original,ngVersion=14.2.8,npmName=budget-assistant-client,serviceSuffix=BudgetAssistantBackendClientService,serviceFileSuffix=-budget-assistant-backend-client.service
 
 # Add timestamp to package.json
-$timestamp = [DateTime]::UtcNow.ToString("o")
+$timestamp = [DateTime]::Now.ToString("o")
 Write-Output "Adding timestamp: $timestamp"
 
 Write-Output "Installing npm dependencies"
@@ -80,7 +95,8 @@ $packageJson = [PSCustomObject]@{
 }
 
 # Preserve existing properties from the original package.json
-$originalJson = Get-Content -Raw -Path package.json | ConvertFrom-Json
+$originalJson = Get-Content -Raw -Path package.json -Encoding utf8 | ConvertFrom-Json
+Write-Output "Original package.json properties: $($originalJson.PSObject.Properties.Name -join ', ')"
 foreach ($property in $originalJson.PSObject.Properties) {
     if (-not $packageJson.PSObject.Properties[$property.Name]) {
         $packageJson | Add-Member -NotePropertyName $property.Name -NotePropertyValue $property.Value
@@ -88,9 +104,12 @@ foreach ($property in $originalJson.PSObject.Properties) {
 }
 
 # Replace placeholders
-$packageJsonString = $packageJson | ConvertTo-Json -Depth 10
+$packageJsonString = $packageJson | ConvertTo-Json -Compress -Depth 100
+$packageJsonString = $packageJsonString -replace "\\u003e", ">" -replace "\\u003c", "<"
 $packageJsonString = $packageJsonString -replace "GIT_USER_ID", "daanvdn"
 $packageJsonString = $packageJsonString -replace "GIT_REPO_ID", "BudgetAssistant"
+
+Write-Output "Updated package.json: $packageJsonString"
 
 # Save updated package.json
 $packageJsonString | Out-File -FilePath package.json -Encoding utf8
@@ -104,13 +123,20 @@ npm publish --access public --registry=$local_registry
 
 Write-Output "Re-install latest version in frontend"
 cd ..\..\BudgetAssistant-frontend
-#make sure that the latest version is re-installed. The version number always is 1.0.0 but the contents of the package can change. So we need to force re-install
 
-npm install @daanvdn/budget-assistant-client --registry "http://localhost:4873" --userconfig "C:\Users\daanv\Git\BudgetAssistant\BudgetAssistant-backend\scripts\.npmrc" --force
+Write-Output "Removing node_modules/@daanvdn/budget-assistant-client from BudgetAssistant-frontend"
+if (Test-Path node_modules/@daanvdn/budget-assistant-client) { Remove-Item node_modules/@daanvdn/budget-assistant-client -Recurse -Force }
+#make sure that the latest version is re-installed. The version number always is 1.0.0 but the contents of the package can change. So we need to force re-install
+npm install @daanvdn/budget-assistant-client --save --registry "http://localhost:4873" --userconfig "C:\Users\daanv\Git\BudgetAssistant\BudgetAssistant-backend\scripts\.npmrc" --force
 
 cd $pwd_absolute_path
 Write-Output "Removing temporary files"
-Remove-Item schema.yml -Force
-Remove-Item ..\node_modules -Recurse -Force
-Remove-Item ..\generated-api -Recurse -Force
+if (Test-Path schema.yml) { Remove-Item schema.yml -Force }
+if (Test-Path ..\node_modules\@daanvdn) { Remove-Item ..\node_modules\@daanvdn -Recurse -Force }
+if (Test-Path ..\generated-api) { Remove-Item ..\generated-api -Recurse -Force }
+if (Test-Path package.json) { Remove-Item package.json -Force }
+if (Test-Path package-lock.json) { Remove-Item package-lock.json -Force }
+if (Test-Path ..\package.json) { Remove-Item ..\package.json -Force }
+if (Test-Path ..\package-lock.json) { Remove-Item ..\package-lock.json -Force }
+
 Write-Output "Angular API generation and installation complete"

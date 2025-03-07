@@ -255,7 +255,7 @@ class CustomLogoutView(APIView):
 class BankAccountsForUserView(APIView):
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(responses={200: BankAccountSerializer})
+    @extend_schema(responses={200: BankAccountSerializer(many=True)})
     def get(self, request):
         user = request.user
         if not isinstance(user, CustomUser):
@@ -325,6 +325,7 @@ class PageTransactionsView(APIView):
             body = json.loads(request.body.decode('utf-8'))
             serializer = PageTransactionsRequestSerializer(data=body)
             if serializer.is_valid(raise_exception=True):
+                user: CustomUser = request.user
 
                 page_transactions_request = PageTransactionsRequest(**serializer.validated_data)
                 query = page_transactions_request.query
@@ -333,7 +334,7 @@ class PageTransactionsView(APIView):
                 sort_order = page_transactions_request.sort_order
                 sort_property = page_transactions_request.sort_property
                 response: TransactionsPage = get_transactions_service().page_transactions(query, page, size, sort_order,
-                                                                                          sort_property)
+                                                                                          sort_property, user)
                 return JsonResponse(response, status=200)
 
         except Exception as e:

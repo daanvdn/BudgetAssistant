@@ -119,15 +119,17 @@ class CategorySerializer(DeserializeInstanceMixin):
         return CategorySerializer(children, many=True).data
 
 class SimpleCategorySerializer(serializers.Serializer):
-    qualified_name = serializers.CharField(required=False)
+    qualified_name = serializers.CharField(required=True)
+    name = serializers.CharField(required=True)
+    id = serializers.IntegerField(required=True)
 
     class Meta:
         model = Category
-        fields = ['qualified_name']
+        fields = ['qualified_name', 'name', 'id']
 
 
     def create(self, validated_data):
-        return Category.objects.get(qualified_name=validated_data.get('qualified_name'))
+        return Category.objects.get(id=validated_data['id'])
 
 
 class CounterpartySerializer(DeserializeInstanceMixin):
@@ -238,7 +240,7 @@ class SimplifiedCategorySerializer(DeserializeInstanceMixin):
 
     class Meta:
         model = Category
-        fields = ['name', 'qualified_name', 'children']
+        fields = ['name', 'qualified_name', 'children', 'id']
 
     def get_children(self, obj) -> List[Dict[str, Union[str, List]]]:
         children = obj.cached_children

@@ -1,7 +1,7 @@
 import re
 from dataclasses import dataclass
 from datetime import date, datetime
-from typing import Optional
+from typing import List, Optional
 
 from django.db.models import Q
 from enumfields.drf import EnumField
@@ -85,13 +85,12 @@ class RevenueExpensesQuerySerializer(Serializer):
 class TransactionQuery:
     MAX_AMOUNT: float = 1000000.0
     MIN_AMOUNT: float = -1000000.0
-    revenue: bool = True
-    expenses: bool = True
+    transaction_type: Optional[TransactionTypeEnum] = None
     counterparty_name: Optional[str] = None
     min_amount: Optional[float] = None
     max_amount: Optional[float] = None
-    account_number: str = "NULL"
-    category: Optional[str] = None  # Assuming category is a string, adjust if necessary
+    account_number: Optional[str] = "NULL"
+    category_id: Optional[int] = None
     transaction_or_communication: Optional[str] = None
     counterparty_account_number: Optional[str] = None
     start_date: Optional[date] = None
@@ -101,13 +100,12 @@ class TransactionQuery:
 
 
 class TransactionQuerySerializer(Serializer):
-    revenue: bool = serializers.BooleanField()
-    expenses: bool = serializers.BooleanField()
+    transaction_type: Optional[TransactionTypeEnum] = EnumField(TransactionTypeEnum, required=False, default=None)
     counterparty_name: Optional[str] = serializers.CharField(required=False, default=None)
     min_amount: Optional[float] = serializers.FloatField(required=False, default=None)
     max_amount: Optional[float] = serializers.FloatField(required=False, default=None)
-    account_number: str = serializers.CharField(required=True)
-    category: Optional[str] = serializers.CharField(required=False, default=None)
+    account_number: Optional[str] = serializers.CharField(required=False)
+    category_id: Optional[int] = serializers.CharField(required=False, default=None)
     transaction_or_communication: Optional[str] = serializers.CharField(required=False, default=None)
     counterparty_account_number: Optional[str] = serializers.CharField(required=False, default=None)
     start_date: Optional[date] = serializers.DateField(required=False, default=None)
@@ -289,21 +287,22 @@ class TransactionPredicates:
 
     @staticmethod
     def amount_predicate(transaction_query: TransactionQuery) -> Q:
-        is_revenue = transaction_query.revenue
-        is_expenses = transaction_query.expenses
         min_amount = transaction_query.min_amount
         max_amount = transaction_query.max_amount
+        transaction_type = transaction_query.transaction_type
 
         if min_amount is not None and max_amount is not None:
+            if min_amount > max_amount:
+                raise ValueError("min_amount must be less than or equal to max_amount")
             return Q(amount__gte=min_amount) & Q(amount__lte=max_amount)
 
-        if is_revenue and is_expenses:
+        if not transaction_type or transaction_type == TransactionTypeEnum.BOTH:
             return Q()  # No specific filter, equivalent to Optional.empty() in Java
 
-        if is_revenue:
+        if transaction_type == TransactionTypeEnum.REVENUE:
             return Q(amount__gt=0.0)
 
-        if is_expenses:
+        if transaction_type == TransactionTypeEnum.EXPENSES:
             return Q(amount__lt=0.0)
 
         return Q()  # Default case if none of the conditions are met
@@ -319,10 +318,10 @@ class TransactionPredicates:
         raise ValueError("Unexpected transaction type")
     @staticmethod
     def category_predicate(transaction_query: TransactionQuery) -> Optional[Q]:
-        category:str = transaction_query.category
-        if category is None or category in ["DUMMY_CATEGORY_NAME", "NO_CATEGORY_NAME"]:
+        category_id:int = transaction_query.category_id
+        if category_id is None:
             return None
-        return Q(category__qualified_name=category) #fix this query
+        return Q(category__id=category_id)
     @staticmethod
     def category_id_predicate(category_id: int) -> Optional[Q]:
         if category_id is None:
@@ -334,6 +333,10 @@ class TransactionPredicates:
         if account_number is None or account_number.strip().upper() == "NULL":
             return None
         return Q(bank_account__account_number__iexact=account_number.strip())
+
+    @staticmethod
+    def bank_account_number_in(account_numbers: List[str]) -> Q:
+        return Q(bank_account__account_number__in=account_numbers)
 
     @staticmethod
     def has_period_account_number_and_is_revenue_and_category_is_null(revenue_expenses_query: RevenueExpensesQuery):

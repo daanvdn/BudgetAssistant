@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd
 from django_pandas.io import read_frame
 from enumfields.drf import EnumField
-from enumfields.fields import CharEnumField
 from pandas.core.groupby import DataFrameGroupBy
 from rest_framework import serializers
 from rest_framework.serializers import Serializer
@@ -234,7 +233,7 @@ class BudgetTrackerResultNode:
 
 
 
-class BudgetTrackerResultNodeSerializer(Serializer):
+class BudgetTrackerResultNodeSerializer2(Serializer):
     children = serializers.SerializerMethodField()
     category = serializers.SerializerMethodField()
     budget = serializers.IntegerField()
@@ -242,7 +241,7 @@ class BudgetTrackerResultNodeSerializer(Serializer):
 
     def get_children(self, obj):
         # the needs to be a recursive method because every child can have children of its owwn
-        return BudgetTrackerResultNodeSerializer(obj.children, many=True).data
+        return BudgetTrackerResultNodeSerializer2(obj.children, many=True).data
 
     def to_internal_value(self, data):
         validated_data = super().to_internal_value(data)
@@ -267,6 +266,44 @@ class BudgetTrackerResultNodeSerializer(Serializer):
         return node
 
 
+
+class BudgetTrackerResultNodeSerializer(Serializer):
+    # Use a placeholder for children initially
+    children = serializers.ListField(child=serializers.Serializer(), required=False)
+    category = SimpleCategorySerializer()
+    budget = serializers.IntegerField(required=False, allow_null=True)
+    amounts_for_period = serializers.DictField(required=False, default=dict)
+
+    def get_children(self, obj):
+        # the needs to be a recursive method because every child can have children of its owwn
+        return BudgetTrackerResultNodeSerializer(obj.children, many=True).data
+
+    def to_internal_value(self, data):
+        validated_data = super().to_internal_value(data)
+        category = data['category']
+        category = Category.objects.get(id=category['id'])
+        validated_data['category'] = category
+        children = data.get('children', [])
+        # deserialize children recursively
+        children_deserialized = [self.to_internal_value(child) for child in children]
+        validated_data['children'] = children_deserialized
+        return validated_data
+
+    def get_category(self, obj):
+        return obj.category.qualified_name
+
+    def create(self, validated_data):
+        children_data = validated_data.pop('children', [])
+        node = BudgetTrackerResultNode(**validated_data)
+        for child_data in children_data:
+            child_node = self.create(child_data)
+            node.add_child(child_node)
+        return node
+
+# After the class definition, update the children field with the actual serializer
+BudgetTrackerResultNodeSerializer._declared_fields['children'] = serializers.ListField(
+    child=BudgetTrackerResultNodeSerializer(), required=False
+)
 
 @dataclass
 class BudgetTrackerResult:
@@ -295,15 +332,15 @@ class BudgetTrackerResult:
 
 
 class BudgetTrackerResultSerializer(Serializer):
-    data = serializers.SerializerMethodField()
+    data = BudgetTrackerResultNodeSerializer(many=True)
     columns = serializers.ListField(child=serializers.CharField())
 
     def to_internal_value(self, data):
         internal = super().to_internal_value(data)
         internal['data'] = [BudgetTrackerResultNodeSerializer().to_internal_value(item) for item in data['data']]
         return internal
-    def get_data(self, obj):
-        return BudgetTrackerResultNodeSerializer(obj.data, many=True).data
+    # def get_data(self, obj):
+    #     return BudgetTrackerResultNodeSerializer(obj.data, many=True).data
 
     def create(self, validated_data):
         data = validated_data['data']

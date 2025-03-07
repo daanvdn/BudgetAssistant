@@ -91,20 +91,25 @@ class TransactionsService:
         count = Transaction.objects.filter(TransactionPredicates.requires_manual_review(bank_account=bank_account_obj,
                                                              transaction_type=TransactionTypeEnum.BOTH)).count()
         return count
-
+    def _get_bank_accounts_for_user(self, user: CustomUser) -> List[str]:
+        accounts = BankAccount.objects.filter(users=user)
+        return [account.account_number for account in accounts]
     def page_transactions(self, query: Optional[TransactionQuery], page: int, size: int, sort_order: str,
-                          sort_property: str) -> TransactionsPage:
+                          sort_property: str, user:CustomUser) -> TransactionsPage:
 
         direction = sort_order.upper()
         sort = f"{direction}{sort_property}"
+        bank_accounts_for_user = self._get_bank_accounts_for_user(user)
+        q = TransactionPredicates.bank_account_number_in(bank_accounts_for_user)
         if not query:
-            transactions = Transaction.objects.all().order_by(sort)
+            transactions = Transaction.objects.filter(q).order_by(sort)
         else:
             predicate = TransactionPredicates.from_transaction_query(query)
             if predicate:
                 transactions = Transaction.objects.filter(predicate).order_by(sort)
             else:
                 transactions = Transaction.objects.all().order_by(sort)
+        transactions = transactions.filter(q)
         paginator = Paginator(transactions, size)
         page_obj = paginator.get_page(page)
         def deserialize(transaction):
