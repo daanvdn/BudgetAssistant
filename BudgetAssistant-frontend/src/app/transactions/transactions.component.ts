@@ -14,7 +14,7 @@ import {
 import {BankAccountSelectionComponent} from '../bank-account-selection/bank-account-selection.component';
 import {TransactionSearchDialogComponent} from '../transaction-search-dialog/transaction-search-dialog.component';
 import {AuthService} from "../auth/auth.service";
-import {HttpEventType, HttpResponse} from "@angular/common/http";
+import { HttpEventType, HttpResponse } from "@angular/common/http";
 import {ErrorDialogService} from "../error-dialog/error-dialog.service";
 import {faTag} from "@fortawesome/free-solid-svg-icons";
 import {Router} from "@angular/router";

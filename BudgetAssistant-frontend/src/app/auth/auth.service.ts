@@ -3,7 +3,7 @@ import {Router} from '@angular/router';
 import {BehaviorSubject, map, Observable} from 'rxjs';
 
 import {DUMMY_USER, User} from "../model";
-import {HttpClient} from "@angular/common/http";
+import { HttpClient } from "@angular/common/http";
 import {
   ApiBudgetAssistantBackendClientService,
   RegisterUser,

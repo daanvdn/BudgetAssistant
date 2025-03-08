@@ -1,10 +1,5 @@
 import { Injectable } from '@angular/core';
-import {
-  HttpRequest,
-  HttpHandler,
-  HttpEvent,
-  HttpInterceptor
-} from '@angular/common/http';
+import { HttpRequest, HttpHandler, HttpEvent, HttpInterceptor } from '@angular/common/http';
 import {firstValueFrom, from, Observable, switchMap} from 'rxjs';
 import {JwtHelperService} from "@auth0/angular-jwt";
 import {Configuration, TokenObtainPair, ApiBudgetAssistantBackendClientService, TokenRefresh} from "@daanvdn/budget-assistant-client";
