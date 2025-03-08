@@ -2,7 +2,7 @@ import {Component, ElementRef, OnInit, ViewChild} from '@angular/core';
 import {MatPaginator} from "@angular/material/paginator";
 import {MatSort} from "@angular/material/sort";
 import { MatTable, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatCellDef, MatCell, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow } from "@angular/material/table";
-import {PaginationDataSource, SimpleDataSource} from "ngx-pagination-data-source";
+import {PaginationDataSource, SimpleDataSource} from "@daanvdn/ngx-pagination-data-source";
 import {AppService} from "../app.service";
 import {BehaviorSubject, map, Observable} from "rxjs";
 import { MatButtonToggleChange, MatButtonToggleGroup, MatButtonToggle } from "@angular/material/button-toggle";

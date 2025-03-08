@@ -2,7 +2,7 @@ import { HttpClient, HttpEvent, HttpHeaders } from '@angular/common/http';
 import {Injectable} from '@angular/core';
 import {BehaviorSubject, catchError, map, Observable, of, Subject, tap, throwError} from 'rxjs';
 
-import {Page, PageRequest} from 'ngx-pagination-data-source';
+import {Page, PageRequest} from "@daanvdn/ngx-pagination-data-source";
 import {
     BudgetTrackerResult,
     CategoryDetailsForPeriodHandlerResult, CategoryMap, CategoryNode, CategoryType,

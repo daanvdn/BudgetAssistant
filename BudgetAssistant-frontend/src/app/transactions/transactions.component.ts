@@ -5,7 +5,7 @@ import {MatPaginator} from '@angular/material/paginator';
 import { MatRadioChange, MatRadioGroup, MatRadioButton } from '@angular/material/radio';
 import { MatSort, MatSortHeader } from '@angular/material/sort';
 import { MatTable, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatCellDef, MatCell, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow } from '@angular/material/table';
-import {PaginationDataSource} from 'ngx-pagination-data-source';
+import {PaginationDataSource} from '@daanvdn/ngx-pagination-data-source';
 import {AppService} from '../app.service';
 import {
   AmountType,

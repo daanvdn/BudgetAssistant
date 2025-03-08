@@ -278,3 +278,5 @@ BudgetAssistant-frontend/.idea
 .project
 /BudgetAssistant-frontend/.angular/
 /BudgetAssistant-backend/BudgetAssistant-backend.iml
+*storybook.log
+/BudgetAssistant-frontend/storybook-static

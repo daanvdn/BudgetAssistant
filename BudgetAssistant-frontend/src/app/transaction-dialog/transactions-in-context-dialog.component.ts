@@ -1,5 +1,5 @@
 import {AfterViewInit, Component, Inject, OnInit} from '@angular/core';
-import {PaginationDataSource} from "ngx-pagination-data-source";
+import {PaginationDataSource} from "@daanvdn/ngx-pagination-data-source";
 import {AppService} from "../app.service";
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogTitle, MatDialogContent, MatDialogActions } from "@angular/material/dialog";
 import {Transaction, TransactionQuery, TransactionInContextQuery} from "@daanvdn/budget-assistant-client";

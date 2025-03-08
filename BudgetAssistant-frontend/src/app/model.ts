@@ -345,7 +345,7 @@ export interface CategoryNode {
 
 }
 
-export function inferAmountType(amount: Number) {
+export function inferAmountType(amount: number) {
     if (amount >= 0) {
         return AmountType.REVENUE;
     }
