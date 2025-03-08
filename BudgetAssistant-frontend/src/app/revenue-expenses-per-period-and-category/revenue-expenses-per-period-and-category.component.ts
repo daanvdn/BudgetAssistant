@@ -6,8 +6,8 @@ import {CategoryMap} from '../model';
 import {Criteria} from "../insights/insights.component";
 // @ts-ignore
 import autocolors from 'chartjs-plugin-autocolors';
-import {MatLegacyTable as MatTable, MatLegacyTableDataSource as MatTableDataSource} from "@angular/material/legacy-table";
-import {MatLegacyDialog as MatDialog} from "@angular/material/legacy-dialog";
+import {MatTable, MatTableDataSource} from "@angular/material/table";
+import {MatDialog} from "@angular/material/dialog";
 import {TransactionsInContextDialogComponent} from "../transaction-dialog/transactions-in-context-dialog.component";
 import {
   ApiBudgetAssistantBackendClientService,

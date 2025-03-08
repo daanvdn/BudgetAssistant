@@ -3,7 +3,7 @@ import {AuthService} from "../auth/auth.service";
 import { User} from "../model";
 import {FormArray, FormBuilder, FormControl, FormGroup} from "@angular/forms";
 import {AppService} from "../app.service";
-import {MatLegacyTableDataSource as MatTableDataSource} from "@angular/material/legacy-table";
+import {MatTableDataSource} from "@angular/material/table";
 import {faSearch} from "@fortawesome/free-solid-svg-icons/faSearch";
 import {BankAccount} from "@daanvdn/budget-assistant-client";
 

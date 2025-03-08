@@ -3,7 +3,7 @@ import {Dataset, TransactionType} from "../model";
 import {AppService} from "../app.service";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import {Observable} from "rxjs";
-import {MatLegacySelectionListChange as MatSelectionListChange} from "@angular/material/legacy-list";
+import {MatSelectionListChange} from "@angular/material/list";
 // @ts-ignore
 import autocolors from 'chartjs-plugin-autocolors';
 import {ExpensesRecurrenceEnum, RevenueExpensesQuery, TransactionTypeEnum} from "@daanvdn/budget-assistant-client";

@@ -5,8 +5,8 @@ import {MatTreeFlatDataSource, MatTreeFlattener} from '@angular/material/tree';
 import {BehaviorSubject} from 'rxjs';
 import {AppService} from '../app.service';
 import {FormBuilder, FormGroup} from "@angular/forms";
-import {MatLegacyFormField as MatFormField} from "@angular/material/legacy-form-field";
-import {MatLegacyAutocompleteTrigger as MatAutocompleteTrigger} from "@angular/material/legacy-autocomplete";
+import {MatFormField} from "@angular/material/form-field";
+import {MatAutocompleteTrigger} from "@angular/material/autocomplete";
 import {AmountType, CategoryNode, FlatCategoryNode, NO_CATEGORY} from "../model";
 
 

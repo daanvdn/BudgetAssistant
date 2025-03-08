@@ -12,7 +12,7 @@ import {
   ValidatorFn
 } from "@angular/forms";
 import {ErrorStateMatcher} from '@angular/material/core';
-import {MatLegacyDialog as MatDialog} from "@angular/material/legacy-dialog";
+import {MatDialog} from "@angular/material/dialog";
 import {SaveErrorDialogComponent} from "./save-error-dialog/save-error-dialog.component";
 
 

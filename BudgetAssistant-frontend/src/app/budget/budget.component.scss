@@ -12,7 +12,7 @@
 /*td.mat-cell, th.mat-header-cell, tr.mat-header-row, tr.mat-row {
   height: 30px;
 }*/
-:host ::ng-deep .mat-row{
+:host ::ng-deep .mat-mdc-row{
   padding-bottom: 2px;
   padding-top: 2px;
 }
@@ -23,12 +23,12 @@
 */
 
 
-.mat-table-wrapper {
+.mat-mdc-table-wrapper {
   //height: 300px; // Set this to your desired height
   overflow: auto;
 }
 
-.mat-table {
+.mat-mdc-table {
   width: 100%;
 }
 

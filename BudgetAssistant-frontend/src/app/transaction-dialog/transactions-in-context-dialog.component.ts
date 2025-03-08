@@ -1,7 +1,7 @@
 import {AfterViewInit, Component, Inject, OnInit} from '@angular/core';
 import {PaginationDataSource} from "ngx-pagination-data-source";
 import {AppService} from "../app.service";
-import {MAT_LEGACY_DIALOG_DATA as MAT_DIALOG_DATA, MatLegacyDialogRef as MatDialogRef} from "@angular/material/legacy-dialog";
+import {MAT_DIALOG_DATA, MatDialogRef} from "@angular/material/dialog";
 import {Transaction, TransactionQuery, TransactionInContextQuery} from "@daanvdn/budget-assistant-client";
 import {AmountType, inferAmountType} from "../model";
 

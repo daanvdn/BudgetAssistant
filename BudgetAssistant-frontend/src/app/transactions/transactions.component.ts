@@ -1,10 +1,10 @@
 import {DatePipe} from '@angular/common';
 import {AfterViewInit, Component, OnInit, ViewChild} from '@angular/core';
-import {MatLegacyDialog as MatDialog} from '@angular/material/legacy-dialog';
-import {MatLegacyPaginator as MatPaginator} from '@angular/material/legacy-paginator';
-import {MatLegacyRadioChange as MatRadioChange} from '@angular/material/legacy-radio';
+import {MatDialog} from '@angular/material/dialog';
+import {MatPaginator} from '@angular/material/paginator';
+import {MatRadioChange} from '@angular/material/radio';
 import {MatSort} from '@angular/material/sort';
-import {MatLegacyTable as MatTable} from '@angular/material/legacy-table';
+import {MatTable} from '@angular/material/table';
 import {PaginationDataSource} from 'ngx-pagination-data-source';
 import {AppService} from '../app.service';
 import {

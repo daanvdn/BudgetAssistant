@@ -1,5 +1,5 @@
 
-.mat-table {
+.mat-mdc-table {
   border-collapse: collapse;
   td, th {
     border: 1px solid #ddd;
@@ -51,11 +51,11 @@
   color: green;
 }
 
-.mat-table {
+.mat-mdc-table {
   width: 100%;
 }
 
-.mat-header-cell, .mat-cell {
+.mat-mdc-header-cell, .mat-mdc-cell {
   padding: 8px;
   text-align: left;
 }
