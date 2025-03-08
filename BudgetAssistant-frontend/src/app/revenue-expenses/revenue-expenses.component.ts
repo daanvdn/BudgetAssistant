@@ -1,7 +1,7 @@
 import {Component, Input, OnChanges, OnInit, SimpleChanges, ViewChild} from '@angular/core';
 import {MatPaginator} from "@angular/material/paginator";
 import {MatSort} from "@angular/material/sort";
-import {MatTable, MatTableDataSource} from "@angular/material/table";
+import { MatTable, MatTableDataSource, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatCellDef, MatCell, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow } from "@angular/material/table";
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import {parse} from 'date-fns';
 import {isNaN} from "lodash";
@@ -10,12 +10,17 @@ import {Criteria} from "../insights/insights.component";
 import {ExpensesRecurrenceEnum, RevenueExpensesQuery, TransactionTypeEnum} from "@daanvdn/budget-assistant-client";
 import {RevenueRecurrenceEnum} from "@daanvdn/budget-assistant-client/model/revenue-recurrence-enum";
 import {ExpensesAndRevenueForPeriod} from "@daanvdn/budget-assistant-client/model/expenses-and-revenue-for-period";
+import { NgIf, NgClass, DecimalPipe } from '@angular/common';
+import { ChartModule } from 'primeng/chart';
+import { MatButton } from '@angular/material/button';
 
 @Component({
-  selector: 'expenses-revenue',
-  templateUrl: './revenue-expenses.component.html',
-  styleUrls: ['./revenue-expenses.component.scss'],
-  animations: []
+    selector: 'expenses-revenue',
+    templateUrl: './revenue-expenses.component.html',
+    styleUrls: ['./revenue-expenses.component.scss'],
+    animations: [],
+    standalone: true,
+    imports: [NgIf, ChartModule, MatButton, MatTable, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatCellDef, MatCell, NgClass, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow, DecimalPipe]
 })
 export class ExpensesRevenueComponent  implements OnInit, OnChanges {
 

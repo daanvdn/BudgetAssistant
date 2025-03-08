@@ -11,8 +11,8 @@ describe('PeriodSelectionComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ PeriodSelectionComponent ]
-    })
+    imports: [PeriodSelectionComponent]
+})
     .compileComponents();
   }));
 

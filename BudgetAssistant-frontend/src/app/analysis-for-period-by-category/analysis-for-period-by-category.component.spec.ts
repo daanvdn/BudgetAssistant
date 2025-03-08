@@ -8,8 +8,8 @@ describe('AnalysisForPeriodByCategoryComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ AnalysisForPeriodByCategoryComponent ]
-    })
+    imports: [AnalysisForPeriodByCategoryComponent]
+})
     .compileComponents();
 
     fixture = TestBed.createComponent(AnalysisForPeriodByCategoryComponent);

@@ -11,8 +11,8 @@ describe('BooleanRadioButtonGroupComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ BooleanRadioButtonGroupComponent ]
-    })
+    imports: [BooleanRadioButtonGroupComponent]
+})
     .compileComponents();
   }));
 

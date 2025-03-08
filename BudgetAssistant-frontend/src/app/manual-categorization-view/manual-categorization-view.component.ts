@@ -1,13 +1,17 @@
 import {Component, ElementRef, OnInit, ViewChild} from '@angular/core';
 import {MatPaginator} from "@angular/material/paginator";
 import {MatSort} from "@angular/material/sort";
-import {MatTable} from "@angular/material/table";
+import { MatTable, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatCellDef, MatCell, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow } from "@angular/material/table";
 import {PaginationDataSource, SimpleDataSource} from "ngx-pagination-data-source";
 import {AppService} from "../app.service";
 import {BehaviorSubject, map, Observable} from "rxjs";
-import {MatButtonToggleChange} from "@angular/material/button-toggle";
+import { MatButtonToggleChange, MatButtonToggleGroup, MatButtonToggle } from "@angular/material/button-toggle";
 import {BankAccount, Transaction, TransactionTypeEnum} from "@daanvdn/budget-assistant-client";
 import {AmountType, inferAmountType} from "../model";
+import { MatToolbar } from '@angular/material/toolbar';
+import { BankAccountSelectionComponent } from '../bank-account-selection/bank-account-selection.component';
+import { NgIf, AsyncPipe } from '@angular/common';
+import { CategoryTreeDropdownComponent } from '../category-tree-dropdown/category-tree-dropdown.component';
 
 
 interface GroupBy {
@@ -67,9 +71,11 @@ class GroupByCounterpartyDataSource implements SimpleDataSource<Transaction | Gr
 }
 
 @Component({
-  selector: 'app-manual-categorization-view',
-  templateUrl: './manual-categorization-view.component.html',
-  styleUrls: ['./manual-categorization-view.component.scss']
+    selector: 'app-manual-categorization-view',
+    templateUrl: './manual-categorization-view.component.html',
+    styleUrls: ['./manual-categorization-view.component.scss'],
+    standalone: true,
+    imports: [MatToolbar, BankAccountSelectionComponent, MatButtonToggleGroup, MatButtonToggle, NgIf, MatPaginator, MatTable, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatCellDef, MatCell, CategoryTreeDropdownComponent, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow, AsyncPipe]
 })
 export class ManualCategorizationViewComponent implements OnInit {
 

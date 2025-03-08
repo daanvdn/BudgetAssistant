@@ -11,8 +11,8 @@ describe('CategoryTreeComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ CategoryTreeDropdownComponent ]
-    })
+    imports: [CategoryTreeDropdownComponent]
+})
     .compileComponents();
   }));
 

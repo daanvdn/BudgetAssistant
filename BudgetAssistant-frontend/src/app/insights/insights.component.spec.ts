@@ -11,8 +11,8 @@ describe('AnalysisComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ InsightsComponent ]
-    })
+    imports: [InsightsComponent]
+})
     .compileComponents();
   }));
 

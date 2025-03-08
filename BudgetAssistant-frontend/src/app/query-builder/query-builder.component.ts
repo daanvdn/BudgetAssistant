@@ -1,14 +1,4 @@
-import {
-  AbstractControl,
-  ControlValueAccessor,
-  FormBuilder,
-  NG_VALIDATORS,
-  NG_VALUE_ACCESSOR,
-  ValidationErrors,
-  Validator,
-  ValidatorFn,
-  Validators
-} from '@angular/forms';
+import { AbstractControl, ControlValueAccessor, FormBuilder, NG_VALIDATORS, NG_VALUE_ACCESSOR, ValidationErrors, Validator, ValidatorFn, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
   CategoricalOperators, Comparator,
   Field, FieldType,
@@ -28,7 +18,16 @@ import {
 } from '@angular/core';
 import {ErrorDialogService} from "../error-dialog/error-dialog.service";
 import {AppService} from "../app.service";
-import {MatExpansionPanel} from "@angular/material/expansion";
+import { MatExpansionPanel, MatExpansionPanelHeader } from "@angular/material/expansion";
+import { NgClass, NgIf, NgFor, NgSwitch, NgSwitchCase } from '@angular/common';
+import { MatButton, MatIconButton } from '@angular/material/button';
+import { MatFormField, MatError } from '@angular/material/form-field';
+import { MatSelect } from '@angular/material/select';
+import { MatOption } from '@angular/material/core';
+import { MatInput } from '@angular/material/input';
+import { MatIcon } from '@angular/material/icon';
+import { MatCheckbox } from '@angular/material/checkbox';
+
 
 export class FieldsMetaData {
 
@@ -80,10 +79,12 @@ export const VALIDATOR: any = {
 
 
 @Component({
-  selector: 'query-builder',
-  templateUrl: './query-builder.component.html',
-  styleUrls: ['./query-builder.component.scss'],
-  providers: [CONTROL_VALUE_ACCESSOR, VALIDATOR]
+    selector: 'query-builder',
+    templateUrl: './query-builder.component.html',
+    styleUrls: ['./query-builder.component.scss'],
+    providers: [CONTROL_VALUE_ACCESSOR, VALIDATOR],
+    standalone: true,
+    imports: [NgClass, NgIf, FormsModule, NgFor, MatButton, ReactiveFormsModule, MatFormField, MatSelect, MatOption, NgSwitch, NgSwitchCase, MatError, MatExpansionPanel, MatExpansionPanelHeader, MatInput, MatIconButton, MatIcon, MatCheckbox, AppModule]
 })
 export class QueryBuilderComponent implements OnChanges, ControlValueAccessor, Validator {
 

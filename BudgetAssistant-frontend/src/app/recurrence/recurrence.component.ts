@@ -1,10 +1,15 @@
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 import { AppService } from '../app.service';
+import { MatRadioGroup, MatRadioButton } from '@angular/material/radio';
+import { FormsModule } from '@angular/forms';
+import { NgFor } from '@angular/common';
 
 @Component({
-  selector: 'app-recurrence',
-  templateUrl: './recurrence.component.html',
-  styleUrls: ['./recurrence.component.scss']
+    selector: 'app-recurrence',
+    templateUrl: './recurrence.component.html',
+    styleUrls: ['./recurrence.component.scss'],
+    standalone: true,
+    imports: [MatRadioGroup, FormsModule, NgFor, MatRadioButton]
 })
 export class RecurrenceComponent implements OnInit {
 

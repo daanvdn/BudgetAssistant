@@ -3,12 +3,21 @@ import {faXmark} from "@fortawesome/free-solid-svg-icons";
 import {anyIsUndefinedOrEmpty, Grouping, TransactionType} from "../model";
 import {Criteria} from "../insights/insights.component";
 import {BankAccount} from "@daanvdn/budget-assistant-client";
+import { NgIf } from '@angular/common';
+import { BankAccountSelectionComponent } from '../bank-account-selection/bank-account-selection.component';
+import { GroupingTypeSelectionComponent } from '../grouping-type-selection/grouping-type-selection.component';
+import { PeriodSelectionComponent } from '../period-selection/period-selection.component';
+import { ExpensesRevenueToggleComponent } from '../expenses-revenue-toggle/expenses-revenue-toggle.component';
+import { MatButton } from '@angular/material/button';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 
 @Component({
     selector: 'criteria-toolbar',
     templateUrl: './criteria-toolbar.component.html',
-    styleUrls: ['./criteria-toolbar.component.scss']
+    styleUrls: ['./criteria-toolbar.component.scss'],
+    standalone: true,
+    imports: [NgIf, BankAccountSelectionComponent, GroupingTypeSelectionComponent, PeriodSelectionComponent, ExpensesRevenueToggleComponent, MatButton, FaIconComponent]
 })
 export class CriteriaToolbarComponent implements OnInit {
 

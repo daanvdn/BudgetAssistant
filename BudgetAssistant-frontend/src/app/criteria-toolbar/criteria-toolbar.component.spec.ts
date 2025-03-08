@@ -8,8 +8,8 @@ describe('CriteriaToolbarComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ CriteriaToolbarComponent ]
-    })
+    imports: [CriteriaToolbarComponent]
+})
     .compileComponents();
 
     fixture = TestBed.createComponent(CriteriaToolbarComponent);

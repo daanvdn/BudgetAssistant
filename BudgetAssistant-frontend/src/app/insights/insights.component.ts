@@ -2,6 +2,16 @@ import {Component, OnInit} from '@angular/core';
 import {faSearch} from "@fortawesome/free-solid-svg-icons/faSearch";
 import {Grouping, TransactionType} from "../model";
 import {BankAccount, TransactionTypeEnum} from "@daanvdn/budget-assistant-client";
+import { MatToolbar } from '@angular/material/toolbar';
+import { MatIconButton } from '@angular/material/button';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MatTabGroup, MatTab } from '@angular/material/tabs';
+import { NgIf } from '@angular/common';
+import { CriteriaToolbarComponent } from '../criteria-toolbar/criteria-toolbar.component';
+import { ExpensesRevenueComponent } from '../revenue-expenses/revenue-expenses.component';
+import { RevenueExpensesPerPeriodAndCategoryComponent } from '../revenue-expenses-per-period-and-category/revenue-expenses-per-period-and-category.component';
+import { CategoryDetailsComponent } from '../category-details/category-details.component';
+import { BudgetTrackingComponent } from '../budget-tracking/budget-tracking.component';
 
 
 export class Criteria {
@@ -40,8 +50,9 @@ export class Criteria {
 
 
 @Component({
-    selector: 'insights', templateUrl: './insights.component.html', styleUrls: ['./insights.component.scss']
-
+    selector: 'insights', templateUrl: './insights.component.html', styleUrls: ['./insights.component.scss'],
+    standalone: true,
+    imports: [MatToolbar, MatIconButton, FaIconComponent, MatTabGroup, MatTab, NgIf, CriteriaToolbarComponent, ExpensesRevenueComponent, RevenueExpensesPerPeriodAndCategoryComponent, CategoryDetailsComponent, BudgetTrackingComponent]
 })
 export class InsightsComponent implements OnInit {
 

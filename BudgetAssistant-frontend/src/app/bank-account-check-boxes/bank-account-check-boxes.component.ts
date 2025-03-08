@@ -1,13 +1,17 @@
 import {Component, EventEmitter, OnDestroy, OnInit, Output} from '@angular/core';
 import {AppService} from "../app.service";
 import {Subject, takeUntil} from "rxjs";
-import {FormBuilder, FormGroup, FormArray} from "@angular/forms";
+import { FormBuilder, FormGroup, FormArray, FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { BankAccount } from '@daanvdn/budget-assistant-client';
+import { NgFor, UpperCasePipe } from '@angular/common';
+import { MatCheckbox } from '@angular/material/checkbox';
 
 @Component({
-  selector: 'bank-account-check-boxes',
-  templateUrl: './bank-account-check-boxes.component.html',
-  styleUrls: ['./bank-account-check-boxes.component.scss']
+    selector: 'bank-account-check-boxes',
+    templateUrl: './bank-account-check-boxes.component.html',
+    styleUrls: ['./bank-account-check-boxes.component.scss'],
+    standalone: true,
+    imports: [FormsModule, ReactiveFormsModule, NgFor, MatCheckbox, UpperCasePipe]
 })
 export class BankAccountCheckBoxesComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();

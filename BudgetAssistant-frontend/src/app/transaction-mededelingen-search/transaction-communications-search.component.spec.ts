@@ -11,8 +11,8 @@ describe('TransactionMededelingenSearchComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ TransactionCommunicationsSearchComponent ]
-    })
+    imports: [TransactionCommunicationsSearchComponent]
+})
     .compileComponents();
   }));
 

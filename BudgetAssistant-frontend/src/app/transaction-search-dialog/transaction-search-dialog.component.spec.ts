@@ -11,8 +11,8 @@ describe('TransactionSearchDialogComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ TransactionSearchDialogComponent ]
-    })
+    imports: [TransactionSearchDialogComponent]
+})
     .compileComponents();
   }));
 

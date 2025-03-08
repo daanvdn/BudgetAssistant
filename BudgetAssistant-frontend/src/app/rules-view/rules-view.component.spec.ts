@@ -8,8 +8,8 @@ describe('ExpensesRulesViewComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ RulesViewComponent ]
-    })
+    imports: [RulesViewComponent]
+})
     .compileComponents();
 
     fixture = TestBed.createComponent(RulesViewComponent);

@@ -8,8 +8,8 @@ describe('BankAccountCheckBoxesComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ BankAccountCheckBoxesComponent ]
-    })
+    imports: [BankAccountCheckBoxesComponent]
+})
     .compileComponents();
 
     fixture = TestBed.createComponent(BankAccountCheckBoxesComponent);

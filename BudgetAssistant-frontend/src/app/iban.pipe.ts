@@ -1,7 +1,8 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
 @Pipe({
-  name: 'iban'
+    name: 'iban',
+    standalone: true
 })
 export class IbanPipe implements PipeTransform {
 

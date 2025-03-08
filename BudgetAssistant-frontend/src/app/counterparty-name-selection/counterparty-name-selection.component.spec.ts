@@ -11,8 +11,8 @@ describe('TegenpartijSelectionComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ CounterpartyNameSelectionComponent ]
-    })
+    imports: [CounterpartyNameSelectionComponent]
+})
     .compileComponents();
   }));
 

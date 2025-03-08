@@ -1,13 +1,20 @@
 import {Component, EventEmitter, OnDestroy, OnInit, Output} from '@angular/core';
-import {FormBuilder, FormGroup} from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {AppService} from '../app.service';
 import {Subject, takeUntil} from "rxjs";
 import {BankAccount} from "@daanvdn/budget-assistant-client";
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatSelect } from '@angular/material/select';
+import { NgFor, UpperCasePipe } from '@angular/common';
+import { MatOption } from '@angular/material/core';
+import { IbanPipe } from '../iban.pipe';
 
 @Component({
-  selector: 'bank-account-selection',
-  templateUrl: './bank-account-selection.component.html',
-  styleUrls: ['./bank-account-selection.component.scss']
+    selector: 'bank-account-selection',
+    templateUrl: './bank-account-selection.component.html',
+    styleUrls: ['./bank-account-selection.component.scss'],
+    standalone: true,
+    imports: [FormsModule, ReactiveFormsModule, MatFormField, MatLabel, MatSelect, NgFor, MatOption, UpperCasePipe, IbanPipe]
 })
 export class BankAccountSelectionComponent implements OnInit, OnDestroy {
 

@@ -11,8 +11,8 @@ describe('TransactiontypeSelectionComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ TransactiontypeSelectionComponent ]
-    })
+    imports: [TransactiontypeSelectionComponent]
+})
     .compileComponents();
   }));
 

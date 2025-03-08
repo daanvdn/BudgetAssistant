@@ -1,12 +1,18 @@
 import {Component, EventEmitter, OnInit, Output} from '@angular/core';
-import {FormBuilder, FormGroup} from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {AppService} from '../app.service';
 import {GroupingEnum} from "@daanvdn/budget-assistant-client";
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatSelect } from '@angular/material/select';
+import { NgFor } from '@angular/common';
+import { MatOption } from '@angular/material/core';
 
 @Component({
-  selector: 'grouping-type-selection',
-  templateUrl: './grouping-type-selection.component.html',
-  styleUrls: ['./grouping-type-selection.component.scss']
+    selector: 'grouping-type-selection',
+    templateUrl: './grouping-type-selection.component.html',
+    styleUrls: ['./grouping-type-selection.component.scss'],
+    standalone: true,
+    imports: [FormsModule, ReactiveFormsModule, MatFormField, MatLabel, MatSelect, NgFor, MatOption]
 })
 export class GroupingTypeSelectionComponent implements OnInit {
 

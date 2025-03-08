@@ -1,10 +1,10 @@
-import {DatePipe} from '@angular/common';
+import { DatePipe, NgIf, AsyncPipe, TitleCasePipe } from '@angular/common';
 import {AfterViewInit, Component, OnInit, ViewChild} from '@angular/core';
 import {MatDialog} from '@angular/material/dialog';
 import {MatPaginator} from '@angular/material/paginator';
-import {MatRadioChange} from '@angular/material/radio';
-import {MatSort} from '@angular/material/sort';
-import {MatTable} from '@angular/material/table';
+import { MatRadioChange, MatRadioGroup, MatRadioButton } from '@angular/material/radio';
+import { MatSort, MatSortHeader } from '@angular/material/sort';
+import { MatTable, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatCellDef, MatCell, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow } from '@angular/material/table';
 import {PaginationDataSource} from 'ngx-pagination-data-source';
 import {AppService} from '../app.service';
 import {
@@ -19,6 +19,14 @@ import {ErrorDialogService} from "../error-dialog/error-dialog.service";
 import {faTag} from "@fortawesome/free-solid-svg-icons";
 import {Router} from "@angular/router";
 import {Transaction, TransactionQuery, TransactionTypeEnum} from '@daanvdn/budget-assistant-client';
+import { MatToolbar } from '@angular/material/toolbar';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { MatButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { MatTooltip } from '@angular/material/tooltip';
+import { MatBadge } from '@angular/material/badge';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { CategoryTreeDropdownComponent } from '../category-tree-dropdown/category-tree-dropdown.component';
 
 
 enum ViewType {
@@ -30,10 +38,11 @@ enum ViewType {
 
 
 @Component({
-  selector: 'app-transactions',
-  templateUrl: './transactions.component.html',
-  styleUrls: ['./transactions.component.scss']
-
+    selector: 'app-transactions',
+    templateUrl: './transactions.component.html',
+    styleUrls: ['./transactions.component.scss'],
+    standalone: true,
+    imports: [MatToolbar, NgIf, MatProgressSpinner, BankAccountSelectionComponent, MatButton, MatIcon, MatTooltip, MatBadge, FaIconComponent, MatPaginator, MatTable, MatSort, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatSortHeader, MatCellDef, MatCell, CategoryTreeDropdownComponent, MatRadioGroup, MatRadioButton, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow, AsyncPipe, TitleCasePipe, DatePipe]
 })
 export class TransactionsComponent implements OnInit, AfterViewInit {
 

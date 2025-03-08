@@ -11,8 +11,8 @@ describe('UitgavenTypeComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ RecurrenceComponent ]
-    })
+    imports: [RecurrenceComponent]
+})
     .compileComponents();
   }));
 

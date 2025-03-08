@@ -6,14 +6,16 @@ import {AppService} from "../app.service";
 import {AuthService} from "../auth/auth.service";
 import {ErrorDialogService} from "../error-dialog/error-dialog.service";
 import {CategoryNode, CategoryType} from "../model";
+import { QueryBuilderComponent } from '../query-builder/query-builder.component';
+import { FormsModule } from '@angular/forms';
 
 
 @Component({
-  selector: 'category-rules',
-  templateUrl: './rules-builder.component.html',
-  styleUrls: ['./rules-builder.component.scss']
-
-
+    selector: 'category-rules',
+    templateUrl: './rules-builder.component.html',
+    styleUrls: ['./rules-builder.component.scss'],
+    standalone: true,
+    imports: [QueryBuilderComponent, FormsModule]
 })
 export class RulesBuilderComponent implements OnInit, OnChanges {
 

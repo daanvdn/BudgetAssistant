@@ -8,8 +8,8 @@ describe('ManualCategorizationViewComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ ManualCategorizationViewComponent ]
-    })
+    imports: [ManualCategorizationViewComponent]
+})
     .compileComponents();
 
     fixture = TestBed.createComponent(ManualCategorizationViewComponent);

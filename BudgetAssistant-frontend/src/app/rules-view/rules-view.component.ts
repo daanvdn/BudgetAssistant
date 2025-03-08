@@ -1,18 +1,34 @@
 import {NestedTreeControl} from '@angular/cdk/tree';
 import {Component, Inject, OnInit} from '@angular/core';
 import {AppService} from "../app.service";
-import {MatTreeNestedDataSource} from "@angular/material/tree";
+import { MatTreeNestedDataSource, MatTree, MatTreeNodeDef, MatTreeNode, MatTreeNodeToggle, MatNestedTreeNode, MatTreeNodeOutlet } from "@angular/material/tree";
 import {faNetworkWired, faPlay} from "@fortawesome/free-solid-svg-icons";
-import {MatButtonToggleChange} from "@angular/material/button-toggle";
-import {MAT_DIALOG_DATA, MatDialog, MatDialogRef} from "@angular/material/dialog";
+import { MatButtonToggleChange, MatButtonToggleGroup, MatButtonToggle } from "@angular/material/button-toggle";
+import { MAT_DIALOG_DATA, MatDialog, MatDialogRef, MatDialogTitle, MatDialogContent, MatDialogActions } from "@angular/material/dialog";
 import {ActiveView, CategoryNode, TransactionsCategorizationResponse} from "../model";
 import {ErrorDialogService} from "../error-dialog/error-dialog.service";
 import {AuthService} from "../auth/auth.service";
 import {faSearch} from "@fortawesome/free-solid-svg-icons/faSearch";
+import { MatToolbar } from '@angular/material/toolbar';
+import { MatIconButton, MatButton } from '@angular/material/button';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MatTooltip } from '@angular/material/tooltip';
+import { NgSwitch, NgSwitchCase } from '@angular/common';
+import { MatIcon } from '@angular/material/icon';
+import { RulesBuilderComponent } from '../rules-builder/rules-builder.component';
+import { CdkScrollable } from '@angular/cdk/scrolling';
 
 
 @Component({
-  selector: 'app-dialog', templateUrl: './run-categorization-dialog-component.component.html',
+    selector: 'app-dialog', templateUrl: './run-categorization-dialog-component.component.html',
+    standalone: true,
+    imports: [
+        MatDialogTitle,
+        CdkScrollable,
+        MatDialogContent,
+        MatDialogActions,
+        MatButton,
+    ],
 })
 export class RunCategorizationDialogComponent {
 
@@ -27,9 +43,11 @@ export class RunCategorizationDialogComponent {
 }
 
 @Component({
-  selector: 'app-expenses-rules-view',
-  templateUrl: './rules-view.component.html',
-  styleUrls: ['./rules-view.component.scss']
+    selector: 'app-expenses-rules-view',
+    templateUrl: './rules-view.component.html',
+    styleUrls: ['./rules-view.component.scss'],
+    standalone: true,
+    imports: [MatToolbar, MatIconButton, FaIconComponent, MatTooltip, NgSwitch, NgSwitchCase, MatButtonToggleGroup, MatButtonToggle, MatTree, MatTreeNodeDef, MatTreeNode, MatTreeNodeToggle, MatIcon, MatNestedTreeNode, MatTreeNodeOutlet, MatButton, RulesBuilderComponent]
 })
 export class RulesViewComponent implements OnInit {
 

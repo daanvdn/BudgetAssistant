@@ -1,15 +1,25 @@
 import {Component, OnInit} from '@angular/core';
 import {AppService} from "../app.service";
-import {LegendPosition} from "@swimlane/ngx-charts";
+import { LegendPosition, PieChartModule } from "@swimlane/ngx-charts";
 import {DistributionByCategoryForPeriodChartData, Period} from "../model";
+import { NgIf, NgFor } from '@angular/common';
+import { MatCard, MatCardHeader, MatCardContent } from '@angular/material/card';
 
 
 
 @Component({
-  selector: 'analysis-for-period-by-category',
-  templateUrl: './analysis-for-period-by-category.component.html',
-  styleUrls: ['./analysis-for-period-by-category.component.scss'],
-
+    selector: 'analysis-for-period-by-category',
+    templateUrl: './analysis-for-period-by-category.component.html',
+    styleUrls: ['./analysis-for-period-by-category.component.scss'],
+    standalone: true,
+    imports: [
+        NgIf,
+        NgFor,
+        MatCard,
+        MatCardHeader,
+        MatCardContent,
+        PieChartModule,
+    ],
 })
 export class AnalysisForPeriodByCategoryComponent implements OnInit {
 

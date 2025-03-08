@@ -8,8 +8,8 @@ describe('ExpensesRevenueToggleComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ ExpensesRevenueToggleComponent ]
-    })
+    imports: [ExpensesRevenueToggleComponent]
+})
     .compileComponents();
 
     fixture = TestBed.createComponent(ExpensesRevenueToggleComponent);

@@ -11,8 +11,8 @@ describe('InkomstenUitgavenPerJaarComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ ExpensesRevenueComponent ]
-    })
+    imports: [ExpensesRevenueComponent]
+})
     .compileComponents();
   }));
 

@@ -8,8 +8,8 @@ describe('TransactionDialogComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ TransactionsInContextDialogComponent ]
-    })
+    imports: [TransactionsInContextDialogComponent]
+})
     .compileComponents();
 
     fixture = TestBed.createComponent(TransactionsInContextDialogComponent);

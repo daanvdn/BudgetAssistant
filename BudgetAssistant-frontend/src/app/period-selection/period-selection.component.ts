@@ -1,11 +1,14 @@
-import {formatDate} from '@angular/common';
+import { formatDate, NgIf, NgFor } from '@angular/common';
 import {Component, EventEmitter, OnChanges, OnInit, Output, ViewChild} from '@angular/core';
-import {FormBuilder, FormControl, FormGroup} from '@angular/forms';
-import {DateAdapter, MAT_DATE_FORMATS, NativeDateAdapter} from '@angular/material/core';
+import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { DateAdapter, MAT_DATE_FORMATS, NativeDateAdapter, MatOption } from '@angular/material/core';
 import {NgSelectComponent} from '@ng-select/ng-select';
 import {AppService} from '../app.service';
 import {StartEndDateShortcut} from '../model';
-import {DateFilterFn} from "@angular/material/datepicker";
+import { DateFilterFn, MatDateRangeInput, MatStartDate, MatEndDate, MatDatepickerToggle, MatDateRangePicker } from "@angular/material/datepicker";
+import { MatFormField, MatLabel, MatSuffix } from '@angular/material/form-field';
+import { MatButton } from '@angular/material/button';
+import { MatSelect } from '@angular/material/select';
 
 export const PICK_FORMATS = {
   parse: { dateInput: { month: 'short', year: 'numeric', day: 'numeric' } },
@@ -29,13 +32,15 @@ class PickDateAdapter extends NativeDateAdapter {
 }
 
 @Component({
-  selector: 'period-selection',
-  templateUrl: './period-selection.component.html',
-  styleUrls: ['./period-selection.component.scss'],
-  providers: [
-    { provide: DateAdapter, useClass: PickDateAdapter },
-    { provide: MAT_DATE_FORMATS, useValue: PICK_FORMATS }
-  ]
+    selector: 'period-selection',
+    templateUrl: './period-selection.component.html',
+    styleUrls: ['./period-selection.component.scss'],
+    providers: [
+        { provide: DateAdapter, useClass: PickDateAdapter },
+        { provide: MAT_DATE_FORMATS, useValue: PICK_FORMATS }
+    ],
+    standalone: true,
+    imports: [MatFormField, MatLabel, MatDateRangeInput, FormsModule, ReactiveFormsModule, MatStartDate, MatEndDate, MatDatepickerToggle, MatSuffix, MatDateRangePicker, NgIf, MatButton, MatSelect, NgFor, MatOption]
 })
 export class PeriodSelectionComponent implements OnInit, OnChanges {
 

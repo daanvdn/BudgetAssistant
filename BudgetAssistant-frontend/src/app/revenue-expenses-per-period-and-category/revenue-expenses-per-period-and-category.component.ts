@@ -6,7 +6,7 @@ import {CategoryMap} from '../model';
 import {Criteria} from "../insights/insights.component";
 // @ts-ignore
 import autocolors from 'chartjs-plugin-autocolors';
-import {MatTable, MatTableDataSource} from "@angular/material/table";
+import { MatTable, MatTableDataSource, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatCellDef, MatCell, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow } from "@angular/material/table";
 import {MatDialog} from "@angular/material/dialog";
 import {TransactionsInContextDialogComponent} from "../transaction-dialog/transactions-in-context-dialog.component";
 import {
@@ -21,11 +21,17 @@ import {
   TransactionInContextQuery,
   TransactionTypeEnum
 } from "@daanvdn/budget-assistant-client";
+import { NgIf, NgFor, NgClass } from '@angular/common';
+import { CdkMenu, CdkMenuItem, CdkContextMenuTrigger } from '@angular/cdk/menu';
+import { ChartModule } from 'primeng/chart';
+import { MatTooltip } from '@angular/material/tooltip';
 
 @Component({
-  selector: 'revenue-expenses-per-period-and-category',
-  templateUrl: './revenue-expenses-per-period-and-category.component.html',
-  styleUrls: ['./revenue-expenses-per-period-and-category.component.scss']
+    selector: 'revenue-expenses-per-period-and-category',
+    templateUrl: './revenue-expenses-per-period-and-category.component.html',
+    styleUrls: ['./revenue-expenses-per-period-and-category.component.scss'],
+    standalone: true,
+    imports: [NgIf, CdkMenu, CdkMenuItem, ChartModule, MatTooltip, MatTable, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatCellDef, MatCell, NgFor, NgClass, CdkContextMenuTrigger, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow]
 })
 export class RevenueExpensesPerPeriodAndCategoryComponent implements OnInit, OnChanges {
 

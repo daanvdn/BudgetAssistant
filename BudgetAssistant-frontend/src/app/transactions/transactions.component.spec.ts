@@ -11,8 +11,8 @@ describe('TransactionsComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ TransactionsComponent ]
-    })
+    imports: [TransactionsComponent]
+})
     .compileComponents();
   }));
 

@@ -11,8 +11,8 @@ describe('RekeningSelectionComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ BankAccountSelectionComponent ]
-    })
+    imports: [BankAccountSelectionComponent]
+})
     .compileComponents();
   }));
 

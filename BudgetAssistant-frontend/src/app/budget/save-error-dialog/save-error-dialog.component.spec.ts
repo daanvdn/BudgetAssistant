@@ -8,8 +8,8 @@ describe('SaveErrorDialogComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ SaveErrorDialogComponent ]
-    })
+    imports: [SaveErrorDialogComponent]
+})
     .compileComponents();
 
     fixture = TestBed.createComponent(SaveErrorDialogComponent);

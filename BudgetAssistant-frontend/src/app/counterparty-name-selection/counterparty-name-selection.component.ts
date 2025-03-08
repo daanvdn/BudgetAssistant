@@ -2,11 +2,15 @@ import {Component, EventEmitter, OnInit, Output, ViewChild} from '@angular/core'
 import {NgSelectComponent} from '@ng-select/ng-select';
 import {Observable} from 'rxjs';
 import {AppService} from '../app.service';
+import { FormsModule } from '@angular/forms';
+import { AsyncPipe } from '@angular/common';
 
 @Component({
-  selector: 'app-counterparty-name-selection',
-  templateUrl: './counterparty-name-selection.component.html',
-  styleUrls: ['./counterparty-name-selection.component.scss']
+    selector: 'app-counterparty-name-selection',
+    templateUrl: './counterparty-name-selection.component.html',
+    styleUrls: ['./counterparty-name-selection.component.scss'],
+    standalone: true,
+    imports: [NgSelectComponent, FormsModule, AsyncPipe]
 })
 export class CounterpartyNameSelectionComponent implements OnInit {
 

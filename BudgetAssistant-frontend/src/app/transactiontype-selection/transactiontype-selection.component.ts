@@ -1,13 +1,18 @@
 import { Component, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
-import {FormBuilder, FormGroup } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule } from '@angular/forms';
 import { NgSelectComponent } from '@ng-select/ng-select';
 import { first, Observable, of } from 'rxjs';
 import { TransactionType } from '../model';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatInput } from '@angular/material/input';
+import { AsyncPipe } from '@angular/common';
 
 @Component({
-  selector: 'app-transactiontype-selection',
-  templateUrl: './transactiontype-selection.component.html',
-  styleUrls: ['./transactiontype-selection.component.scss']
+    selector: 'app-transactiontype-selection',
+    templateUrl: './transactiontype-selection.component.html',
+    styleUrls: ['./transactiontype-selection.component.scss'],
+    standalone: true,
+    imports: [MatFormField, MatLabel, MatInput, FormsModule, NgSelectComponent, AsyncPipe]
 })
 
 

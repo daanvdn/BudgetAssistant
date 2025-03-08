@@ -1,14 +1,23 @@
 import {AfterViewInit, Component, Inject, OnInit} from '@angular/core';
 import {PaginationDataSource} from "ngx-pagination-data-source";
 import {AppService} from "../app.service";
-import {MAT_DIALOG_DATA, MatDialogRef} from "@angular/material/dialog";
+import { MAT_DIALOG_DATA, MatDialogRef, MatDialogTitle, MatDialogContent, MatDialogActions } from "@angular/material/dialog";
 import {Transaction, TransactionQuery, TransactionInContextQuery} from "@daanvdn/budget-assistant-client";
 import {AmountType, inferAmountType} from "../model";
+import { CdkScrollable } from '@angular/cdk/scrolling';
+import { MatTable, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatCellDef, MatCell, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow } from '@angular/material/table';
+import { MatSort, MatSortHeader } from '@angular/material/sort';
+import { NgIf, AsyncPipe, TitleCasePipe, DatePipe } from '@angular/common';
+import { CategoryTreeDropdownComponent } from '../category-tree-dropdown/category-tree-dropdown.component';
+import { MatPaginator } from '@angular/material/paginator';
+import { MatButton } from '@angular/material/button';
 
 @Component({
     selector: 'transactions-in-context-dialog',
     templateUrl: './transactions-in-context-dialog.component.html',
-    styleUrls: ['./transactions-in-context-dialog.component.scss']
+    styleUrls: ['./transactions-in-context-dialog.component.scss'],
+    standalone: true,
+    imports: [MatDialogTitle, CdkScrollable, MatDialogContent, MatTable, MatSort, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatSortHeader, MatCellDef, MatCell, NgIf, CategoryTreeDropdownComponent, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow, MatPaginator, MatDialogActions, MatButton, AsyncPipe, TitleCasePipe, DatePipe]
 })
 export class TransactionsInContextDialogComponent implements OnInit, AfterViewInit {
     dataSource!: PaginationDataSource<Transaction, TransactionInContextQuery>;

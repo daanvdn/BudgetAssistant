@@ -11,8 +11,8 @@ describe('UitgavenPerCategorieComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ ExpensesByCategoryComponent ]
-    })
+    imports: [ExpensesByCategoryComponent]
+})
     .compileComponents();
   }));
 

@@ -11,8 +11,8 @@ describe('GroupingTypeSelectionComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ GroupingTypeSelectionComponent ]
-    })
+    imports: [GroupingTypeSelectionComponent]
+})
     .compileComponents();
   }));
 

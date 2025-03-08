@@ -1,12 +1,16 @@
 import {Component, OnInit} from '@angular/core';
-import {FormBuilder, FormControl, FormGroup} from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {AppService} from '../app.service';
 import {StartEndDateShortcut} from '../model';
 
-import {DateAdapter, MAT_DATE_FORMATS, NativeDateAdapter} from '@angular/material/core';
-import {formatDate} from '@angular/common';
+import { DateAdapter, MAT_DATE_FORMATS, NativeDateAdapter, MatOption } from '@angular/material/core';
+import { formatDate, NgFor } from '@angular/common';
 import {Subject, takeUntil} from "rxjs";
 import {BankAccount, GroupingEnum, TransactionTypeEnum} from "@daanvdn/budget-assistant-client";
+import { MatFormField, MatLabel, MatHint, MatSuffix } from '@angular/material/form-field';
+import { MatSelect } from '@angular/material/select';
+import { MatDateRangeInput, MatStartDate, MatEndDate, MatDatepickerToggle, MatDateRangePicker } from '@angular/material/datepicker';
+import { MatButton } from '@angular/material/button';
 
 export const PICK_FORMATS = {
   parse: {dateInput: {month: 'short', year: 'numeric', day: 'numeric'}},
@@ -31,13 +35,15 @@ class PickDateAdapter extends NativeDateAdapter {
 }
 
 @Component({
-  selector: 'app-filters',
-  templateUrl: './filters.component.html',
-  styleUrls: ['./filters.component.scss'],
-  providers: [
-    {provide: DateAdapter, useClass: PickDateAdapter},
-    {provide: MAT_DATE_FORMATS, useValue: PICK_FORMATS}
-  ]
+    selector: 'app-filters',
+    templateUrl: './filters.component.html',
+    styleUrls: ['./filters.component.scss'],
+    providers: [
+        { provide: DateAdapter, useClass: PickDateAdapter },
+        { provide: MAT_DATE_FORMATS, useValue: PICK_FORMATS }
+    ],
+    standalone: true,
+    imports: [FormsModule, ReactiveFormsModule, MatFormField, MatLabel, MatSelect, NgFor, MatOption, MatDateRangeInput, MatStartDate, MatEndDate, MatHint, MatDatepickerToggle, MatSuffix, MatDateRangePicker, MatButton]
 })
 export class FiltersComponent implements OnInit {
 

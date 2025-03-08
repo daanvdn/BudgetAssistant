@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, Inject, OnInit, ViewChild } from '@angular/core';
-import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatDialogRef, MAT_DIALOG_DATA, MatDialogTitle, MatDialogContent, MatDialogActions } from '@angular/material/dialog';
 import {CategoryTreeDropdownComponent} from '../category-tree-dropdown/category-tree-dropdown.component';
 import {AmountType, TransactionQuery, TransactionType} from '../model';
 import { PeriodSelectionComponent } from '../period-selection/period-selection.component';
@@ -7,11 +7,17 @@ import { CounterpartyAccountNumberSelectionComponent } from '.././counterparty-a
 import { CounterpartyNameSelectionComponent } from '.././counterparty-name-selection/counterparty-name-selection.component';
 import { TransactionCommunicationsSearchComponent } from '../transaction-mededelingen-search/transaction-communications-search.component';
 import { TransactiontypeSelectionComponent } from '../transactiontype-selection/transactiontype-selection.component';
+import { CdkScrollable } from '@angular/cdk/scrolling';
+import { CounterpartyNameSelectionComponent as CounterpartyNameSelectionComponent_1 } from '../counterparty-name-selection/counterparty-name-selection.component';
+import { CounterpartyAccountNumberSelectionComponent as CounterpartyAccountNumberSelectionComponent_1 } from '../counterparty-account-number-selection/counterparty-account-number-selection.component';
+import { MatButton } from '@angular/material/button';
 
 @Component({
-  selector: 'app-transaction-search-dialog',
-  templateUrl: './transaction-search-dialog.component.html',
-  styleUrls: ['./transaction-search-dialog.component.scss']
+    selector: 'app-transaction-search-dialog',
+    templateUrl: './transaction-search-dialog.component.html',
+    styleUrls: ['./transaction-search-dialog.component.scss'],
+    standalone: true,
+    imports: [MatDialogTitle, CdkScrollable, MatDialogContent, TransactiontypeSelectionComponent, PeriodSelectionComponent, CategoryTreeDropdownComponent, CounterpartyNameSelectionComponent_1, CounterpartyAccountNumberSelectionComponent_1, TransactionCommunicationsSearchComponent, MatDialogActions, MatButton]
 })
 export class TransactionSearchDialogComponent implements OnInit, AfterViewInit {
 

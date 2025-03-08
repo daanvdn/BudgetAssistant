@@ -1,13 +1,18 @@
 import {SelectionModel} from '@angular/cdk/collections';
 import {FlatTreeControl} from '@angular/cdk/tree';
 import {Component, EventEmitter, Input, OnInit, Output, ViewChild} from '@angular/core';
-import {MatTreeFlatDataSource, MatTreeFlattener} from '@angular/material/tree';
+import { MatTreeFlatDataSource, MatTreeFlattener, MatTree, MatTreeNodeDef, MatTreeNode, MatTreeNodeToggle, MatTreeNodePadding } from '@angular/material/tree';
 import {BehaviorSubject} from 'rxjs';
 import {AppService} from '../app.service';
-import {FormBuilder, FormGroup} from "@angular/forms";
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from "@angular/forms";
 import {MatFormField} from "@angular/material/form-field";
-import {MatAutocompleteTrigger} from "@angular/material/autocomplete";
+import { MatAutocompleteTrigger, MatAutocomplete } from "@angular/material/autocomplete";
 import {AmountType, CategoryNode, FlatCategoryNode, NO_CATEGORY} from "../model";
+import { MatInput } from '@angular/material/input';
+import { MatOption } from '@angular/material/core';
+import { MatIconButton } from '@angular/material/button';
+import { MatCheckbox } from '@angular/material/checkbox';
+import { MatIcon } from '@angular/material/icon';
 
 
 // @Injectable({ providedIn: "root" })
@@ -114,9 +119,11 @@ export class BackingDatabase {
 
 
 @Component({
-  selector: 'app-category-tree-dropdown',
-  templateUrl: './category-tree-dropdown.component.html',
-  styleUrls: ['./category-tree-dropdown.component.scss']
+    selector: 'app-category-tree-dropdown',
+    templateUrl: './category-tree-dropdown.component.html',
+    styleUrls: ['./category-tree-dropdown.component.scss'],
+    standalone: true,
+    imports: [FormsModule, ReactiveFormsModule, MatFormField, MatInput, MatAutocompleteTrigger, MatAutocomplete, MatOption, MatTree, MatTreeNodeDef, MatTreeNode, MatTreeNodeToggle, MatTreeNodePadding, MatIconButton, MatCheckbox, MatIcon]
 })
 export class CategoryTreeDropdownComponent implements OnInit  {
 

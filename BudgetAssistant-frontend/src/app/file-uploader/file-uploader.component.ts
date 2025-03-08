@@ -1,14 +1,19 @@
 import { Component, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
 import { Observable } from 'rxjs';
 import { FileQueueObject, FileUploaderService } from '../file-uploader.service';
+import { MatDialogTitle, MatDialogContent } from '@angular/material/dialog';
+import { CdkScrollable } from '@angular/cdk/scrolling';
+import { NgFor, NgIf, AsyncPipe, DecimalPipe } from '@angular/common';
 
 
 
 
 @Component({
-  selector: 'file-uploader, [file-uploader]',
-  templateUrl: 'file-uploader.component.html',
-  styleUrls: ['./file-uploader.component.scss']
+    selector: 'file-uploader, [file-uploader]',
+    templateUrl: 'file-uploader.component.html',
+    styleUrls: ['./file-uploader.component.scss'],
+    standalone: true,
+    imports: [MatDialogTitle, CdkScrollable, MatDialogContent, NgFor, NgIf, AsyncPipe, DecimalPipe]
 })
 
 export class FileUploaderComponent implements OnInit {

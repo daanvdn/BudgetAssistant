@@ -3,7 +3,7 @@ import {Dataset, TransactionType} from "../model";
 import {AppService} from "../app.service";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import {Observable} from "rxjs";
-import {MatSelectionListChange} from "@angular/material/list";
+import { MatSelectionListChange, MatSelectionList, MatListOption } from "@angular/material/list";
 // @ts-ignore
 import autocolors from 'chartjs-plugin-autocolors';
 import {ExpensesRecurrenceEnum, RevenueExpensesQuery, TransactionTypeEnum} from "@daanvdn/budget-assistant-client";
@@ -11,6 +11,8 @@ import {ExpensesRecurrenceEnum, RevenueExpensesQuery, TransactionTypeEnum} from 
 import {Criteria} from "../insights/insights.component";
 import {BankAccount} from "@daanvdn/budget-assistant-client";
 import {RevenueRecurrenceEnum} from "@daanvdn/budget-assistant-client";
+import { NgIf, NgFor } from '@angular/common';
+import { ChartModule } from 'primeng/chart';
 
 
 interface Category {
@@ -21,7 +23,9 @@ interface Category {
 @Component({
     selector: 'category-details',
     templateUrl: './category-details.component.html',
-    styleUrls: ['./category-details.component.scss']
+    styleUrls: ['./category-details.component.scss'],
+    standalone: true,
+    imports: [NgIf, MatSelectionList, NgFor, MatListOption, ChartModule]
 })
 export class CategoryDetailsComponent implements OnInit, OnChanges {
 
