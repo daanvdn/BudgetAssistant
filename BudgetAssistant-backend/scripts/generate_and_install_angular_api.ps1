@@ -112,8 +112,10 @@ $packageJsonString = $packageJsonString -replace "GIT_REPO_ID", "BudgetAssistant
 Write-Output "Updated package.json: $packageJsonString"
 
 # Save updated package.json
-$packageJsonString | Out-File -FilePath package.json -Encoding utf8
-
+#$packageJsonString | Out-File -FilePath package.json -Encoding utf8
+# Replace the current WriteAllText line with this:
+$utf8NoBom = New-Object System.Text.UTF8Encoding $false
+[System.IO.File]::WriteAllText("$pwd\package.json", $packageJsonString, $utf8NoBom)
 # Store full package name in environment variable
 $env:PACKAGE_NAME = "budget-assistant-client-1.0.0.tgz"
 npm pack
