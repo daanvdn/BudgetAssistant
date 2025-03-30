@@ -1,33 +1,36 @@
-import { HttpClient, HttpEvent, HttpHeaders } from '@angular/common/http';
+import {HttpClient, HttpEvent, HttpHeaders} from '@angular/common/http';
 import {Injectable} from '@angular/core';
 import {BehaviorSubject, catchError, map, Observable, of, Subject, tap, throwError} from 'rxjs';
 
 import {Page, PageRequest} from "@daanvdn/ngx-pagination-data-source";
 import {
     BudgetTrackerResult,
-    CategoryDetailsForPeriodHandlerResult, CategoryMap, CategoryNode, CategoryType,
+    CategoryDetailsForPeriodHandlerResult,
+    CategoryMap,
+    CategoryNode,
     CompositeTransactionsFileUploadResponse,
     DistributionByCategoryForPeriodHandlerResult2,
     FileWrapper,
     ResolvedStartEndDateShortcut,
     StartEndDateShortcut,
-    TransactionsCategorizationResponse,
-    TransactionType
+    TransactionsCategorizationResponse
 } from './model';
 import {AuthService} from "./auth/auth.service";
 import {BudgetTreeNode, UpdateBudgetEntryResponse} from "./budget/budget.component";
-import {deserializeRuleSet, RuleSetWrapper} from "./query-builder/query-builder.interfaces";
-import {environment} from "../environments/environment";
 import {
     ApiBudgetAssistantBackendClientService,
     BankAccount,
     GroupingEnum,
-    RevenueExpensesQuery,
+    PageTransactionsInContextRequest,
+    PageTransactionsToManuallyReviewRequest,
+    RevenueExpensesQuery, RuleSetWrapper,
     SimplifiedCategory,
     Transaction,
     TransactionQuery,
-    TransactionTypeEnum, PageTransactionsToManuallyReviewRequest, PageTransactionsInContextRequest
+    TransactionTypeEnum,
+    TypeEnum
 } from "@daanvdn/budget-assistant-client";
+import {environment} from "../environments/environment";
 import {
     RevenueAndExpensesPerPeriodResponse
 } from "@daanvdn/budget-assistant-client/model/revenue-and-expenses-per-period-response";
@@ -37,9 +40,8 @@ import {SortOrderEnum} from "@daanvdn/budget-assistant-client/model/sort-order-e
 import {SortPropertyEnum} from "@daanvdn/budget-assistant-client/model/sort-property-enum";
 import {TransactionsPage} from "@daanvdn/budget-assistant-client/model/transactions-page";
 import {TransactionInContextQuery} from "@daanvdn/budget-assistant-client/model/transaction-in-context-query";
-import {
-    RevenueAndExpensesPerPeriodAndCategory
-} from "@daanvdn/budget-assistant-client/model/revenue-and-expenses-per-period-and-category";
+import {SuccessfulOperationResponse} from "@daanvdn/budget-assistant-client/model/successful-operation-response";
+import {GetOrCreateRuleSetWrapper} from "@daanvdn/budget-assistant-client/model/get-or-create-rule-set-wrapper";
 
 
 @Injectable({
@@ -115,7 +117,7 @@ export class AppService {
         );
     }
 
-    private convertSimplifiedCategoryToCategoryNode(simplified: SimplifiedCategory, type: CategoryType): CategoryNode {
+    private convertSimplifiedCategoryToCategoryNode(simplified: SimplifiedCategory, type: TypeEnum): CategoryNode {
         const children: CategoryNode[] = simplified.children.map(childObj => {
             const [name, value] = Object.entries(childObj)[0];
             return this.convertSimplifiedCategoryToCategoryNode({
@@ -515,50 +517,17 @@ export class AppService {
     }
 
 
-    public saveRuleSetWrapper(ruleSetWrapper: RuleSetWrapper): Observable<void> {
+    public saveRuleSetWrapper(ruleSetWrapper: RuleSetWrapper): Observable<SuccessfulOperationResponse> {
+        return this.apiBudgetAssistantBackendClientService.apiSaveRuleSetWrapperCreate(ruleSetWrapper)
 
-
-        const headers = new HttpHeaders().set('Content-Type', 'application/json; charset=utf-8');
-        const options = {headers: headers};
-
-        let body = {
-            ruleSet: ruleSetWrapper.ruleSet.toJson(),
-            category: ruleSetWrapper.category,
-            categoryType: ruleSetWrapper.categoryType,
-            id: ruleSetWrapper.id,
-            users: ruleSetWrapper.users,
-
-
-        }
-
-        let result = this.http.post<void>(`${this.backendUrl}/save_rule_set_wrapper`, body, options)
-        return result;
     }
 
-    public getOrCreateRuleSetWrapper(category: CategoryNode, categoryType: CategoryType,
-                                     userName: string): Observable<RuleSetWrapper> {
-        const params = {
-            type: categoryType, userName: userName, category: category.qualifiedName
-        }
-        return this.http.get<Record<string, any>>(`${this.backendUrl}/get_or_create_rule_set_wrapper`, {params})
-            .pipe(map(response => {
-
-                let id = response['id'];
-                let category = response["category"];
-                let categoryType = response["categoryType"];
-                let users = response["users"];
-                let ruleSet = JSON.stringify(response["ruleSet"]);
-
-                let wrapper: RuleSetWrapper = {
-                    id: id,
-                    category: category,
-                    ruleSet: deserializeRuleSet(ruleSet),
-                    categoryType: categoryType,
-                    users: users
-                }
-                return wrapper;
-
-            }));
+    public getOrCreateRuleSetWrapper(category: CategoryNode, categoryType: TypeEnum): Observable<RuleSetWrapper> {
+        const getOrCreateRuleSetWrapper: GetOrCreateRuleSetWrapper = {
+            categoryQualifiedName : category.qualifiedName,
+            type:  categoryType,
+        };
+        return this.apiBudgetAssistantBackendClientService.apiGetOrCreateRuleSetWrapperCreate(getOrCreateRuleSetWrapper)
 
     }
 
@@ -593,7 +562,7 @@ export class AppService {
             `${this.backendUrl}/get_category_details_for_period`, {params})
     }
 
-    public getCategoriesForAccountAndTransactionType(accountNumber: string, transactionType: TransactionType): Observable<string[]>{
+    public getCategoriesForAccountAndTransactionType(accountNumber: string, transactionType: TransactionTypeEnum): Observable<string[]>{
 
         const params = {
             accountNumber: accountNumber,
@@ -604,6 +573,3 @@ export class AppService {
 
     }
 }
-
-
-

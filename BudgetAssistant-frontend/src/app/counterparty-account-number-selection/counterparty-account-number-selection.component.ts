@@ -38,7 +38,7 @@ export class CounterpartyAccountNumberSelectionComponent implements OnInit {
 
 
 
-  rekeningTegenPartijSelectionChanges() {
+  accountCounterpartySelectionChanges() {
     let sel = this.getSelectedCounterpartAccountNumber()
     if(sel !== null && sel !== undefined){
       this.selectedCounterpartAccountNumber = sel;

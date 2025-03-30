@@ -3,15 +3,14 @@ import {
   CategoricalOperators, Comparator,
   Field, FieldType,
   LocalRuleMeta,
-  MATCH_TYPES,
-  MatchType,
+  MATCH_TYPES, MatchTypes,
   MultiMap, NumericalOperators, Operator,
   Option,
   QueryBuilderClassNames,
   QueryBuilderConfig,
   Rule,
   RuleSet,
-  RuleUtils, StringOperators,
+  RuleUtils, StringOperators
 } from './query-builder.interfaces';
 import {
   ChangeDetectorRef, Component, ElementRef, forwardRef, HostBinding, Input, OnChanges, SimpleChanges, ViewChild
@@ -27,6 +26,8 @@ import { MatOption } from '@angular/material/core';
 import { MatInput } from '@angular/material/input';
 import { MatIcon } from '@angular/material/icon';
 import { MatCheckbox } from '@angular/material/checkbox';
+import {FieldTypeEnum, RuleMatchType, RuleOperator} from "@daanvdn/budget-assistant-client";
+import {ConditionEnum} from "@daanvdn/budget-assistant-client/model/condition-enum";
 
 
 export class FieldsMetaData {
@@ -84,7 +85,7 @@ export const VALIDATOR: any = {
     styleUrls: ['./query-builder.component.scss'],
     providers: [CONTROL_VALUE_ACCESSOR, VALIDATOR],
     standalone: true,
-    imports: [NgClass, NgIf, FormsModule, NgFor, MatButton, ReactiveFormsModule, MatFormField, MatSelect, MatOption, NgSwitch, NgSwitchCase, MatError, MatExpansionPanel, MatExpansionPanelHeader, MatInput, MatIconButton, MatIcon, MatCheckbox, AppModule]
+    imports: [NgClass, NgIf, FormsModule, NgFor, MatButton, ReactiveFormsModule, MatFormField, MatSelect, MatOption, NgSwitch, NgSwitchCase, MatError, MatExpansionPanel, MatExpansionPanelHeader, MatInput, MatIconButton, MatIcon, MatCheckbox]
 })
 export class QueryBuilderComponent implements OnChanges, ControlValueAccessor, Validator {
 
@@ -344,7 +345,7 @@ export class QueryBuilderComponent implements OnChanges, ControlValueAccessor, V
     if (!rule.field) {
       return [];
     }
-    if (RuleUtils.fieldIsArray(rule) && (rule.field as Array<Field>).length > 1) {
+    if (RuleUtils.fieldIsArray(rule) && (rule.field as any).length > 1) {
       throw new Error('Expected field to not be an array!');
 
     }
@@ -352,7 +353,7 @@ export class QueryBuilderComponent implements OnChanges, ControlValueAccessor, V
 
     //get random element from set and get options
 
-    let options = (rule.field as Field).options;
+    let options = (rule.field as any).options;
     if (!options) {
       return [];
     }
@@ -373,8 +374,6 @@ export class QueryBuilderComponent implements OnChanges, ControlValueAccessor, V
         return NumericalOperators.ALL;
       case "categorical":
         return CategoricalOperators.ALL;
-      case "null":
-        return [];
       default:
         throw new Error(`Unexpected field type: ${fieldType}`);
 
@@ -640,8 +639,11 @@ export class QueryBuilderComponent implements OnChanges, ControlValueAccessor, V
     if (this.disabled) {
       return;
     }
-
-    this.data.condition = value;
+    //check that value satisfies ConditionEnum
+    if (value.toLowerCase() !== 'and' && value.toLowerCase() !== 'or') {
+      throw new Error('Invalid condition value');
+    }
+    this.data.condition = value.toUpperCase() as  ConditionEnum;
     this.handleTouched();
     this.handleDataChange();
     this.changeDetectorRef.detectChanges();
@@ -660,7 +662,7 @@ export class QueryBuilderComponent implements OnChanges, ControlValueAccessor, V
   }
 
 
-  changeFieldMatchType(fieldMatchType: MatchType, rule: Rule): void {
+  changeFieldMatchType(fieldMatchType: RuleMatchType, rule: Rule): void {
     if (this.disabled) {
       return;
     }
@@ -671,7 +673,7 @@ export class QueryBuilderComponent implements OnChanges, ControlValueAccessor, V
     this.changeDetectorRef.detectChanges(); // Add this line
   }
 
-  changeValueMatchType(valueMatchType: MatchType, rule: Rule): void {
+  changeValueMatchType(valueMatchType: RuleMatchType, rule: Rule): void {
     if (this.disabled) {
       return;
     }
@@ -703,8 +705,11 @@ export class QueryBuilderComponent implements OnChanges, ControlValueAccessor, V
 
 
     // delete rule.value;
-    rule.field = field;
-    rule.operator = field.operators?.[0];
+    rule.field = [field.name];
+    if (field.operators?.[0] !== undefined){
+
+      rule.operator = field.operators?.[0].asOperator() as RuleOperator;
+    }
 
     this.handleTouched();
     this.handleDataChange();
@@ -717,7 +722,7 @@ export class QueryBuilderComponent implements OnChanges, ControlValueAccessor, V
     }
 
 
-    rule.value = undefined;
+    rule.value = [];
     if (!rule.field) {
       rule.field = [];
     } else {
@@ -726,15 +731,21 @@ export class QueryBuilderComponent implements OnChanges, ControlValueAccessor, V
       }
     }
     //check if field is already in rule array
-    let fieldArray: Field[] = rule.field as Field[];
+    let fieldArray: Field[] = rule.field as any;
     for (const fieldItem of field) {
       if (fieldArray.indexOf(fieldItem) === -1) {
         fieldArray.push(fieldItem);
       }
     }
-    rule.field = fieldArray;
+    rule.field = fieldArray.map((f) => f.name);
 
-    rule.operator = field[0]?.operators?.[0];
+    let operator = field[0]?.operators?.[0];
+    if (operator){
+
+      rule.operator = operator;
+    } else {
+        rule.operator = StringOperators.CONTAINS;
+    }
 
 
     this.handleTouched();
@@ -746,14 +757,17 @@ export class QueryBuilderComponent implements OnChanges, ControlValueAccessor, V
     if (this.disabled) {
       return;
     }
+    if(fieldType === null){
+      return;
+    }
 
 
-    rule.fieldType = fieldType;
-    delete rule.field;
-    delete rule.fieldMatchType;
+    rule.fieldType = fieldType as FieldTypeEnum;
+    rule.field = [];
+    rule.fieldMatchType = MatchTypes.ANY_OF;
     // delete rule.value;
-    delete rule.valueMatchType;
-    delete rule.operator;
+    rule.valueMatchType = MatchTypes.ANY_OF;
+    rule.operator = StringOperators.CONTAINS;
 
 
     this.handleTouched();

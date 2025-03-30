@@ -1,3 +1,5 @@
+import {SimpleCategory, TypeEnum} from '@daanvdn/budget-assistant-client';
+
 export interface CategoryAndAmount {
     amount: number;
     category: string;
@@ -228,28 +230,7 @@ export interface DistributionByCategoryForPeriodTableData {
 
 }
 
-export interface RevenueExpensesQuery {
 
-    accountNumber: string | null | undefined;
-    grouping: Grouping | null | undefined;
-    transactionType: TransactionType | null | undefined;
-    start: Date | null | undefined;
-    end: Date | null | undefined;
-    revenueRecurrence: string | null | undefined;
-    expensesRecurrence: string | null | undefined;
-
-
-}
-
-export const EMPTY_REVENUE_EXPENSES_QUERY: RevenueExpensesQuery = {
-    accountNumber: undefined,
-    grouping: undefined,
-    transactionType: undefined,
-    start: undefined,
-    end: undefined,
-    revenueRecurrence: undefined,
-    expensesRecurrence: undefined
-}
 
 export class ResolvedStartEndDateShortcut {
     start: Date;
@@ -339,7 +320,7 @@ export interface CategoryNode {
     children: CategoryNode[];
     name: string;
     qualifiedName: string;
-    type: CategoryType | undefined;
+    type: TypeEnum | undefined;
     id: number;
 
 
@@ -368,7 +349,8 @@ export class FlatCategoryNode {
     expandable!: boolean;
     name!: string;
     qualifiedName!: string;
-    type: CategoryType | undefined;
+    nodeId!: number;
+    type: TypeEnum | undefined;
 }
 
 const DUMMY_CATEGORY: CategoryNode = {
@@ -391,6 +373,7 @@ export class CategoryMap {
     private idToNameMap: Map<number, string> = new Map<number, string>();
     private qualifiedNameToIdMap: Map<string, number> = new Map<string, number>();
     private qualifiedNameToNameMap: Map<string, string> = new Map<string, string>();
+    private simpleCategoryMap: Map<string, SimpleCategory> = new Map<string, SimpleCategory>();
 
     constructor(nodes: CategoryNode[]) {
         for (let node of nodes) {
@@ -402,6 +385,14 @@ export class CategoryMap {
         this.idToNameMap.set(node.id, node.name);
         this.qualifiedNameToIdMap.set(node.qualifiedName, node.id);
         this.qualifiedNameToNameMap.set(node.qualifiedName, node.name);
+
+        // Store a SimpleCategory object for each node
+        this.simpleCategoryMap.set(node.qualifiedName, {
+            qualifiedName: node.qualifiedName,
+            name: node.name,
+            id: node.id
+        });
+
         for (let child of node.children) {
             this.populateMaps(child);
         }
@@ -423,5 +414,25 @@ export class CategoryMap {
         return id;
     }
 
+    public getSimpleCategory(qualifiedName: string): SimpleCategory | null {
+        // If qualifiedName is undefined or null, return null
+        if (!qualifiedName) {
+            return null;
+        }
+
+        let simpleCategory = this.simpleCategoryMap.get(qualifiedName);
+        if (simpleCategory === undefined) {
+            // If the category doesn't exist in our map, create a default one
+            // This handles cases where the category might be from an external source
+            // or was added after the CategoryMap was initialized
+            console.warn("No SimpleCategory found for qualified name " + qualifiedName + ". Creating a default one.");
+            return {
+                qualifiedName: qualifiedName,
+                name: qualifiedName.split('.').pop() || qualifiedName, // Use the last part of the qualified name as the name
+                id: -1 // Use a default ID
+            };
+        }
+        return simpleCategory;
+    }
 
 }

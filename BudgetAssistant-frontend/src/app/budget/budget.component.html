@@ -1,5 +1,7 @@
 <mat-toolbar color="primary" class="toolbar-header">
   <span>Budget</span>
+
+
 </mat-toolbar>
 <div>
   <div style="display: flex;justify-content: space-between; position: sticky; top:0px;background: rgba(255, 255, 255, 1); height: 5vh">
@@ -13,7 +15,7 @@
       </button>
       <button mat-button (click)="toggleTree()" class="button;flex-child">
         <div style="display: flex; flex-direction: column; align-items: center;">
-          <mat-icon>{{ isTreeExpanded ? 'expand_less' : 'expand_more' }}</mat-icon>
+            <mat-icon>{{ isTreeExpanded ? 'expand_less' : 'expand_more' }}</mat-icon>
           {{ isTreeExpanded ? 'Collapse' : 'Expand' }}
         </div>
       </button>

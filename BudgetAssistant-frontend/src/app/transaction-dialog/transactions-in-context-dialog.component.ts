@@ -1,23 +1,39 @@
 import {AfterViewInit, Component, Inject, OnInit} from '@angular/core';
 import {PaginationDataSource} from "@daanvdn/ngx-pagination-data-source";
 import {AppService} from "../app.service";
-import { MAT_DIALOG_DATA, MatDialogRef, MatDialogTitle, MatDialogContent, MatDialogActions } from "@angular/material/dialog";
-import {Transaction, TransactionQuery, TransactionInContextQuery} from "@daanvdn/budget-assistant-client";
-import {AmountType, inferAmountType} from "../model";
-import { CdkScrollable } from '@angular/cdk/scrolling';
-import { MatTable, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatCellDef, MatCell, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow } from '@angular/material/table';
-import { MatSort, MatSortHeader } from '@angular/material/sort';
-import { NgIf, AsyncPipe, TitleCasePipe, DatePipe } from '@angular/common';
-import { CategoryTreeDropdownComponent } from '../category-tree-dropdown/category-tree-dropdown.component';
-import { MatPaginator } from '@angular/material/paginator';
-import { MatButton } from '@angular/material/button';
+import {
+    MAT_DIALOG_DATA,
+    MatDialogActions,
+    MatDialogContent,
+    MatDialogRef,
+    MatDialogTitle
+} from "@angular/material/dialog";
+import {Transaction, TransactionInContextQuery} from "@daanvdn/budget-assistant-client";
+import {AmountType, CategoryMap, inferAmountType} from "../model";
+import {
+    MatCell,
+    MatCellDef,
+    MatColumnDef,
+    MatHeaderCell,
+    MatHeaderCellDef,
+    MatHeaderRow,
+    MatHeaderRowDef,
+    MatRow,
+    MatRowDef,
+    MatTable
+} from '@angular/material/table';
+import {MatSort, MatSortHeader} from '@angular/material/sort';
+import {AsyncPipe, DatePipe, NgIf, TitleCasePipe} from '@angular/common';
+import {CategoryTreeDropdownComponent} from '../category-tree-dropdown/category-tree-dropdown.component';
+import {MatPaginator} from '@angular/material/paginator';
+import {MatButton} from '@angular/material/button';
 
 @Component({
     selector: 'transactions-in-context-dialog',
     templateUrl: './transactions-in-context-dialog.component.html',
     styleUrls: ['./transactions-in-context-dialog.component.scss'],
     standalone: true,
-    imports: [MatDialogTitle, CdkScrollable, MatDialogContent, MatTable, MatSort, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatSortHeader, MatCellDef, MatCell, NgIf, CategoryTreeDropdownComponent, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow, MatPaginator, MatDialogActions, MatButton, AsyncPipe, TitleCasePipe, DatePipe]
+    imports: [MatDialogTitle, MatDialogContent, MatTable, MatSort, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatSortHeader, MatCellDef, MatCell, NgIf, CategoryTreeDropdownComponent, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow, MatPaginator, MatDialogActions, MatButton, AsyncPipe, TitleCasePipe, DatePipe]
 })
 export class TransactionsInContextDialogComponent implements OnInit, AfterViewInit {
     dataSource!: PaginationDataSource<Transaction, TransactionInContextQuery>;
@@ -29,9 +45,13 @@ export class TransactionsInContextDialogComponent implements OnInit, AfterViewIn
         "transactionType"
     ];
     private currentSort?: any;
+    private categoryMap?: CategoryMap;
 
     constructor(private appService: AppService, public dialogRef: MatDialogRef<TransactionsInContextDialogComponent>,
                 @Inject(MAT_DIALOG_DATA) public query: TransactionInContextQuery) {
+        this.appService.categoryMapObservable$.subscribe(categoryMap => {
+            this.categoryMap = categoryMap;
+        });
     }
 
     ngOnInit(): void {
@@ -76,7 +96,11 @@ export class TransactionsInContextDialogComponent implements OnInit, AfterViewIn
     }
 
     setCategory(transaction: Transaction, selectedCategoryQualifiedNameStr: string) {
-        transaction.category = {qualifiedName:selectedCategoryQualifiedNameStr};
+        let simpleCategory = this.categoryMap?.getSimpleCategory(selectedCategoryQualifiedNameStr);
+        if (! simpleCategory){
+            throw new Error("No category found for " + selectedCategoryQualifiedNameStr);
+        }
+        transaction.category = simpleCategory;
         this.saveTransaction(transaction);
     }
 

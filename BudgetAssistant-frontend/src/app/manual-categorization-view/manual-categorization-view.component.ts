@@ -1,17 +1,28 @@
 import {Component, ElementRef, OnInit, ViewChild} from '@angular/core';
 import {MatPaginator} from "@angular/material/paginator";
 import {MatSort} from "@angular/material/sort";
-import { MatTable, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatCellDef, MatCell, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow } from "@angular/material/table";
+import {
+  MatCell,
+  MatCellDef,
+  MatColumnDef,
+  MatHeaderCell,
+  MatHeaderCellDef,
+  MatHeaderRow,
+  MatHeaderRowDef,
+  MatRow,
+  MatRowDef,
+  MatTable
+} from "@angular/material/table";
 import {PaginationDataSource, SimpleDataSource} from "@daanvdn/ngx-pagination-data-source";
 import {AppService} from "../app.service";
 import {BehaviorSubject, map, Observable} from "rxjs";
-import { MatButtonToggleChange, MatButtonToggleGroup, MatButtonToggle } from "@angular/material/button-toggle";
-import {BankAccount, Transaction, TransactionTypeEnum} from "@daanvdn/budget-assistant-client";
-import {AmountType, inferAmountType} from "../model";
-import { MatToolbar } from '@angular/material/toolbar';
-import { BankAccountSelectionComponent } from '../bank-account-selection/bank-account-selection.component';
-import { NgIf, AsyncPipe } from '@angular/common';
-import { CategoryTreeDropdownComponent } from '../category-tree-dropdown/category-tree-dropdown.component';
+import {MatButtonToggle, MatButtonToggleChange, MatButtonToggleGroup} from "@angular/material/button-toggle";
+import {BankAccount, SimpleCategory, Transaction, TransactionTypeEnum} from "@daanvdn/budget-assistant-client";
+import {AmountType, CategoryMap, inferAmountType} from "../model";
+import {MatToolbar} from '@angular/material/toolbar';
+import {BankAccountSelectionComponent} from '../bank-account-selection/bank-account-selection.component';
+import {AsyncPipe, NgIf} from '@angular/common';
+import {CategoryTreeDropdownComponent} from '../category-tree-dropdown/category-tree-dropdown.component';
 
 
 interface GroupBy {
@@ -86,6 +97,7 @@ export class ManualCategorizationViewComponent implements OnInit {
 
 
   dataSource!: GroupByCounterpartyDataSource;
+  categoryMap!: CategoryMap;
 
   private bankAccount!: BankAccount;
   displayedColumns = [
@@ -102,6 +114,12 @@ export class ManualCategorizationViewComponent implements OnInit {
         this.dataSource = this.initDataSource(account, this.activeView.getValue());
       }
     });
+    appService.categoryMapObservable$.subscribe(categoryMap => {
+      if (categoryMap) {
+        this.categoryMap = categoryMap;
+      }}
+    )
+
 
     this.activeViewObservable.subscribe(activeView => {
       this.dataSource = this.initDataSource(this.bankAccount, activeView);
@@ -135,20 +153,21 @@ export class ManualCategorizationViewComponent implements OnInit {
   }
 
   setCategory(row: (Transaction | GroupBy), selectedCategoryQualifiedNameStr: string) {
-    //check if row is an interface that has key  'isGroupBy'
+    // Get the SimpleCategory object from the CategoryMap
+    const category = this.categoryMap.getSimpleCategory(selectedCategoryQualifiedNameStr);
+
+    // Check if row is an interface that has key 'isGroupBy'
     if ("isGroupBy" in row) {
       (row as GroupBy).transactions.forEach(transaction => {
-        transaction.category = {qualifiedName:selectedCategoryQualifiedNameStr};
+        transaction.category = category;
         this.saveTransaction(transaction);
-      })
+      });
       return;
     } else {
       let transaction = row as Transaction;
-      transaction.category = {qualifiedName:selectedCategoryQualifiedNameStr};
+      transaction.category = category;
       this.saveTransaction(transaction);
     }
-
-
   }
 
   amountType(transaction: Transaction | GroupBy): AmountType {

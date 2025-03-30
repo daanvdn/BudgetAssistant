@@ -1,18 +1,27 @@
 import {SelectionModel} from '@angular/cdk/collections';
 import {FlatTreeControl} from '@angular/cdk/tree';
 import {Component, EventEmitter, Input, OnInit, Output, ViewChild} from '@angular/core';
-import { MatTreeFlatDataSource, MatTreeFlattener, MatTree, MatTreeNodeDef, MatTreeNode, MatTreeNodeToggle, MatTreeNodePadding } from '@angular/material/tree';
+import {
+  MatTree,
+  MatTreeFlatDataSource,
+  MatTreeFlattener,
+  MatTreeNode,
+  MatTreeNodeDef,
+  MatTreeNodePadding,
+  MatTreeNodeToggle
+} from '@angular/material/tree';
 import {BehaviorSubject} from 'rxjs';
 import {AppService} from '../app.service';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from "@angular/forms";
+import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {MatFormField} from "@angular/material/form-field";
-import { MatAutocompleteTrigger, MatAutocomplete } from "@angular/material/autocomplete";
-import {AmountType, CategoryNode, FlatCategoryNode, NO_CATEGORY} from "../model";
-import { MatInput } from '@angular/material/input';
-import { MatOption } from '@angular/material/core';
-import { MatIconButton } from '@angular/material/button';
-import { MatCheckbox } from '@angular/material/checkbox';
-import { MatIcon } from '@angular/material/icon';
+import {MatAutocomplete, MatAutocompleteTrigger} from "@angular/material/autocomplete";
+import {CategoryNode, FlatCategoryNode, NO_CATEGORY} from "../model";
+import {MatInput} from '@angular/material/input';
+import {MatOption} from '@angular/material/core';
+import {MatIconButton} from '@angular/material/button';
+import {MatCheckbox} from '@angular/material/checkbox';
+import {MatIcon} from '@angular/material/icon';
+import {TransactionTypeEnum} from "@daanvdn/budget-assistant-client";
 
 
 // @Injectable({ providedIn: "root" })
@@ -24,16 +33,16 @@ export class BackingDatabase {
     return this.dataChange.value;
   }
 
-  constructor(private appService: AppService, amountType: AmountType) {
-    this.initialize(amountType);
+  constructor(private appService: AppService, transactionTypeEnum: TransactionTypeEnum) {
+    this.initialize(transactionTypeEnum);
   }
 
 
 
-  initialize(amountType: AmountType) {
+  initialize(transactionTypeEnum: TransactionTypeEnum) {
 
-    switch (amountType) {
-      case AmountType.REVENUE:
+    switch (transactionTypeEnum) {
+      case TransactionTypeEnum.REVENUE:
         this.appService.sharedCategoryTreeRevenueObservable$.subscribe(tree => {
           this.treeData = tree;
           // Build the tree nodes from Json object. The result is a list of `TodoItemNode` with nested
@@ -45,7 +54,7 @@ export class BackingDatabase {
 
         });
         break;
-      case AmountType.EXPENSES:
+      case TransactionTypeEnum.EXPENSES:
         this.appService.sharedCategoryTreeExpensesObservable$.subscribe(tree => {
           this.treeData = tree;
           // Build the tree nodes from Json object. The result is a list of `TodoItemNode` with nested
@@ -57,7 +66,7 @@ export class BackingDatabase {
 
         });
         break;
-      case AmountType.BOTH:
+      case TransactionTypeEnum.BOTH:
 
 
         this.appService.sharedCategoryTreeObservable$?.subscribe(tree => {
@@ -143,7 +152,7 @@ export class CategoryTreeDropdownComponent implements OnInit  {
   treeControl!: FlatTreeControl<FlatCategoryNode>
   dataSource!: MatTreeFlatDataSource<CategoryNode, FlatCategoryNode>;
   @Input()
-  amountType?: AmountType;
+  transactionTypeEnum?: TransactionTypeEnum;
 
   @Output() selectionChange: EventEmitter<string> = new EventEmitter<string>();
 
@@ -195,8 +204,8 @@ export class CategoryTreeDropdownComponent implements OnInit  {
       }
 
     }
-    if (this.amountType !== undefined) {
-      this._database = new BackingDatabase(this.appService, this.amountType);
+    if (this.transactionTypeEnum !== undefined) {
+      this._database = new BackingDatabase(this.appService, this.transactionTypeEnum);
       this._database.dataChange.subscribe(data => {
         this.dataSource.data = data;
       });
@@ -213,6 +222,7 @@ export class CategoryTreeDropdownComponent implements OnInit  {
         ? existingNode
         : new FlatCategoryNode();
     flatNode.name = node.name;
+    flatNode.nodeId = node.id;
     flatNode.qualifiedName = node.qualifiedName;
     flatNode.level = level;
     flatNode.expandable = (node.children != undefined && node.children.length > 0);

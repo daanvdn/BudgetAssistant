@@ -1,15 +1,15 @@
 import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {faXmark} from "@fortawesome/free-solid-svg-icons";
-import {anyIsUndefinedOrEmpty, Grouping, TransactionType} from "../model";
+import {anyIsUndefinedOrEmpty} from "../model";
 import {Criteria} from "../insights/insights.component";
-import {BankAccount} from "@daanvdn/budget-assistant-client";
-import { NgIf } from '@angular/common';
-import { BankAccountSelectionComponent } from '../bank-account-selection/bank-account-selection.component';
-import { GroupingTypeSelectionComponent } from '../grouping-type-selection/grouping-type-selection.component';
-import { PeriodSelectionComponent } from '../period-selection/period-selection.component';
-import { ExpensesRevenueToggleComponent } from '../expenses-revenue-toggle/expenses-revenue-toggle.component';
-import { MatButton } from '@angular/material/button';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import {BankAccount, GroupingEnum, TransactionTypeEnum} from "@daanvdn/budget-assistant-client";
+import {NgIf} from '@angular/common';
+import {BankAccountSelectionComponent} from '../bank-account-selection/bank-account-selection.component';
+import {GroupingTypeSelectionComponent} from '../grouping-type-selection/grouping-type-selection.component';
+import {PeriodSelectionComponent} from '../period-selection/period-selection.component';
+import {ExpensesRevenueToggleComponent} from '../expenses-revenue-toggle/expenses-revenue-toggle.component';
+import {MatButton} from '@angular/material/button';
+import {FaIconComponent} from '@fortawesome/angular-fontawesome';
 
 
 @Component({
@@ -31,10 +31,10 @@ export class CriteriaToolbarComponent implements OnInit {
 
 
     bankAccount!: BankAccount;
-    grouping!: Grouping;
+    grouping!: GroupingEnum ;
     startDate!: Date;
     endDate!: Date;
-    transactionType!: TransactionType;
+    transactionType!: TransactionTypeEnum;
     currentCriteria!: Criteria;
 
 
@@ -52,7 +52,7 @@ export class CriteriaToolbarComponent implements OnInit {
     protected readonly faXmark = faXmark;
 
 
-    onExpensesRevenueChange(transactionType: TransactionType) {
+    onExpensesRevenueChange(transactionType: TransactionTypeEnum) {
         this.transactionType = transactionType;
         this.maybeEmitCriteriaChange();
     }
@@ -62,7 +62,7 @@ export class CriteriaToolbarComponent implements OnInit {
         this.maybeEmitCriteriaChange();
     }
 
-    onGroupingChange(grouping: Grouping) {
+    onGroupingChange(grouping: GroupingEnum) {
         this.grouping = grouping;
         this.maybeEmitCriteriaChange();
     }

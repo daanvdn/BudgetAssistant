@@ -1,11 +1,22 @@
 import {Component, Input, OnChanges, OnInit, SimpleChanges} from '@angular/core';
 
 import {AppService} from '../app.service';
-import {TransactionType} from '../model';
 import {Criteria} from "../insights/insights.component";
 // @ts-ignore
 import autocolors from 'chartjs-plugin-autocolors';
-import { MatTableDataSource, MatTable, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatCellDef, MatCell, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow } from "@angular/material/table";
+import {
+    MatCell,
+    MatCellDef,
+    MatColumnDef,
+    MatHeaderCell,
+    MatHeaderCellDef,
+    MatHeaderRow,
+    MatHeaderRowDef,
+    MatRow,
+    MatRowDef,
+    MatTable,
+    MatTableDataSource
+} from "@angular/material/table";
 import {TreeNode} from "primeng/api";
 import {
     ApiBudgetAssistantBackendClientService,
@@ -16,7 +27,7 @@ import {
 } from "@daanvdn/budget-assistant-client";
 import {RevenueRecurrenceEnum} from "@daanvdn/budget-assistant-client/model/revenue-recurrence-enum";
 import {catchError, throwError} from "rxjs";
-import { NgIf, NgFor } from '@angular/common';
+import {NgFor, NgIf} from '@angular/common';
 
 @Component({
     selector: 'budget-tracking',
@@ -82,7 +93,7 @@ export class BudgetTrackingComponent implements OnInit, OnChanges {
 
     }
 
-    protected readonly TransactionType = TransactionType;
+    protected readonly TransactionType = TransactionTypeEnum;
 
 
 

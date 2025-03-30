@@ -2,19 +2,39 @@ import {Component, OnInit} from '@angular/core';
 import {AppService} from "../app.service";
 import {FlatTreeControl} from "@angular/cdk/tree";
 import {MatTreeFlatDataSource, MatTreeFlattener} from "@angular/material/tree";
-import { AbstractControl, FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm, ValidatorFn, FormsModule, ReactiveFormsModule } from "@angular/forms";
+import {
+  AbstractControl,
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  FormGroupDirective,
+  FormsModule,
+  NgForm,
+  ReactiveFormsModule,
+  ValidatorFn
+} from "@angular/forms";
 import {ErrorStateMatcher} from '@angular/material/core';
 import {MatDialog} from "@angular/material/dialog";
 import {SaveErrorDialogComponent} from "./save-error-dialog/save-error-dialog.component";
-import { MatToolbar } from '@angular/material/toolbar';
-import { BankAccountSelectionComponent } from '../bank-account-selection/bank-account-selection.component';
-import { MatButton, MatIconButton } from '@angular/material/button';
-import { MatIcon } from '@angular/material/icon';
-import { NgIf, NgClass } from '@angular/common';
-import { MatTable, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatCellDef, MatCell, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow } from '@angular/material/table';
-import { MatFormField, MatError } from '@angular/material/form-field';
-import { MatInput } from '@angular/material/input';
-
+import {MatToolbar} from '@angular/material/toolbar';
+import {BankAccountSelectionComponent} from '../bank-account-selection/bank-account-selection.component';
+import {MatButton, MatIconButton} from '@angular/material/button';
+import {MatIcon, MatIconModule, MatIconRegistry} from '@angular/material/icon';
+import {NgClass, NgIf} from '@angular/common';
+import {
+  MatCell,
+  MatCellDef,
+  MatColumnDef,
+  MatHeaderCell,
+  MatHeaderCellDef,
+  MatHeaderRow,
+  MatHeaderRowDef,
+  MatRow,
+  MatRowDef,
+  MatTable
+} from '@angular/material/table';
+import {MatError, MatFormField} from '@angular/material/form-field';
+import {MatInput} from '@angular/material/input';
 
 export interface BudgetTreeNode {
   budgetTreeNodeAmount: number;
@@ -34,6 +54,7 @@ export class FlatBudgetTreeNode {
   budgetTreeNodeAmount!: number;
   budgetTreeNodeParentId!: number;
 }
+
 
 
 export interface FindOrCreateBudgetResponse {
@@ -66,7 +87,11 @@ export class MyErrorStateMatcher implements ErrorStateMatcher {
     templateUrl: './budget.component.html',
     styleUrls: ['./budget.component.scss'],
     standalone: true,
-    imports: [MatToolbar, BankAccountSelectionComponent, MatButton, MatIcon, NgIf, FormsModule, ReactiveFormsModule, MatTable, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatCellDef, MatCell, MatIconButton, MatFormField, MatInput, MatError, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow, NgClass]
+  imports: [MatToolbar, BankAccountSelectionComponent,
+    MatButton, MatIcon, NgIf, FormsModule, ReactiveFormsModule, MatTable, MatColumnDef, MatHeaderCellDef, MatHeaderCell,
+    MatCellDef, MatCell, MatIconButton, MatFormField, MatInput, MatError, MatHeaderRowDef,
+    MatHeaderRow, MatRowDef, MatRow, NgClass, MatIconModule, MatIcon],
+
 })
 export class BudgetComponent implements OnInit {
   TOTAL_NODE_ID: number = -1;
@@ -75,6 +100,7 @@ export class BudgetComponent implements OnInit {
   totalBudget: number = 0;
 
   matcher = new MyErrorStateMatcher();
+
 
   /** Map from flat node to nested node. This helps us finding the nested node to be modified */
   idToNodeMap = new Map<number, BudgetTreeNode>();
@@ -103,7 +129,9 @@ export class BudgetComponent implements OnInit {
   isTreeExpanded = true;
 
 
-  constructor(private appService: AppService,  private fb: FormBuilder, public dialog: MatDialog) {
+  constructor(private appService: AppService, private fb: FormBuilder, public dialog: MatDialog
+  ) {
+
     this.mainForm = this.fb.group({});
 
     this.treeFlattener = new MatTreeFlattener(

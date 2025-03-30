@@ -1,6 +1,5 @@
 import {Component, EventEmitter, OnInit, Output} from '@angular/core';
 import { MatButtonToggleChange, MatButtonToggleGroup, MatButtonToggle } from "@angular/material/button-toggle";
-import {TransactionType} from "../model";
 import {AppService} from "../app.service";
 import {TransactionTypeEnum} from "@daanvdn/budget-assistant-client";
 
@@ -13,23 +12,23 @@ import {TransactionTypeEnum} from "@daanvdn/budget-assistant-client";
 })
 export class ExpensesRevenueToggleComponent implements OnInit {
 
-  @Output() change: EventEmitter<TransactionType> = new EventEmitter<TransactionType>(true);
+  @Output() change: EventEmitter<TransactionTypeEnum> = new EventEmitter<TransactionTypeEnum>(true);
 
 
   constructor(private appService: AppService) { }
 
   ngOnInit(): void {
-    this.change.emit(TransactionType.EXPENSES);
+    this.change.emit(TransactionTypeEnum.EXPENSES);
     this.appService.setTransactionType(TransactionTypeEnum.EXPENSES);
   }
   onToggleChange($event: MatButtonToggleChange) {
     const value = $event.value;
     if (value === "expenses") {
-      this.change.emit(TransactionType.EXPENSES);
+      this.change.emit(TransactionTypeEnum.EXPENSES);
       this.appService.setTransactionType(TransactionTypeEnum.EXPENSES);
     }
     else if (value === "revenue") {
-      this.change.emit(TransactionType.REVENUE);
+      this.change.emit(TransactionTypeEnum.REVENUE);
       this.appService.setTransactionType(TransactionTypeEnum.REVENUE);
     }
     else {

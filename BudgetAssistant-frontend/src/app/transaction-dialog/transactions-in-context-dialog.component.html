@@ -58,15 +58,14 @@
                     <table style="width: 100%">
                         <tr>
                             <td>
-                                <div style="font-weight: lighter;font-style: italic;">categorie
-                                </div>
+                                <div style="font-weight: lighter;font-style: italic;">Category</div>
                             </td>
                             <td>
                                 <div>
                                     <app-category-tree-dropdown
                                             (selectionChange)="setCategory(item, $event)"
                                             [selectedCategoryQualifiedNameStr]="item.category"
-                                            [amountType]="amountType(item)"
+                                            [transactionTypeEnum]="amountType(item)"
                                     >
                                     </app-category-tree-dropdown>
                                 </div>

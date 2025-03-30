@@ -8,13 +8,14 @@ import { MatSelect } from '@angular/material/select';
 import { NgFor, UpperCasePipe } from '@angular/common';
 import { MatOption } from '@angular/material/core';
 import { IbanPipe } from '../iban.pipe';
+import {MatIconModule} from "@angular/material/icon";
 
 @Component({
     selector: 'bank-account-selection',
     templateUrl: './bank-account-selection.component.html',
     styleUrls: ['./bank-account-selection.component.scss'],
     standalone: true,
-    imports: [FormsModule, ReactiveFormsModule, MatFormField, MatLabel, MatSelect, NgFor, MatOption, UpperCasePipe, IbanPipe]
+    imports: [FormsModule, ReactiveFormsModule, MatFormField, MatLabel, MatSelect, NgFor, MatOption, UpperCasePipe, IbanPipe, MatIconModule]
 })
 export class BankAccountSelectionComponent implements OnInit, OnDestroy {
 

@@ -132,7 +132,7 @@
                     <app-category-tree-dropdown
                       (selectionChange)="setCategory(item, $event)"
                       [selectedCategoryQualifiedNameStr]="item.category"
-                      [amountType]="amountType(item)"
+                      [transactionTypeEnum]="amountType(item)"
                     >
                     </app-category-tree-dropdown>
                   </div>

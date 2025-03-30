@@ -8,7 +8,7 @@ import { MatTable, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatCellDef, Ma
 import {PaginationDataSource} from '@daanvdn/ngx-pagination-data-source';
 import {AppService} from '../app.service';
 import {
-  AmountType,
+  AmountType, CategoryMap,
   CompositeTransactionsFileUploadResponse, EMPTY_TRANSACTION_QUERY, FileWrapper, inferAmountType
 } from '../model';
 import {BankAccountSelectionComponent} from '../bank-account-selection/bank-account-selection.component';
@@ -75,13 +75,18 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
   @ViewChild('fileInput') fileInput: any;
 
   viewType: ViewType = ViewType.INITIAL_VIEW;
+  categoryMap?: CategoryMap;
 
 
   constructor(private appService: AppService, private authService: AuthService, public dialog: MatDialog,
               public datepipe: DatePipe, private errorDialogService: ErrorDialogService, private router: Router) {
 
-    let rekening = undefined
-    this.dataSource = this.initDataSource(rekening);
+    let account = undefined
+    this.dataSource = this.initDataSource(account);
+    this.appService.categoryMapObservable$.subscribe(categoryMap => {
+      this.categoryMap = categoryMap;
+    })
+
     this.appService.selectedBankAccountObservable$.subscribe(bankAccount => {
       if (bankAccount) {
         this.appService.countTransactionToManuallyReview(bankAccount).subscribe(count => {
@@ -143,7 +148,7 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
           minAmount: undefined,
           maxAmount: undefined,
           accountNumber: undefined,
-          category: undefined,
+          categoryId: undefined,
           counterpartyAccountNumber: undefined,
           startDate: undefined,
           endDate: undefined,
@@ -255,7 +260,7 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
       minAmount: undefined,
       maxAmount: undefined,
       accountNumber: this.selectedAccount,
-      category: undefined,
+      categoryId: undefined,
       counterpartyAccountNumber: undefined,
       startDate: undefined,
       endDate: undefined,
@@ -319,7 +324,11 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
 
 
   setCategory(transaction: Transaction, selectedCategoryQualifiedNameStr: string) {
-    transaction.category = {qualifiedName:selectedCategoryQualifiedNameStr};
+    let category = this.categoryMap?.getSimpleCategory(selectedCategoryQualifiedNameStr);
+    if (!category) {
+      throw new Error("No category found for " + selectedCategoryQualifiedNameStr);
+    }
+    transaction.category = category;
     this.saveTransaction(transaction);
   }
 

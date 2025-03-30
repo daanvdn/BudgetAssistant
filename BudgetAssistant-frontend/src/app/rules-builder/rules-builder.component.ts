@@ -1,13 +1,17 @@
 import {Component, Input, OnChanges, OnInit, SimpleChanges} from '@angular/core';
 import {
-  DEFAULT_QUERY_BUILDER_CONFIG, QueryBuilderConfig, RuleSet, RuleSetWrapper
+    convertClientRuleSetToRuleSet,
+    DEFAULT_QUERY_BUILDER_CONFIG,
+    QueryBuilderConfig,
+    RuleSet
 } from "../query-builder/query-builder.interfaces";
 import {AppService} from "../app.service";
 import {AuthService} from "../auth/auth.service";
 import {ErrorDialogService} from "../error-dialog/error-dialog.service";
-import {CategoryNode, CategoryType} from "../model";
-import { QueryBuilderComponent } from '../query-builder/query-builder.component';
-import { FormsModule } from '@angular/forms';
+import {CategoryNode} from "../model";
+import {QueryBuilderComponent} from '../query-builder/query-builder.component';
+import {FormsModule} from '@angular/forms';
+import {TypeEnum, RuleSetWrapper} from "@daanvdn/budget-assistant-client";
 
 
 @Component({
@@ -37,16 +41,16 @@ export class RulesBuilderComponent implements OnInit, OnChanges {
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['categoryNode']) {
       // categoryNode input has changed, do something with it
-      let categoryType: CategoryType = this.categoryNode.type as CategoryType;
+      let categoryType: TypeEnum = this.categoryNode.type as TypeEnum;
       let user = this.authService.getUser();
       if (!user || !user.userName) {
         this.errorDialogService.openErrorDialog("User is not defined!", undefined);
         return;
       }
-      this.appService.getOrCreateRuleSetWrapper(this.categoryNode, categoryType, user.userName)
-            .subscribe((response: RuleSetWrapper) => {
+      this.appService.getOrCreateRuleSetWrapper(this.categoryNode, categoryType)
+          .subscribe((response: RuleSetWrapper) => {
               this.ruleSetWrapper = response;
-              this.ruleSet = this.ruleSetWrapper.ruleSet;
+              this.ruleSet =  convertClientRuleSetToRuleSet(this.ruleSetWrapper.ruleSet);
             });
 
 

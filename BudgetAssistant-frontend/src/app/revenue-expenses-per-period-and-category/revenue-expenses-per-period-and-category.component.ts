@@ -218,7 +218,8 @@ export class RevenueExpensesPerPeriodAndCategoryComponent implements OnInit, OnC
 
   }
 
-  openContextMenu(period: string, category: string, event: MouseEvent) {
+  openContextMenu(period: string, category: number, event: MouseEvent) {
+    //fixme: change data model so that we don't store category string but category object
     // Prevent the browser's default context menu from being opened
     event.preventDefault();
 

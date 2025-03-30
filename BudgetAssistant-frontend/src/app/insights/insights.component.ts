@@ -1,27 +1,28 @@
 import {Component, OnInit} from '@angular/core';
 import {faSearch} from "@fortawesome/free-solid-svg-icons/faSearch";
-import {Grouping, TransactionType} from "../model";
-import {BankAccount, TransactionTypeEnum} from "@daanvdn/budget-assistant-client";
-import { MatToolbar } from '@angular/material/toolbar';
-import { MatIconButton } from '@angular/material/button';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { MatTabGroup, MatTab } from '@angular/material/tabs';
-import { NgIf } from '@angular/common';
-import { CriteriaToolbarComponent } from '../criteria-toolbar/criteria-toolbar.component';
-import { ExpensesRevenueComponent } from '../revenue-expenses/revenue-expenses.component';
-import { RevenueExpensesPerPeriodAndCategoryComponent } from '../revenue-expenses-per-period-and-category/revenue-expenses-per-period-and-category.component';
-import { CategoryDetailsComponent } from '../category-details/category-details.component';
-import { BudgetTrackingComponent } from '../budget-tracking/budget-tracking.component';
+import {BankAccount, GroupingEnum, TransactionTypeEnum} from "@daanvdn/budget-assistant-client";
+import {MatToolbar} from '@angular/material/toolbar';
+import {MatIconButton} from '@angular/material/button';
+import {FaIconComponent} from '@fortawesome/angular-fontawesome';
+import {MatTab, MatTabGroup} from '@angular/material/tabs';
+import {NgIf} from '@angular/common';
+import {CriteriaToolbarComponent} from '../criteria-toolbar/criteria-toolbar.component';
+import {ExpensesRevenueComponent} from '../revenue-expenses/revenue-expenses.component';
+import {
+    RevenueExpensesPerPeriodAndCategoryComponent
+} from '../revenue-expenses-per-period-and-category/revenue-expenses-per-period-and-category.component';
+import {CategoryDetailsComponent} from '../category-details/category-details.component';
+import {BudgetTrackingComponent} from '../budget-tracking/budget-tracking.component';
 
 
 export class Criteria {
     bankAccount: BankAccount;
-    grouping: Grouping;
+    grouping: GroupingEnum;
     startDate: Date;
     endDate: Date;
     transactionType: TransactionTypeEnum | undefined;
 
-    constructor(bankAccount: BankAccount, grouping: Grouping, startDate: Date, endDate: Date,
+    constructor(bankAccount: BankAccount, grouping: GroupingEnum, startDate: Date, endDate: Date,
                 transactionType: TransactionTypeEnum | undefined) {
         this.bankAccount = bankAccount;
         this.grouping = grouping;

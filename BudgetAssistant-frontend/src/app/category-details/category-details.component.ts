@@ -1,18 +1,22 @@
 import {Component, Input, OnChanges, OnInit, SimpleChanges} from '@angular/core';
-import {Dataset, TransactionType} from "../model";
+import {Dataset} from "../model";
 import {AppService} from "../app.service";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import {Observable} from "rxjs";
-import { MatSelectionListChange, MatSelectionList, MatListOption } from "@angular/material/list";
+import {MatListOption, MatSelectionList, MatSelectionListChange} from "@angular/material/list";
 // @ts-ignore
 import autocolors from 'chartjs-plugin-autocolors';
-import {ExpensesRecurrenceEnum, RevenueExpensesQuery, TransactionTypeEnum} from "@daanvdn/budget-assistant-client";
+import {
+    BankAccount,
+    ExpensesRecurrenceEnum,
+    RevenueExpensesQuery,
+    RevenueRecurrenceEnum,
+    TransactionTypeEnum
+} from "@daanvdn/budget-assistant-client";
 
 import {Criteria} from "../insights/insights.component";
-import {BankAccount} from "@daanvdn/budget-assistant-client";
-import {RevenueRecurrenceEnum} from "@daanvdn/budget-assistant-client";
-import { NgIf, NgFor } from '@angular/common';
-import { ChartModule } from 'primeng/chart';
+import {NgFor, NgIf} from '@angular/common';
+import {ChartModule} from 'primeng/chart';
 
 
 interface Category {
@@ -172,7 +176,7 @@ export class CategoryDetailsComponent implements OnInit, OnChanges {
 
     }
 
-    protected readonly TransactionType = TransactionType;
+    protected readonly TransactionType = TransactionTypeEnum;
 
     ngOnChanges(changes: SimpleChanges): void {
         let criteriaChange = changes['criteria'];
