@@ -59,12 +59,12 @@ conda activate budget-assistant-backend-django
 #set the TEST_MODE environment variable to true
 $env:TEST_MODE = "true"
 echo "generating openapi schema"
-..\manage.py spectacular --color --file schema.yml
+python ..\manage.py spectacular --color --file schema.yml
 
 echo "Generating Angular API"
-if (Test-Path ..\api)
+if (Test-Path ..\generated-api)
 {
-    Remove-Item ..\api -Recurse -Force
+    Remove-Item ..\generated-api -Recurse -Force
 }
 openapi-generator-cli generate -i schema.yml -g typescript-angular -o ../generated-api --additional-properties=modelPropertyNaming=camelCase,fileNaming=kebab-case,enumPropertyNaming=original,ngVersion=18.2.13,npmName=budget-assistant-client,serviceSuffix=BudgetAssistantBackendClientService,serviceFileSuffix=-budget-assistant-backend-client.service
 
@@ -78,6 +78,9 @@ cd ..\generated-api
 npm init -y
 npm install
 
+Write-Output "Building Angular library"
+npm run build
+
 Write-Output "Packaging npm module"
 
 # Update package.json
@@ -85,9 +88,27 @@ Write-Output "Packaging npm module"
 $packageJson = [PSCustomObject]@{
     name = "@daanvdn/budget-assistant-client"
     version = "1.0.0"
-    main = "index.js"
-    types = "index.d.ts"
-    files = @("**/*")
+    main = "dist/bundles/budget-assistant-client.umd.js"
+    module = "dist/fesm2022/budget-assistant-client.mjs"
+    es2022 = "dist/fesm2022/budget-assistant-client.mjs"
+    esm2022 = "dist/esm2022/budget-assistant-client.mjs"
+    fesm2022 = "dist/fesm2022/budget-assistant-client.mjs"
+    typings = "dist/index.d.ts"
+    type = "module"
+    sideEffects = $false
+    exports = @{
+        "." = @{
+            types = "./dist/index.d.ts"
+            esm2022 = "./dist/esm2022/budget-assistant-client.mjs"
+            es2022 = "./dist/fesm2022/budget-assistant-client.mjs"
+            es2020 = "./dist/fesm2022/budget-assistant-client.mjs"
+            es2015 = "./dist/fesm2022/budget-assistant-client.mjs"
+            node = "./dist/fesm2022/budget-assistant-client.mjs"
+            default = "./dist/fesm2022/budget-assistant-client.mjs"
+        }
+        "./package.json" = "./package.json"
+    }
+    files = @("dist/**/*")
     publishConfig = @{
         "@daanvdn:registry" = $local_registry
     }
@@ -123,6 +144,22 @@ npm pack
 Write-Output "Publishing npm module to local registry"
 npm publish --access public --registry=$local_registry
 
+# Make sure the compiled library is included in the package
+Write-Output "Verifying package contents"
+if (Test-Path $env:PACKAGE_NAME) {
+    Write-Output "Package created successfully: $env:PACKAGE_NAME"
+    # Extract the package to verify its contents
+    if (Test-Path package-contents) { Remove-Item package-contents -Recurse -Force }
+    mkdir package-contents
+    tar -xf $env:PACKAGE_NAME -C package-contents
+    Write-Output "Package contents:"
+    Get-ChildItem -Path package-contents\package -Recurse | Select-Object FullName
+    # Clean up
+    Remove-Item package-contents -Recurse -Force
+} else {
+    Write-Output "Warning: Package was not created successfully"
+}
+
 Write-Output "Re-install latest version in frontend"
 cd ..\..\BudgetAssistant-frontend
 
@@ -135,10 +172,58 @@ cd $pwd_absolute_path
 Write-Output "Removing temporary files"
 if (Test-Path schema.yml) { Remove-Item schema.yml -Force }
 if (Test-Path ..\node_modules\@daanvdn) { Remove-Item ..\node_modules\@daanvdn -Recurse -Force }
-if (Test-Path ..\generated-api) { Remove-Item ..\generated-api -Recurse -Force }
+# Keep the generated-api directory for reference
+# if (Test-Path ..\generated-api) { Remove-Item ..\generated-api -Recurse -Force }
 if (Test-Path package.json) { Remove-Item package.json -Force }
 if (Test-Path package-lock.json) { Remove-Item package-lock.json -Force }
 if (Test-Path ..\package.json) { Remove-Item ..\package.json -Force }
 if (Test-Path ..\package-lock.json) { Remove-Item ..\package-lock.json -Force }
+
+# Create a README file explaining the generated library
+$readmeContent = @"
+# Budget Assistant Client Library
+
+This directory contains the generated Angular client library for the Budget Assistant API.
+
+## Contents
+
+- Source code: TypeScript source files generated from the OpenAPI schema
+- Compiled library: JavaScript files compiled from the TypeScript sources (in the 'dist' directory)
+
+## Usage
+
+The library is published to the local npm registry and installed in the frontend project.
+To use it in the frontend, import the services and models from '@daanvdn/budget-assistant-client'.
+
+Example:
+```typescript
+import { ApiService, ModelClass } from '@daanvdn/budget-assistant-client';
+```
+
+## Module Resolution
+
+This library is configured as an ES module with proper package exports. Angular should be able to resolve
+it directly from node_modules without needing special path mappings in tsconfig.json.
+
+If you previously had this in your tsconfig.json:
+```json
+"paths": {
+  "@daanvdn/budget-assistant-client": [
+    "node_modules/@daanvdn/budget-assistant-client"
+  ]
+}
+```
+
+You should now be able to remove it, as the library is properly configured for Angular's module resolution.
+"@
+
+# Ensure the generated-api directory exists
+if (-not (Test-Path ..\generated-api)) {
+    New-Item -Path ..\generated-api -ItemType Directory -Force
+}
+
+if (-not (Test-Path ..\generated-api\README.md)) {
+    $readmeContent | Out-File -FilePath ..\generated-api\README.md -Encoding utf8
+}
 
 Write-Output "Angular API generation and installation complete"
