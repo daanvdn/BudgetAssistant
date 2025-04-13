@@ -69,7 +69,7 @@ export class BackingDatabase {
       case TransactionTypeEnum.BOTH:
 
 
-        this.appService.sharedCategoryTreeObservable$?.subscribe(tree => {
+        this.appService.sharedCategoryTreeObservable$.subscribe(tree => {
           this.treeData = tree;
           // Build the tree nodes from Json object. The result is a list of `TodoItemNode` with nested
           //     file node as children.

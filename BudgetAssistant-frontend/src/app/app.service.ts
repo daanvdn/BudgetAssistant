@@ -67,7 +67,7 @@ export class AppService {
     private categoryQueryForSelectedPeriod$ = new BehaviorSubject<RevenueExpensesQuery |undefined>(undefined);
     public categoryQueryForSelectedPeriodObservable$ = this.categoryQueryForSelectedPeriod$.asObservable();
 
-    public sharedCategoryTreeObservable$?: Observable<CategoryNode[]>;
+    public sharedCategoryTreeObservable$: Observable<CategoryNode[]> = of([]);
     public sharedCategoryTreeExpensesObservable$: Observable<CategoryNode[]>;
     public sharedCategoryTreeRevenueObservable$: Observable<CategoryNode[]>;
     public fileUploadComplete$ = new Subject<void>();

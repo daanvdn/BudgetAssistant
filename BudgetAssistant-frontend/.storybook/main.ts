@@ -26,6 +26,8 @@ const config: StorybookConfig = {
       '@daanvdn/budget-assistant-client/model': path.resolve(__dirname, '../node_modules/@daanvdn/budget-assistant-client/model')
 
     };
+    baseConfig.devtool = 'source-map';
+
     return baseConfig;
   },
 };

@@ -1,12 +1,12 @@
 import {NgModule} from '@angular/core';
 import {RouterModule, Routes} from '@angular/router';
-import {InsightsComponent} from '././insights/insights.component';
+import {InsightsComponent} from './insights/insights.component';
 import {TransactionsComponent} from './transactions/transactions.component';
 import {LoginComponent} from "./login/login.component";
 import {AuthGuard} from "./auth/auth.guard";
 import {HomeLayoutComponent} from "./layouts/home-layout/home-layout.component";
 import {LoginLayoutComponent} from "./layouts/login-layout/login-layout.component";
-import {ProfileComponent} from "././profile/profile.component";
+import {ProfileComponent} from "./profile/profile.component";
 import {RegisterComponent} from "./register/register.component";
 import {BudgetComponent} from "./budget/budget.component";
 import {RulesViewComponent} from "./rules-view/rules-view.component";

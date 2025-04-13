@@ -106,14 +106,15 @@
           "options": {
             "configDir": ".storybook",
             "browserTarget": "budget-assistent-analysis-ui:build",
-            "compodoc": true,
+            "compodoc": false,
             "compodocArgs": [
               "-e",
               "json",
               "-d",
               "."
             ],
-            "port": 6006
+            "port": 6006,
+            "sourceMap": true
           }
         },
         "build-storybook": {

@@ -1,14 +1,12 @@
-import type { Meta, StoryObj } from '@storybook/angular';
-import { moduleMetadata } from '@storybook/angular';
-import { CategoryDetailsComponent } from './category-details.component';
-import { MatListModule } from '@angular/material/list';
-import { ChartModule } from 'primeng/chart';
-import { NgIf, NgFor } from '@angular/common';
-import {TransactionTypeEnum} from '@daanvdn/budget-assistant-client';
-import {GroupingEnum} from '@daanvdn/budget-assistant-client';
-import { BankAccount} from '@daanvdn/budget-assistant-client';
-import { Criteria } from '../model/criteria.model';
-import { AppService } from '../app.service';
+import type {Meta, StoryObj} from '@storybook/angular';
+import {moduleMetadata} from '@storybook/angular';
+import {CategoryDetailsComponent} from './category-details.component';
+import {MatListModule} from '@angular/material/list';
+import {ChartModule} from 'primeng/chart';
+import {NgFor, NgIf} from '@angular/common';
+import {BankAccount, GroupingEnum, TransactionTypeEnum} from '@daanvdn/budget-assistant-client';
+import {Criteria} from '../model/criteria.model';
+import {AppService} from '../app.service';
 
 // Mock BankAccount data
 const mockBankAccount: BankAccount = {
@@ -17,15 +15,23 @@ const mockBankAccount: BankAccount = {
   users: [1]
 };
 
-console.log(TransactionTypeEnum.EXPENSES)
 // Mock Criteria
-const mockCriteria = new Criteria(
+const mockExpensesCriteria = new Criteria(
   mockBankAccount,
     GroupingEnum.month,
   new Date('2025-01-01'),
   new Date('2025-12-31'),
     TransactionTypeEnum.EXPENSES
 );
+const mockRevenueCriteria = new Criteria(
+  mockBankAccount,
+    GroupingEnum.month,
+  new Date('2025-01-01'),
+  new Date('2025-12-31'),
+    TransactionTypeEnum.REVENUE
+);
+
+
 
 const meta: Meta<CategoryDetailsComponent> = {
   title: 'Components/CategoryDetails',
@@ -53,9 +59,9 @@ const meta: Meta<CategoryDetailsComponent> = {
 export default meta;
 type Story = StoryObj<CategoryDetailsComponent>;
 
-export const Default: Story = {
+export const ExpensesView: Story = {
   args: {
-    criteria: mockCriteria,
+    criteria: mockExpensesCriteria,
     expensesCategories: [
       { name: 'Groceries', transactionType: TransactionTypeEnum.EXPENSES },
       { name: 'Utilities', transactionType: TransactionTypeEnum.EXPENSES },
@@ -64,7 +70,7 @@ export const Default: Story = {
       { name: 'Salary', transactionType: TransactionTypeEnum.REVENUE },
       { name: 'Investments', transactionType: TransactionTypeEnum.REVENUE },
     ],
-    datatIsLoaded: true,
+    datatIsLoaded: false,
     chartData: {
       labels: ['January', 'February', 'March'],
       datasets: [
@@ -75,6 +81,14 @@ export const Default: Story = {
           borderColor: 'rgba(255, 99, 132, 1)',
           borderWidth: 1,
         },
+        {
+          label: 'Utilities',
+          data: [100, 120, 130],
+          backgroundColor: 'rgba(54, 162, 235, 0.2)',
+          borderColor: 'rgba(54, 162, 235, 1)',
+          borderWidth: 1,
+        }
+
       ],
     },
     chartOptions: {
@@ -87,18 +101,11 @@ export const Default: Story = {
   }
 };
 
-// Create a new mockCriteria for revenue view
-const revenueMockCriteria = new Criteria(
-  mockBankAccount,
-    GroupingEnum.month,
-  new Date('2025-01-01'),
-  new Date('2025-12-31'),
-    TransactionTypeEnum.REVENUE
-);
 
 export const RevenueView: Story = {
   args: {
-    ...Default.args,
-    criteria: revenueMockCriteria
+    ...ExpensesView.args,
+    criteria: mockRevenueCriteria,
   }
 };
+

@@ -8,7 +8,10 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "storybook": "ng run budget-assistent-analysis-ui:storybook",
-    "build-storybook": "ng run budget-assistent-analysis-ui:build-storybook"
+    "build-storybook": "ng run budget-assistent-analysis-ui:build-storybook",
+    "debug-storybook": "node --inspect=9229 ./node_modules/@angular/cli/bin/ng.js run budget-assistent-analysis-ui:storybook"
+
+
   },
   "private": true,
   "dependencies": {
