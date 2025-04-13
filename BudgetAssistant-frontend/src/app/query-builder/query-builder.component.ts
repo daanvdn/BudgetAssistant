@@ -27,7 +27,7 @@ import { MatInput } from '@angular/material/input';
 import { MatIcon } from '@angular/material/icon';
 import { MatCheckbox } from '@angular/material/checkbox';
 import {FieldTypeEnum, RuleMatchType, RuleOperator} from "@daanvdn/budget-assistant-client";
-import {ConditionEnum} from "@daanvdn/budget-assistant-client/model/condition-enum";
+import {ConditionEnum} from "@daanvdn/budget-assistant-client";
 
 
 export class FieldsMetaData {

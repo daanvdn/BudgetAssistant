@@ -14,7 +14,7 @@ import {
     TransactionTypeEnum
 } from "@daanvdn/budget-assistant-client";
 
-import {Criteria} from "../insights/insights.component";
+import {Criteria} from "../model/criteria.model";
 import {NgFor, NgIf} from '@angular/common';
 import {ChartModule} from 'primeng/chart';
 

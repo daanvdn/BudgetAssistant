@@ -1,7 +1,7 @@
 import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {faXmark} from "@fortawesome/free-solid-svg-icons";
 import {anyIsUndefinedOrEmpty} from "../model";
-import {Criteria} from "../insights/insights.component";
+import {Criteria} from "../model/criteria.model";
 import {BankAccount, GroupingEnum, TransactionTypeEnum} from "@daanvdn/budget-assistant-client";
 import {NgIf} from '@angular/common';
 import {BankAccountSelectionComponent} from '../bank-account-selection/bank-account-selection.component';

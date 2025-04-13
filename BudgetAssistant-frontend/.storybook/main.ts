@@ -1,4 +1,5 @@
 import type { StorybookConfig } from '@storybook/angular';
+import path from 'path';
 
 const config: StorybookConfig = {
   "stories": [
@@ -14,6 +15,18 @@ const config: StorybookConfig = {
   "framework": {
     "name": "@storybook/angular",
     "options": {}
-  }
+  },
+  webpackFinal: async (baseConfig) => {
+    if (!baseConfig.resolve) {
+      baseConfig.resolve = {};
+    }
+    baseConfig.resolve.alias = {
+      ...(baseConfig.resolve.alias || {}),
+      '@daanvdn/budget-assistant-client': path.resolve(__dirname, '../node_modules/@daanvdn/budget-assistant-client'),
+      '@daanvdn/budget-assistant-client/model': path.resolve(__dirname, '../node_modules/@daanvdn/budget-assistant-client/model')
+
+    };
+    return baseConfig;
+  },
 };
 export default config;

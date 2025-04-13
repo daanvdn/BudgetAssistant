@@ -24,10 +24,7 @@
       "dom"
     ],
     "paths": {
-      "@daanvdn/budget-assistant-client": [
-        "node_modules/@daanvdn/budget-assistant-client"
-
-      ], "@daanvdn/ngx-pagination-data-source": [
+     "@daanvdn/ngx-pagination-data-source": [
         "node_modules/@daanvdn/ngx-pagination-data-source"
       ]
     },

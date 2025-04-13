@@ -1,5 +1,5 @@
 <div *ngIf="criteria" style="display: flex; justify-content: space-between;">
-    <mat-selection-list *ngIf="criteria.transactionType === TransactionType.EXPENSES; else showRevenueCategories"
+    <mat-selection-list *ngIf="criteria.transactionType === 'EXPENSES'; else showRevenueCategories"
                         [multiple]="false" (selectionChange)="onCategorySelectionChange($event)"
                         style="width: fit-content; overflow-y: auto; height: 80vh">
         <mat-list-option *ngFor="let category of expensesCategories" [value]="category">

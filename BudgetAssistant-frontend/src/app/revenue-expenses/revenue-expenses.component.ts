@@ -6,10 +6,10 @@ import ChartDataLabels from 'chartjs-plugin-datalabels';
 import {parse} from 'date-fns';
 import {isNaN} from "lodash";
 import {AppService} from "../app.service";
-import {Criteria} from "../insights/insights.component";
+import {Criteria} from "../model/criteria.model";
 import {ExpensesRecurrenceEnum, RevenueExpensesQuery, TransactionTypeEnum} from "@daanvdn/budget-assistant-client";
-import {RevenueRecurrenceEnum} from "@daanvdn/budget-assistant-client/model/revenue-recurrence-enum";
-import {ExpensesAndRevenueForPeriod} from "@daanvdn/budget-assistant-client/model/expenses-and-revenue-for-period";
+import {RevenueRecurrenceEnum} from "@daanvdn/budget-assistant-client";
+import {ExpensesAndRevenueForPeriod} from "@daanvdn/budget-assistant-client";
 import { NgIf, NgClass, DecimalPipe } from '@angular/common';
 import { ChartModule } from 'primeng/chart';
 import { MatButton } from '@angular/material/button';
@@ -247,4 +247,3 @@ export class ExpensesRevenueComponent  implements OnInit, OnChanges {
   }
 
 }
-

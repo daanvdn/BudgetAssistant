@@ -4,6 +4,12 @@
     "types": [
       "node"
     ],
+    "paths": {
+      "@daanvdn/budget-assistant-client/*": [
+        "../node_modules/@daanvdn/budget-assistant-client/*"
+      ]
+    }
+    ,
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true
   },

@@ -1,7 +1,7 @@
 import {Component, Input, OnChanges, OnInit, SimpleChanges} from '@angular/core';
 
 import {AppService} from '../app.service';
-import {Criteria} from "../insights/insights.component";
+import {Criteria} from "../model/criteria.model";
 // @ts-ignore
 import autocolors from 'chartjs-plugin-autocolors';
 import {
@@ -25,7 +25,7 @@ import {
     RevenueExpensesQuery,
     TransactionTypeEnum
 } from "@daanvdn/budget-assistant-client";
-import {RevenueRecurrenceEnum} from "@daanvdn/budget-assistant-client/model/revenue-recurrence-enum";
+import {RevenueRecurrenceEnum} from "@daanvdn/budget-assistant-client";
 import {catchError, throwError} from "rxjs";
 import {NgFor, NgIf} from '@angular/common';
 
@@ -111,7 +111,3 @@ export class BudgetTrackingComponent implements OnInit, OnChanges {
         return "N/A";
     }
 }
-
-
-
-

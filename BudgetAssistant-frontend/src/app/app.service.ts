@@ -33,15 +33,15 @@ import {
 import {environment} from "../environments/environment";
 import {
     RevenueAndExpensesPerPeriodResponse
-} from "@daanvdn/budget-assistant-client/model/revenue-and-expenses-per-period-response";
-import {ExpensesAndRevenueForPeriod} from "@daanvdn/budget-assistant-client/model/expenses-and-revenue-for-period";
-import {PageTransactionsRequest} from "@daanvdn/budget-assistant-client/model/page-transactions-request";
-import {SortOrderEnum} from "@daanvdn/budget-assistant-client/model/sort-order-enum";
-import {SortPropertyEnum} from "@daanvdn/budget-assistant-client/model/sort-property-enum";
-import {TransactionsPage} from "@daanvdn/budget-assistant-client/model/transactions-page";
-import {TransactionInContextQuery} from "@daanvdn/budget-assistant-client/model/transaction-in-context-query";
-import {SuccessfulOperationResponse} from "@daanvdn/budget-assistant-client/model/successful-operation-response";
-import {GetOrCreateRuleSetWrapper} from "@daanvdn/budget-assistant-client/model/get-or-create-rule-set-wrapper";
+} from "@daanvdn/budget-assistant-client";
+import {ExpensesAndRevenueForPeriod} from "@daanvdn/budget-assistant-client";
+import {PageTransactionsRequest} from "@daanvdn/budget-assistant-client";
+import {SortOrderEnum} from "@daanvdn/budget-assistant-client";
+import {SortPropertyEnum} from "@daanvdn/budget-assistant-client";
+import {TransactionsPage} from "@daanvdn/budget-assistant-client";
+import {TransactionInContextQuery} from "@daanvdn/budget-assistant-client";
+import {SuccessfulOperationResponse} from "@daanvdn/budget-assistant-client";
+import {GetOrCreateRuleSetWrapper} from "@daanvdn/budget-assistant-client";
 
 
 @Injectable({

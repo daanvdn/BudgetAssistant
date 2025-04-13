@@ -3,7 +3,7 @@ import ChartDataLabels from 'chartjs-plugin-datalabels';
 
 import {AppService} from '../app.service';
 import {CategoryMap} from '../model';
-import {Criteria} from "../insights/insights.component";
+import {Criteria} from "../model/criteria.model";
 // @ts-ignore
 import autocolors from 'chartjs-plugin-autocolors';
 import { MatTable, MatTableDataSource, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatCellDef, MatCell, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow } from "@angular/material/table";
@@ -248,7 +248,3 @@ export class RevenueExpensesPerPeriodAndCategoryComponent implements OnInit, OnC
 
   protected readonly TransactionTypeEnum = TransactionTypeEnum;
 }
-
-
-
-

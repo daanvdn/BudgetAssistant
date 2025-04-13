@@ -7,7 +7,7 @@ import { BankAccount, GroupingEnum, TransactionTypeEnum } from '@daanvdn/budget-
 import { MatTableModule } from '@angular/material/table';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { NgFor, NgIf } from '@angular/common';
-import { Criteria } from '../insights/insights.component';
+import { Criteria } from '../model/criteria.model';
 import { ApiBudgetAssistantBackendClientService } from '@daanvdn/budget-assistant-client';
 import { BudgetTrackerResult } from '../model';
 
@@ -19,16 +19,13 @@ const mockBankAccount: BankAccount = {
 };
 
 // Mock Criteria
-const mockCriteria: Criteria = {
-  bankAccount: mockBankAccount,
-  grouping: GroupingEnum.month,
-  startDate: new Date('2023-01-01'),
-  endDate: new Date('2023-12-31'),
-  transactionType: TransactionTypeEnum.BOTH,
-  equals: function(criteria: Criteria): boolean {
-    return true; // Simplified for mock
-  }
-};
+const mockCriteria = new Criteria(
+  mockBankAccount,
+  GroupingEnum.month,
+  new Date('2023-01-01'),
+  new Date('2023-12-31'),
+  TransactionTypeEnum.BOTH
+);
 
 // Mock BudgetTrackerResult data
 const mockBudgetTrackerResult: BudgetTrackerResult = {
