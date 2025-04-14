@@ -100,6 +100,7 @@ class UploadTransactionsResponseSerializer(Serializer):
     created: int = serializers.IntegerField(min_value=0, default=0)
     updated: int = serializers.IntegerField(min_value=0, default=0)
     status_code: int = serializers.IntegerField(default=200)
+    upload_timestamp: str = serializers.DateTimeField(format="%Y-%m-%dT%H:%M:%S.%fZ", required=True)
 
 
 @dataclass

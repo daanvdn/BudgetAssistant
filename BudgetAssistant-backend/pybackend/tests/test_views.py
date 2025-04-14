@@ -999,7 +999,7 @@ class CategoryDetailsForPeriodTests(ProtectedApiTestCase):
         serializer = RevenueExpensesQueryWithCategorySerializer(
             instance=RevenueExpensesQueryWithCategoryFactory.build())
         self.url = reverse('category_details_for_period')
-        response = self.client.get(self.url, data=serializer.data)
+        response = self.client.post(self.url, data=serializer.data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         response = response.json()
 

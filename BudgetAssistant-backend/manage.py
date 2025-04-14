@@ -7,9 +7,15 @@ import sys
 
 import os
 if os.getenv('DEBUG_PYCHARM', 'false').lower() == 'true':
-    import pydevd_pycharm
-    pydevd_pycharm.settrace('localhost', port=5678, stdoutToServer=True, stderrToServer=True
-                        )
+    try:
+        print("Debugging in PyCharm")
+        import pydevd_pycharm
+
+        pydevd_pycharm.settrace('host.docker.internal', port=29781, stdoutToServer=True, stderrToServer=True)
+    except:
+        print("PyCharm debugger not available, continuing without it")
+
+
 def main():
 
 

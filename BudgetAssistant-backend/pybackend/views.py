@@ -559,7 +559,7 @@ class UploadTransactionsView(APIView):
                                                                               BelfiusTransactionParser(), file.name)
                 created += parse_result.created
                 updated += parse_result.updated
-            return JsonResponse({'created': created, 'updated': updated}, status=200)
+            return JsonResponse({'created': created, 'updated': updated, 'upload_timestamp': upload_timestamp}, status=200)
         except Exception as e:
             traceback.print_exc()
             return HttpResponseServerError()
@@ -966,17 +966,17 @@ class CategoryDetailsForPeriodView(APIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
-        parameters=[RevenueExpensesQueryWithCategorySerializer],
+        request=RevenueExpensesQueryWithCategorySerializer,
         responses={
             200: CategoryDetailsForPeriodHandlerResultSerializer,
             500: None,
             400: None
 
         })
-    def get(self, request):
+    def post(self , request, *args, **kwargs):
         try:
-
-            serializer = RevenueExpensesQueryWithCategorySerializer(data=request.GET)
+            body = request.body.decode('utf-8')
+            serializer = RevenueExpensesQueryWithCategorySerializer(data=json.loads(body))
             if serializer.is_valid(raise_exception=True):
                 validated_data = serializer.validated_data
                 query = RevenueExpensesQueryWithCategory(**validated_data)
