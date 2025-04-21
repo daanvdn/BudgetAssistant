@@ -35,6 +35,7 @@ import {
 } from '@angular/material/table';
 import {MatError, MatFormField} from '@angular/material/form-field';
 import {MatInput} from '@angular/material/input';
+import {HttpResponse} from "@angular/common/http";
 
 export interface BudgetTreeNode {
   budgetTreeNodeAmount: number;
@@ -434,11 +435,12 @@ export class BudgetComponent implements OnInit {
       budgetTreeNode.budgetTreeNodeAmount = budgetControl.value;
     }
 
-    this.appService.updateBudgetEntryAmount(budgetTreeNode).subscribe(
+    this.appService.
+    updateBudgetEntryAmount(budgetTreeNode).subscribe(
       (
-        response: UpdateBudgetEntryResponse
+        response: HttpResponse<any>
       ) => {
-        if (response.response.toLowerCase() !== "success") {
+        if (!response.ok) {
           throw new Error("Failed to update budget entry amount");
         }
         // this.recalculateCumulatedAmountsForAllNodes();

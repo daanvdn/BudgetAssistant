@@ -31,15 +31,17 @@ export class BankAccountSelectionComponent implements OnInit, OnDestroy {
     this.appService.fetchBankAccountsForUser()
       .pipe(takeUntil(this.destroy$))
       .subscribe(result => {
-        if (result == undefined) {
+        if (result == undefined || result.length === 0) {
+          console.error('No bank accounts found for user');
           return;
         }
-        this.bankAccounts = result
+        this.bankAccounts = result;
         this.selectedBankAccount = this.bankAccounts[0];
-        this.appService.setBankAccount(this.selectedBankAccount);
-        this.change.emit(this.selectedBankAccount);
+        if (this.selectedBankAccount && this.selectedBankAccount.accountNumber) {
+          this.appService.setBankAccount(this.selectedBankAccount);
+          this.change.emit(this.selectedBankAccount);
+        }
         return this.bankAccounts;
-
       }
     )
     this.bankAccountFormFieldGroup = formBuilder.group({queryForm: ""});
@@ -50,8 +52,12 @@ export class BankAccountSelectionComponent implements OnInit, OnDestroy {
   }
 
   ngOnChanges() {
-    this.change.emit(this.selectedBankAccount);
-    this.appService.setBankAccount(this.selectedBankAccount);
+    if (this.selectedBankAccount && this.selectedBankAccount.accountNumber) {
+      this.change.emit(this.selectedBankAccount);
+      this.appService.setBankAccount(this.selectedBankAccount);
+    } else {
+      console.error('Selected bank account or account number is undefined in ngOnChanges');
+    }
   }
 
   ngOnDestroy() {

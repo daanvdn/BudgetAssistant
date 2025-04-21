@@ -26,6 +26,7 @@ import {MatIconButton} from '@angular/material/button';
 import {MatIcon} from '@angular/material/icon';
 import {NgIf, UpperCasePipe} from '@angular/common';
 import {IbanPipe} from '../iban.pipe';
+import {map} from "rxjs";
 
 @Component({
     selector: 'app-profile',
@@ -59,7 +60,9 @@ export class ProfileComponent implements OnInit {
     this.authService.getUserObservable().subscribe(u => {
       this.currentUser = u;
     })
-    this.appService.fetchBankAccountsForUser().subscribe(bankAccounts => {
+    this.appService.fetchBankAccountsForUser().pipe(map(r => {
+      return r;
+    })).subscribe(bankAccounts => {
       this.bankAccounts = bankAccounts;
       this.dataSource = new MatTableDataSource(this.bankAccounts);
     });

@@ -58,7 +58,7 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
 
 
   filesAreUploading = false; // Add this line
-  transactionToManuallyReview!: Number;
+  transactionToManuallyReview!: number;
 
   dataSource: PaginationDataSource<Transaction, TransactionQuery>;
   displayedColumns = [
@@ -88,19 +88,27 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
     })
 
     this.appService.selectedBankAccountObservable$.subscribe(bankAccount => {
-      if (bankAccount) {
+      if (bankAccount && bankAccount.accountNumber) {
         this.appService.countTransactionToManuallyReview(bankAccount).subscribe(count => {
-          this.transactionToManuallyReview = count;
-
+          this.transactionToManuallyReview = count.valueOf();
         });
+      } else {
+        // Set a default value if bankAccount or accountNumber is undefined
+        this.transactionToManuallyReview = 0;
       }
     })
 
   }
 
   showTransactionsToManuallyReview(){
-
-    this.router.navigate(['/categorieën']);
+    // Check if there are transactions to manually review before navigating
+    if (this.transactionToManuallyReview !== undefined && 
+        this.transactionToManuallyReview !== null && 
+        this.transactionToManuallyReview > 0) {
+      this.router.navigate(['/categorieën']);
+    } else {
+      console.error('No transactions to manually review or count is undefined');
+    }
   }
 
   onClickFileInputButton(): void {
@@ -250,10 +258,18 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
   }
 
   handleAccountChange(){
-    this.selectedAccount = this.accountSelectionComponent.selectedBankAccount.accountNumber
-    if (this.selectedAccount === undefined || this.selectedAccount === this.appService.DUMMY_BANK_ACCOUNT) {
+    // Check if selectedBankAccount exists before accessing its properties
+    if (!this.accountSelectionComponent || !this.accountSelectionComponent.selectedBankAccount) {
+      console.error('Selected bank account is undefined in handleAccountChange');
       return;
     }
+
+    this.selectedAccount = this.accountSelectionComponent.selectedBankAccount.accountNumber;
+    if (this.selectedAccount === undefined || this.selectedAccount === this.appService.DUMMY_BANK_ACCOUNT) {
+      console.error('Selected account number is undefined or dummy in handleAccountChange');
+      return;
+    }
+
     this.transactionQuery  = {
       transactionType: TransactionTypeEnum.BOTH,
       counterpartyName: undefined,
@@ -266,10 +282,9 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
       endDate: undefined,
       transactionOrCommunication: undefined,
       uploadTimestamp: undefined
-
     }
-    this.doQuery(this.transactionQuery)
 
+    this.doQuery(this.transactionQuery);
   }
   showAllTransactions() {
     this.dataSource = this.initDataSource(this.selectedAccount);
@@ -373,27 +388,16 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
   protected readonly faTag = faTag;
 
   getNrOfTransactionsToManuallyReview(): string {
-    if (this.transactionToManuallyReview){
-
-      return  this.transactionToManuallyReview.toString();
+    if (this.transactionToManuallyReview !== undefined && this.transactionToManuallyReview !== null){
+      return this.transactionToManuallyReview.toString();
     }
-
     return "";
-
-
   }
 
-  getNrOfTransactionsToManuallyReviewTooltip() : string {
-    if (this.transactionToManuallyReview){
-
+  getNrOfTransactionsToManuallyReviewTooltip(): string {
+    if (this.transactionToManuallyReview !== undefined && this.transactionToManuallyReview !== null){
       return `You have ${this.transactionToManuallyReview} transactions to manually review`;
     }
-
     return "";
   }
 }
-
-
-
-
-

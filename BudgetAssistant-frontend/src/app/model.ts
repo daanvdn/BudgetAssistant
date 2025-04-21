@@ -281,17 +281,9 @@ export enum Type {
 export interface TransactionsCategorizationResponse {
     message: string;
     withCategoryCount: number;
-    withoutCategoryCount: number;
-    type: Type;
+    withoutCategoryCount: number
 }
 
-export interface BankAccount {
-
-    accountNumber: string;
-    alias: string | undefined | null;
-    editAlias: boolean;
-
-}
 
 export enum ActiveView {
     EXPENSES = "expenses", REVENUE = "revenue"

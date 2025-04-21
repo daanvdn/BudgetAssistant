@@ -1,14 +1,11 @@
-import {HttpClient, HttpEvent, HttpHeaders} from '@angular/common/http';
+import {HttpClient, HttpEvent, HttpResponse} from '@angular/common/http';
 import {Injectable} from '@angular/core';
-import {BehaviorSubject, catchError, map, Observable, of, Subject, tap, throwError} from 'rxjs';
+import {BehaviorSubject, map, Observable, of, Subject, tap} from 'rxjs';
 
 import {Page, PageRequest} from "@daanvdn/ngx-pagination-data-source";
 import {
-    BudgetTrackerResult,
-    CategoryDetailsForPeriodHandlerResult,
     CategoryMap,
     CategoryNode,
-    CompositeTransactionsFileUploadResponse,
     DistributionByCategoryForPeriodHandlerResult2,
     FileWrapper,
     ResolvedStartEndDateShortcut,
@@ -16,32 +13,41 @@ import {
     TransactionsCategorizationResponse
 } from './model';
 import {AuthService} from "./auth/auth.service";
-import {BudgetTreeNode, UpdateBudgetEntryResponse} from "./budget/budget.component";
+import {BudgetTreeNode} from "./budget/budget.component";
 import {
     ApiBudgetAssistantBackendClientService,
     BankAccount,
+    BankAccountNumber,
+    BudgetTreeNode as BudgetTreeNodeApi,
+    CategoryDetailsForPeriodHandlerResult,
+    ExpensesAndRevenueForPeriod,
+    GetOrCreateRuleSetWrapper,
     GroupingEnum,
     PageTransactionsInContextRequest,
+    PageTransactionsRequest,
     PageTransactionsToManuallyReviewRequest,
-    RevenueExpensesQuery, RuleSetWrapper,
+    ResolvedStartEndDateShortcut as ResolvedStartEndDateShortcutApi,
+    RevenueAndExpensesPerPeriodResponse,
+    RevenueExpensesQuery,
+    RuleSetWrapper,
+    SaveAlias,
     SimplifiedCategory,
+    SortOrderEnum,
+    SortPropertyEnum,
+    SuccessfulOperationResponse,
     Transaction,
+    TransactionInContextQuery,
     TransactionQuery,
+    TransactionsPage,
     TransactionTypeEnum,
     TypeEnum
 } from "@daanvdn/budget-assistant-client";
 import {environment} from "../environments/environment";
+import {UploadTransactionsResponse} from "@daanvdn/budget-assistant-client/dist/model/upload-transactions-response";
+import {BudgetTree} from "@daanvdn/budget-assistant-client/dist/model/budget-tree";
 import {
-    RevenueAndExpensesPerPeriodResponse
-} from "@daanvdn/budget-assistant-client";
-import {ExpensesAndRevenueForPeriod} from "@daanvdn/budget-assistant-client";
-import {PageTransactionsRequest} from "@daanvdn/budget-assistant-client";
-import {SortOrderEnum} from "@daanvdn/budget-assistant-client";
-import {SortPropertyEnum} from "@daanvdn/budget-assistant-client";
-import {TransactionsPage} from "@daanvdn/budget-assistant-client";
-import {TransactionInContextQuery} from "@daanvdn/budget-assistant-client";
-import {SuccessfulOperationResponse} from "@daanvdn/budget-assistant-client";
-import {GetOrCreateRuleSetWrapper} from "@daanvdn/budget-assistant-client";
+    RevenueExpensesQueryWithCategory
+} from "@daanvdn/budget-assistant-client/dist/model/revenue-expenses-query-with-category";
 
 
 @Injectable({
@@ -196,17 +202,16 @@ export class AppService {
     public fetchBankAccountsForUser(): Observable<BankAccount[]> {
 
 
-        this.apiBudgetAssistantBackendClientService.apiBankAccountsList().subscribe(result => {
-            this.currentBankAccounts$.next(result);
-        })
-
-
-        return this.currentBankAccountsObservable$;
+        return this.apiBudgetAssistantBackendClientService.apiBankAccountsList('body');
 
 
     }
 
     public countTransactionToManuallyReview(bankAccount: BankAccount): Observable<Number> {
+        if (!bankAccount || !bankAccount.accountNumber) {
+            console.error('Bank account or account number is undefined');
+            return of(0); // Return observable with 0 if bankAccount or accountNumber is undefined
+        }
         return this.apiBudgetAssistantBackendClientService.apiTransactionsCountTransactionsToManuallyReviewRetrieve(
             bankAccount.accountNumber).pipe(map(count => count.count));
 
@@ -418,18 +423,6 @@ export class AppService {
     }
 
 
-    public trackBudget(restQuery: RevenueExpensesQuery): Observable<BudgetTrackerResult> {
-        const params = {
-            query: JSON.stringify(restQuery), responseType: "json"
-        }
-        return this.http.get<BudgetTrackerResult>(`${this.backendUrl}/track_budget`, {params}).pipe(
-            catchError(error => {
-                console.error('Error occurred:', error);
-                return throwError(error);
-            })
-        );
-    }
-
 
     public getRevenueExpensesPerPeriodAndCategoryShow1MonthBeforeAndAfter(restQuery: RevenueExpensesQuery): Observable<DistributionByCategoryForPeriodHandlerResult2> {
 
@@ -438,6 +431,7 @@ export class AppService {
             query: JSON.stringify(restQuery), responseType: "json"
 
         }
+
         return this.http.get<DistributionByCategoryForPeriodHandlerResult2>(
             `${this.backendUrl}/revenue_expenses_per_period_and_category_show_1_month_before_and_after`, {params})
 
@@ -445,74 +439,118 @@ export class AppService {
 
 
     public resolveStartEndDateShortcut(startEnDateShortCut: StartEndDateShortcut): Observable<ResolvedStartEndDateShortcut> {
+        return this.apiBudgetAssistantBackendClientService.apiResolveStartEndDateShortcutRetrieve(startEnDateShortCut,
+            'body')
+            .pipe(map((resolvedStartEndDateShortcutApi: ResolvedStartEndDateShortcutApi) => {
+                //parse the ResolvedStartEndDateShortcutApi.start string and ResolvedStartEndDateShortcutApi.end string
+                // to Date and return a new ResolvedStartEndDateShortcut object
+                let start: Date = this.parseDate(resolvedStartEndDateShortcutApi.start);
+                let end: Date = this.parseDate(resolvedStartEndDateShortcutApi.end);
+                return new ResolvedStartEndDateShortcut(start, end);
 
-        const params = {
-            "query": startEnDateShortCut
-        }
-        return this.http.get<ResolvedStartEndDateShortcut>(`${this.backendUrl}/resolve_start_end_date_shortcut`,
-            {params})
+            }));
 
     }
 
 
-    public getDistinctCounterpartyNames(bankAccount: string): Observable<string[]> {
-        const params = {
-            account: bankAccount
-        }
-        return this.http.get<string[]>(`${this.backendUrl}/distinct_counterparty_names`, {params})
+    public getDistinctCounterpartyNames(bankAccount: string): Observable<Array<string>> {
+
+        return this.apiBudgetAssistantBackendClientService.apiDistinctCounterpartyNamesRetrieve(bankAccount, 'body')
     }
 
-    public getDistinctCounterpartyAccounts(bankAccount: string): Observable<string[]> {
-        const params = {
-            account: bankAccount
-        }
-        return this.http.get<string[]>(`${this.backendUrl}/distinct_counterparty_accounts`, {params})
+    public getDistinctCounterpartyAccounts(bankAccount: string): Observable<Array<string>> {
+        return this.apiBudgetAssistantBackendClientService.apiDistinctCounterpartyAccountsRetrieve(bankAccount, 'body')
     }
 
     public uploadTransactionFiles(fileWrappers: FileWrapper[],
-                                  userName: string): Observable<HttpEvent<CompositeTransactionsFileUploadResponse>> {
-
-        // Create a FormData instance
-        let formData = new FormData();
+                                  userName: string): Observable<HttpEvent<UploadTransactionsResponse>> {
 
 
+        // Mark files as in progress
+        const files: Blob[] = [];
         for (const fileWrapper of fileWrappers) {
             fileWrapper.inProgress = true;
-            formData.append("files", fileWrapper.file, fileWrapper.file.name);
+            files.push(fileWrapper.file);
         }
-        formData.append("userName", userName);
 
-
-        return this.http.post<CompositeTransactionsFileUploadResponse>(`${this.backendUrl}/upload_transactions`,
-            formData, {
-                reportProgress: true, observe: 'events'
-            }).pipe(tap(() => {
+        // Call the API client service method
+        return this.apiBudgetAssistantBackendClientService.apiTransactionsUploadTransactionsCreate(
+            files,
+            'events',
+            true
+        ).pipe(tap(() => {
             this.fetchBankAccountsForUser(); //fixme: need for subscription?
             this.fileUploadComplete$.next();
-        }));
+        })) as Observable<HttpEvent<UploadTransactionsResponse>>;
 
     }
 
     public findOrCreateBudget(bankAccount: BankAccount): Observable<BudgetTreeNode[]> {
 
-        const params = {
-            account: bankAccount.accountNumber
+        const bankAccountNumber: BankAccountNumber = {
+            bankAccountNumber: bankAccount.accountNumber
         }
-        return this.http.get<BudgetTreeNode[]>(`${this.backendUrl}/find_or_create_budget`, {params})
+        let obs: Observable<BudgetTree> = this.apiBudgetAssistantBackendClientService.apiFindOrCreateBudgetCreate(
+            bankAccountNumber, 'body');
+        return obs.pipe(map((budgetTree: BudgetTree) => {
+            // Convert the BudgetTree to an array of BudgetTreeNode objects
+            const result: BudgetTreeNode[] = [];
 
+            // Process the root node and its children recursively
+            this.convertBudgetTreeNodeApiToBudgetTreeNode(budgetTree.root, -1, result);
+
+            return result;
+        }));
 
     }
 
-    public updateBudgetEntryAmount(budgetEntry: BudgetTreeNode): Observable<UpdateBudgetEntryResponse> {
+    private convertBudgetTreeNodeApiToBudgetTreeNode(apiNode: BudgetTreeNodeApi, parentId: number,
+                                                     result: BudgetTreeNode[]): void {
+        // Create a new BudgetTreeNode from the API node
+        const localNode: BudgetTreeNode = {
+            budgetTreeNodeAmount: apiNode.budgetTreeNodeAmount,
+            budgetTreeNodeId: apiNode.budgetTreeNodeId,
+            budgetTreeNodeParentId: parentId,
+            children: [],
+            name: apiNode.name,
+            qualifiedName: apiNode.qualifiedName
+        };
 
-        const headers = new HttpHeaders().set('Content-Type', 'application/json; charset=utf-8');
-        const options = {headers: headers};
+        // Add the node to the result array
+        result.push(localNode);
 
-        const body = JSON.stringify(budgetEntry);
+        // Process children recursively
+        if (apiNode.children && apiNode.children.length > 0) {
+            for (const childObj of apiNode.children) {
+                // Extract the child node from the object
+                const [childName, childValue] = Object.entries(childObj)[0];
+                const childNode = childValue as unknown as BudgetTreeNodeApi;
+
+                // Process the child node recursively
+                this.convertBudgetTreeNodeApiToBudgetTreeNode(childNode, localNode.budgetTreeNodeId, result);
+
+                // Add the converted child to the current node's children array
+                localNode.children.push(result[result.length - 1]);
+            }
+        }
+    }
+
+    private convertBudgetTreeNodeToBudgetTreeNodeApi(node: BudgetTreeNode): BudgetTreeNodeApi {
+
+        return {
+            budgetTreeNodeAmount: node.budgetTreeNodeAmount,
+            budgetTreeNodeId: node.budgetTreeNodeId,
+            children: node.children.map(child => this.convertBudgetTreeNodeToBudgetTreeNodeApi(child)),
+            name: node.name,
+            qualifiedName: node.qualifiedName
+        }
+    }
 
 
-        return this.http.post<UpdateBudgetEntryResponse>(`${this.backendUrl}/update_budget_entry_amount`, body, options)
+    public updateBudgetEntryAmount(budgetEntry: BudgetTreeNode): Observable<HttpResponse<any>> {
 
+        return this.apiBudgetAssistantBackendClientService.apiUpdateBudgetEntryAmountCreate(
+            this.convertBudgetTreeNodeToBudgetTreeNodeApi(budgetEntry), 'response')
 
     }
 
@@ -532,44 +570,39 @@ export class AppService {
     }
 
     public categorizeTransactions(userName: string): Observable<TransactionsCategorizationResponse> {
+        return this.apiBudgetAssistantBackendClientService.apiCategorizeTransactionsCreate("body").pipe(map(r => {
+                return {
+                    message: r.message,
+                    withCategoryCount: r.withCategoryCount,
+                    withoutCategoryCount: r.withoutCategoryCount
 
-        const params = {
-            userName: userName
+                }
         }
-        return this.http.get<TransactionsCategorizationResponse>(`${this.backendUrl}/categorize_transactions`,
-            {params});
+        ))
+
 
     }
 
-    public saveBankAccountAlias(bankAccount: BankAccount): Observable<void> {
-        const headers = new HttpHeaders().set('Content-Type', 'application/json; charset=utf-8');
-        const options = {headers: headers};
+    public saveBankAccountAlias(bankAccount: BankAccount): Observable<any> {
 
-        const body = {
-            alias: bankAccount.alias, accountNumber: bankAccount.accountNumber
-        };
-        return this.http.post<void>(`${this.backendUrl}/save_bankacount_alias`, body, options)
+        const saveAlias: SaveAlias = {
+            alias: bankAccount.alias as string,
+            bankAccount: bankAccount.accountNumber
+        }
+        return this.apiBudgetAssistantBackendClientService.apiSaveAliasCreate(saveAlias, 'body')
+
     }
 
-    public getCategoryDetailsForPeriod(revenueExpensesQuery: RevenueExpensesQuery, category:string): Observable<CategoryDetailsForPeriodHandlerResult>{
-        const params = {
-            query: JSON.stringify(revenueExpensesQuery),
-            category: category,
-            responseType: "json"
+    public getCategoryDetailsForPeriod(revenueExpensesQuery: RevenueExpensesQueryWithCategory): Observable<CategoryDetailsForPeriodHandlerResult> {
+        return this.apiBudgetAssistantBackendClientService.apiAnalysisCategoryDetailsForPeriodCreate(
+            revenueExpensesQuery, 'body');
 
-        }
-        return this.http.get<CategoryDetailsForPeriodHandlerResult>(
-            `${this.backendUrl}/get_category_details_for_period`, {params})
     }
 
-    public getCategoriesForAccountAndTransactionType(accountNumber: string, transactionType: TransactionTypeEnum): Observable<string[]>{
+    public getCategoriesForAccountAndTransactionType(accountNumber: string, transactionType: TransactionTypeEnum): Observable<Array<string>>{
 
-        const params = {
-            accountNumber: accountNumber,
-            transactionType: transactionType
-        }
-        return this.http.get<string[]>(
-            `${this.backendUrl}/get_categories_for_account_and_transaction_type`, {params})
+        return this.apiBudgetAssistantBackendClientService.apiAnalysisCategoriesForAccountAndTransactionTypeRetrieve(
+            accountNumber, transactionType, 'body')
 
     }
 }

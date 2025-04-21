@@ -17,6 +17,9 @@ import {
 import {Criteria} from "../model/criteria.model";
 import {NgFor, NgIf} from '@angular/common';
 import {ChartModule} from 'primeng/chart';
+import {
+    RevenueExpensesQueryWithCategory
+} from "@daanvdn/budget-assistant-client/dist/model/revenue-expenses-query-with-category";
 
 
 interface Category {
@@ -131,20 +134,21 @@ export class CategoryDetailsComponent implements OnInit, OnChanges {
             return;
         }
 
-        let query: RevenueExpensesQuery = {
+        let query: RevenueExpensesQueryWithCategory = {
             accountNumber: this.criteria.bankAccount.accountNumber,
             grouping: this.criteria.grouping,
             transactionType: this.criteria.transactionType,
             start: JSON.stringify(this.criteria.startDate),
             end: JSON.stringify(this.criteria.endDate),
             expensesRecurrence: ExpensesRecurrenceEnum.BOTH,
-            revenueRecurrence: RevenueRecurrenceEnum.BOTH
+            revenueRecurrence: RevenueRecurrenceEnum.BOTH,
+            category: this.selectedCategory.name
 
         };
 
 
         this.datatIsLoaded = false;
-        this.appService.getCategoryDetailsForPeriod(query, this.selectedCategory.name).subscribe((data) => {
+        this.appService.getCategoryDetailsForPeriod(query).subscribe((data) => {
             data.datasets = data.datasets.map((dataset: Dataset) => {
                 dataset.maxBarThickness = 50
                 return dataset;

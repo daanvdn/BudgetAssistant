@@ -135,9 +135,6 @@ export class RulesViewComponent implements OnInit {
 
   }
 
-  onChangeSelectedBankAccountsForCurrentRule($event: string[]) {
-
-  }
 
   protected readonly faSearch = faSearch;
 }
