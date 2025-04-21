@@ -263,7 +263,7 @@ class BankAccountsForUserView(APIView):
         bank_accounts = get_bank_accounts_service().find_distinct_by_users_contains(user)
         # use BankAccountSerializer to serialize the bank accounts
         serializer = BankAccountSerializer(bank_accounts, many=True)
-        return JsonResponse(serializer.data, safe=False, status=200)
+        return JsonResponse(serializer.data, status=200, safe=False)
 
 
 class RevenueAndExpensesPerPeriodView(APIView):
@@ -335,9 +335,11 @@ class PageTransactionsView(APIView):
                 sort_property = page_transactions_request.sort_property
                 response: TransactionsPage = get_transactions_service().page_transactions(query, page, size, sort_order,
                                                                                           sort_property, user)
-                return JsonResponse(response, status=200)
+                data = TransactionsPageSerializer(response).data
+                return JsonResponse(data, status=200)
 
         except Exception as e:
+            traceback.print_exc()
             return JsonResponse({}, status=400)
 
 

@@ -1,5 +1,13 @@
-#Write-Output "Activating conda environment"
-#conda activate budget-assistant-backend-django
+#check if conda env budget-assistant-backend-django is activated. if not then activate it
+$envName = "budget-assistant-backend-django"
+# Get the currently active Conda environment
+$activeEnv = $env:CONDA_DEFAULT_ENV
+if ($activeEnv -ne $envName) {
+    Write-Output "Activating Conda environment: $envName"
+    conda activate $envName
+} else {
+    Write-Output "Conda environment '$envName' is already active."
+}
 Write-Output "Creating pip_packages.txt"
 python parse_pip_packages.py
 

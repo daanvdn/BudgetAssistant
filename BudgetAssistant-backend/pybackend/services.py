@@ -98,7 +98,10 @@ class TransactionsService:
                           sort_property: str, user:CustomUser) -> TransactionsPage:
 
         direction = sort_order.upper()
-        sort = f"{direction}{sort_property}"
+        if direction not in ['ASC', 'DESC']:
+            raise ValueError(f"Invalid sort order: {direction}")
+
+        sort = f"-{sort_property}" if direction == 'DESC' else sort_property
         bank_accounts_for_user = self._get_bank_accounts_for_user(user)
         q = TransactionPredicates.bank_account_number_in(bank_accounts_for_user)
         if not query:
@@ -117,8 +120,9 @@ class TransactionsService:
             if serializer.is_valid(raise_exception=True):
                 return serializer.validated_data
 
-        content = [ deserialize(transaction) for transaction in page_obj]
-        return TransactionsPage(content=content, number=page_obj.number, size=len(content),
+        #content = [ deserialize(transaction) for transaction in page_obj]
+        content = page_obj.object_list
+        return TransactionsPage(content=page_obj.object_list, number=page_obj.number, size=len(content),
                                 totalElements=paginator.count)
 
     def page_transactions_in_context(self, query: Optional[TransactionInContextQuery], page: int, size: int,

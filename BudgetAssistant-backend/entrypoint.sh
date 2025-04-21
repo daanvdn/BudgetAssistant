@@ -1,12 +1,30 @@
 #!/bin/bash -x
 set -e
 set -x
+
+# Check if TRUNCATE_TABLES environment variable is set
+if [ "${TRUNCATE_TABLES}" = "true" ]; then
+    echo "TRUNCATE_TABLES flag is set to true. Will truncate database tables after migrations."
+    SHOULD_TRUNCATE=true
+else
+  echo "TRUNCATE_TABLES flag is not set or set to false. Will not truncate database tables."
+    SHOULD_TRUNCATE=false
+fi
+
 # Wait for the database to be ready
 /wait-for-it.sh db:3306 --timeout=60 --strict -- echo "Database is up"
 echo "Running makemigrations..."
 python manage.py makemigrations
 echo "Running migrations..."
 python manage.py migrate
+
+# Truncate tables if flag is set
+if [ "$SHOULD_TRUNCATE" = true ]; then
+    echo "Truncating database tables..."
+    python manage.py truncate_tables
+    echo "Database tables truncated."
+fi
+
 echo "Collecting static files..."
 python manage.py collectstatic --no-input
 

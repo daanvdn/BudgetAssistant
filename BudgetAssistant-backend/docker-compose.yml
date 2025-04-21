@@ -36,6 +36,7 @@ services:
       DATABASE_HOST: db
       DATABASE_PORT: 3306
       DEBUG_PYCHARM: 'false'
+      TRUNCATE_TABLES: ${TRUNCATE_TABLES:-false}
     env_file:
       - .env
 volumes:

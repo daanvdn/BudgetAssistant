@@ -26,40 +26,6 @@ class DeserializeInstanceMixin(serializers.ModelSerializer):
         else:
             raise serializers.ValidationError(serializer.errors)
 
-class BankAccountSerializer(DeserializeInstanceMixin):
-    class Meta:
-        model = BankAccount
-        fields = ['account_number', 'alias', 'users']
-
-    def create(self, validated_data):
-        users_data = validated_data.pop('users', [])
-        bank_account = BankAccount.objects.create(**validated_data)
-        for user in users_data:
-            # Get or create the bank account by account_number
-            user, created = CustomUser.objects.get_or_create(user)
-            bank_account.users.add(user)
-            user.bank_accounts.add(bank_account)
-        return bank_account
-
-    def update(self, instance: BankAccount, validated_data: Dict):
-        users_data = validated_data.pop('users', [])
-        instance.account_number = BankAccount.normalize_account_number(
-            validated_data.get('account_number', instance.account_number))
-        instance.alias = validated_data.get('alias', instance.alias)
-        instance.save()
-        for user in users_data:
-            # Get or create the bank account by account_number
-            user, created = CustomUser.objects.get_or_create(username=user)
-
-            # Associate the user with the bank account
-            instance.users.add(user)
-            # Associate the bank account with the user
-            user.bank_accounts.add(instance)
-            user.save()
-
-        return instance
-
-
 class CustomUserSerializer(DeserializeInstanceMixin):
 
     class Meta:
@@ -102,6 +68,41 @@ class CustomUserSerializer(DeserializeInstanceMixin):
             bank_account.save()
 
         return instance
+
+
+class BankAccountSerializer(DeserializeInstanceMixin):
+    class Meta:
+        model = BankAccount
+        fields = ['account_number', 'alias', 'users']
+
+    def create(self, validated_data):
+        users_data = validated_data.pop('users', [])
+        bank_account = BankAccount.objects.create(**validated_data)
+        for user in users_data:
+            # Get or create the bank account by account_number
+            user, created = CustomUser.objects.get_or_create(user)
+            bank_account.users.add(user)
+            user.bank_accounts.add(bank_account)
+        return bank_account
+
+    def update(self, instance: BankAccount, validated_data: Dict):
+        users_data = validated_data.pop('users', [])
+        instance.account_number = BankAccount.normalize_account_number(
+            validated_data.get('account_number', instance.account_number))
+        instance.alias = validated_data.get('alias', instance.alias)
+        instance.save()
+        for user in users_data:
+            # Get or create the bank account by account_number
+            user, created = CustomUser.objects.get_or_create(username=user)
+
+            # Associate the user with the bank account
+            instance.users.add(user)
+            # Associate the bank account with the user
+            user.bank_accounts.add(instance)
+            user.save()
+
+        return instance
+
 
 
 class CategorySerializer(DeserializeInstanceMixin):
