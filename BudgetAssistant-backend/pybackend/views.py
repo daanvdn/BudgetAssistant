@@ -18,15 +18,12 @@ from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseServer
 from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
 from django.utils.http import urlsafe_base64_decode
-from django.views import View
 from drf_spectacular.utils import PolymorphicProxySerializer, extend_schema, inline_serializer
 from rest_framework import status
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import UnsupportedMediaType, ValidationError
 from rest_framework.fields import BooleanField
-from rest_framework.generics import GenericAPIView
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.response import Response
 from rest_framework.serializers import CharField, EmailField
 from rest_framework.views import APIView
 
@@ -297,7 +294,7 @@ class RevenueAndExpensesPerPeriodView(APIView):
                 result = dict()
                 result["content"] = data or []
                 result["number"] = 1 if data else 0
-                result["totalElements"] = len(data) if data else 0
+                result["total_elements"] = len(data) if data else 0
                 result["size"] = len(data) if data else 0
 
                 return RevenueAndExpensesPerPeriodResponse(**result)
@@ -546,6 +543,8 @@ class UploadTransactionsView(APIView):
     )
     def post(self, request, *args, **kwargs):
         try:
+            if not request.content_type.startswith('multipart/form-data'):
+                raise UnsupportedMediaType(request.content_type)
             files: List[UploadedFile] = request.FILES.getlist('files')
             user = request.user
             if not isinstance(user, CustomUser):
@@ -562,6 +561,8 @@ class UploadTransactionsView(APIView):
                 created += parse_result.created
                 updated += parse_result.updated
             return JsonResponse({'created': created, 'updated': updated, 'upload_timestamp': upload_timestamp}, status=200)
+        except UnsupportedMediaType as e:
+            return JsonResponse({'error': f'Unsupported media type: {str(e)}'}, status=415)
         except Exception as e:
             traceback.print_exc()
             return HttpResponseServerError()

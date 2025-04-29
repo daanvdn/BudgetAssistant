@@ -272,7 +272,7 @@ class TransactionPredicates:
     def upload_time_stamp_query(upload_timestamp: datetime) -> Optional[Q]:
         if not upload_timestamp:
             return None
-        return Q(upload_timestamp__eq=upload_timestamp)
+        return Q(upload_timestamp=upload_timestamp)
 
     @staticmethod
     def has_transaction_type(transaction_type: TransactionTypeEnum) -> Q:

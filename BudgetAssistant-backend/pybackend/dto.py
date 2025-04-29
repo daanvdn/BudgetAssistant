@@ -17,14 +17,14 @@ from pybackend.serializers import TransactionSerializer
 class RevenueAndExpensesPerPeriodResponse:
     content: List[ExpensesAndRevenueForPeriod]
     number: int
-    totalElements: int
+    total_elements: int
     size: int
 
 
 class RevenueAndExpensesPerPeriodResponseSerializer(Serializer):
     content = ExpensesAndRevenueForPeriodSerializer(many=True)
     number = serializers.IntegerField()
-    totalElements = serializers.IntegerField()
+    total_elements = serializers.IntegerField()
     size = serializers.IntegerField()
 
     def to_internal_value(self, data):
@@ -42,14 +42,14 @@ class RevenueAndExpensesPerPeriodResponseSerializer(Serializer):
 class TransactionsPage:
     content: List[Transaction]
     number: int
-    totalElements: int
+    total_elements: int
     size: int
 
 
 class TransactionsPageSerializer(Serializer):
     content: List[Transaction] = TransactionSerializer(many=True)
     number: int = serializers.IntegerField()
-    totalElements: int = serializers.IntegerField()
+    total_elements: int = serializers.IntegerField()
     size: int = serializers.IntegerField()
 
     def to_internal_value(self, data):

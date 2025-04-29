@@ -75,7 +75,7 @@ class TransactionsServiceTests(TestCase):
             transaction_type=TransactionTypeEnum.EXPENSES
         )
 
-        self.assertEqual(response.totalElements, 3)
+        self.assertEqual(response.total_elements, 3)
         self.assertEqual(response.number, 1)
         self.assertEqual(response.size, 10)
         self.assertIn(transaction1, response.content)
@@ -90,7 +90,7 @@ class TransactionsServiceTests(TestCase):
         )
         self.assertEqual(response.content, [])
         self.assertEqual(response.number, 1)
-        self.assertEqual(response.totalElements, 0)
+        self.assertEqual(response.total_elements, 0)
         self.assertEqual(response.size, 10)
 
     def test_count_transactions_to_manually_review_returns_count(self):
@@ -142,6 +142,85 @@ class TransactionsServiceTests(TestCase):
                 #check if transactions are saved in db
                 transactions = Transaction.objects.all()
                 self.assertEqual(len(transactions), 10)
+
+    def test_page_transactions_pagination(self):
+        # Create a bank account and associate it with the user
+        bank_account = baker.make(BankAccount, account_number='test_account')
+        bank_account.users.add(self.user)
+
+        # Create 99 transactions using baker and store them in a list
+        transactions = []
+        for i in range(99):
+            transaction = baker.make(
+                Transaction, 
+                bank_account=bank_account, 
+                amount=-10.0, 
+                manually_assigned_category=False, 
+                category=None
+            )
+            transactions.append(transaction)
+
+        # Sort transactions by transaction_id to match the sorting in the service
+        transactions.sort(key=lambda t: t.transaction_id)
+
+        # Check all pages from 1 to 10
+        for page_num in range(1, 11):
+            # Call page_transactions with the current page number
+            response_page = self.service.page_transactions(
+                query=None, 
+                page=page_num, 
+                size=10, 
+                sort_order='asc', 
+                sort_property='transaction_id',
+                user=self.user
+            )
+
+            # Verify total_elements is always 99
+            self.assertEqual(response_page.total_elements, 99)
+
+            # Verify page number matches the requested page
+            self.assertEqual(response_page.number, page_num)
+
+            # Calculate expected content size (10 for pages 1-9, 9 for page 10)
+            expected_size = 9 if page_num == 10 else 10
+            self.assertEqual(len(response_page.content), expected_size)
+
+            # Calculate the start and end indices for the expected transactions
+            start_idx = (page_num - 1) * 10
+            end_idx = min(start_idx + 10, 99)
+            expected_transactions = transactions[start_idx:end_idx]
+
+            # Verify that the content matches the expected transactions
+            for i, transaction in enumerate(response_page.content):
+                self.assertEqual(transaction, expected_transactions[i], 
+                                f"Transaction mismatch on page {page_num}, position {i}")
+
+        # Additional verification for first and last page
+        # Get the first page
+        response_page1 = self.service.page_transactions(
+            query=None, 
+            page=1, 
+            size=10, 
+            sort_order='asc', 
+            sort_property='transaction_id',
+            user=self.user
+        )
+
+        # Verify first page has 10 transactions
+        self.assertEqual(len(response_page1.content), 10)
+
+        # Get the last page (page 10)
+        response_page10 = self.service.page_transactions(
+            query=None, 
+            page=10, 
+            size=10, 
+            sort_order='asc', 
+            sort_property='transaction_id',
+            user=self.user
+        )
+
+        # Verify last page has 9 transactions
+        self.assertEqual(len(response_page10.content), 9)
 
 
 

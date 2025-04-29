@@ -241,7 +241,7 @@ class SimplifiedCategorySerializer(DeserializeInstanceMixin):
 
     class Meta:
         model = Category
-        fields = ['name', 'qualified_name', 'children', 'id']
+        fields = ['name', 'qualified_name', 'children', 'id', 'type']
 
     def get_children(self, obj) -> List[Dict[str, Union[str, List]]]:
         children = obj.cached_children

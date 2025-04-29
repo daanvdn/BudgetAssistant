@@ -42,7 +42,7 @@ from pybackend.rules import RuleSetWrapper, RuleSetWrapperSerializer
 from pybackend.serializers import BankAccountSerializer, BudgetTreeNodeSerializer, BudgetTreeSerializer, \
     CategoryTreeSerializer, \
     TransactionSerializer
-from tests.utils import RevenueAndExpensesPerPeriodAndCategoryFactory, create_random_rule_set, generate_random_period
+from utils import RevenueAndExpensesPerPeriodAndCategoryFactory, create_random_rule_set, generate_random_period
 
 
 def deserialize_succesful_operation_response(data: Dict) -> SuccessfulOperationResponse:
@@ -166,7 +166,7 @@ class RevenueAndExpensesPerPeriodTests(ProtectedApiTestCase):
 
 
         expected = RevenueAndExpensesPerPeriodResponse(content=service_response, number=1,
-                                                       totalElements=len(service_response), size=len(service_response))
+                                                       total_elements=len(service_response), size=len(service_response))
         url = reverse('revenue_and_expenses_per_period')
 
         payload = RevenueExpensesQuerySerializer(query).data
@@ -242,13 +242,79 @@ class PageTransactionsTests(ProtectedApiTestCase):
         response = {
             'content': [TransactionSerializer(transaction).data for transaction in transactions],
             'number': 1,
-            'totalElements': 100,
+            'total_elements': 100,
             'size': 10
         }
         mock_service.page_transactions.return_value = response
         url = reverse('page_transactions')
         response = self.client.post(url, data=PageTransactionsRequestSerializer(request).data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_page_transactions_pagination(self):
+        # Create a bank account and associate it with the user
+        bank_account = baker.make(BankAccount, account_number='test_account')
+        bank_account.users.add(self.user)
+
+        # Create 99 transactions using baker and store them in a list
+        transactions = []
+        for i in range(99):
+            transaction = baker.make(
+                Transaction, 
+                bank_account=bank_account, 
+                amount=-10.0, 
+                manually_assigned_category=False, 
+                category=None
+            )
+            transactions.append(transaction)
+
+        # Sort transactions by transaction_id to match the sorting in the service
+        transactions.sort(key=lambda t: t.transaction_id)
+
+        url = reverse('page_transactions')
+
+        # Check all pages from 1 to 10
+        for page_num in range(1, 11):
+            # Create request data for the current page
+            request_data = {
+                'page': page_num,
+                'size': 10,
+                'sort_order': 'asc',
+                'sort_property': 'transaction_id'
+            }
+
+            # Make POST request to the view
+            response = self.client.post(url, data=request_data, format='json')
+
+            # Verify response status code
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            # Parse response data
+            response_data = response.json()
+
+            # Verify total_elements is always 99
+            self.assertEqual(response_data['total_elements'], 99)
+
+            # Verify page number matches the requested page
+            self.assertEqual(response_data['number'], page_num)
+
+            # Calculate expected content size (10 for pages 1-9, 9 for page 10)
+            expected_size = 9 if page_num == 10 else 10
+            self.assertEqual(len(response_data['content']), expected_size)
+
+            # Calculate the start and end indices for the expected transactions
+            start_idx = (page_num - 1) * 10
+            end_idx = min(start_idx + 10, 99)
+            expected_transactions = transactions[start_idx:end_idx]
+
+            # Verify that the content matches the expected transactions
+            for i, transaction_data in enumerate(response_data['content']):
+                # Get the transaction_id from the response
+                response_transaction_id = transaction_data['transaction_id']
+                # Get the expected transaction_id
+                expected_transaction_id = expected_transactions[i].transaction_id
+                # Verify they match
+                self.assertEqual(response_transaction_id, expected_transaction_id, 
+                                f"Transaction mismatch on page {page_num}, position {i}")
 
     def test_fail_if_logged_out(self):
         url = reverse('page_transactions')
@@ -267,7 +333,7 @@ class PageTransactionsInContextTests(ProtectedApiTestCase):
         response = {
             'content': transactions,
             'number': 1,
-            'totalElements': 100,
+            'total_elements': 100,
             'size': 10
         }
         request = PageTransactionsInContextRequest(page=1, size=10, sort_order='asc', sort_property='transaction_id',

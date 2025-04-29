@@ -27,12 +27,6 @@ from pybackend.transactions_parsing import ParseResult
 
 logger = logging.getLogger(__name__)
 
-
-
-
-
-
-
 class BankAccountsService:
     def get_or_create_bank_account(self, account_number: str, user: CustomUser) -> BankAccount:
         account_number = BankAccount.normalize_account_number(account_number)
@@ -57,8 +51,6 @@ class BankAccountsService:
         bank_account.alias = alias
         bank_account.save()
 
-
-
 class TransactionsService:
     def __init__(self):
 
@@ -81,7 +73,7 @@ class TransactionsService:
         response = {
             "content": [transaction for transaction in page_obj],
             "number": page_obj.number,
-            "totalElements": paginator.count,
+            "total_elements": paginator.count,
             "size": paginator.per_page
         }
         return TransactionsPage(**response)
@@ -115,15 +107,9 @@ class TransactionsService:
         transactions = transactions.filter(q)
         paginator = Paginator(transactions, size)
         page_obj = paginator.get_page(page)
-        def deserialize(transaction):
-            serializer = TransactionSerializer(data=transaction)
-            if serializer.is_valid(raise_exception=True):
-                return serializer.validated_data
-
-        #content = [ deserialize(transaction) for transaction in page_obj]
         content = page_obj.object_list
         return TransactionsPage(content=page_obj.object_list, number=page_obj.number, size=len(content),
-                                totalElements=paginator.count)
+                                total_elements=paginator.count)
 
     def page_transactions_in_context(self, query: Optional[TransactionInContextQuery], page: int, size: int,
                                      sort_order: str,
@@ -144,7 +130,7 @@ class TransactionsService:
         content = [transaction for transaction in page_obj]
 
         return TransactionsPage(content=content, number=page_obj.number, size=len(content),
-                                totalElements=paginator.count)
+                                total_elements=paginator.count)
 
     def save_transaction(self, transaction_json: Dict) -> Union[
         SuccessfulOperationResponse,
@@ -205,8 +191,6 @@ class TransactionsService:
             with_category_count=with_category,
             without_category_count=without_category)
 
-
-
 class BudgetTreeService:
 
     @transaction.atomic
@@ -249,7 +233,6 @@ class RuleSetsService:
             logger.error(f"Error deleting rule set: {e}")
             raise e
 
-
 class AnalysisService:
     def __init__(self):
         pass
@@ -286,7 +269,6 @@ class AnalysisService:
                                         category_qualified_name: str) -> CategoryDetailsForPeriodHandlerResult:
        return CategoryDetailsForPeriodHandler(revenue_expenses_query,
                                               category_qualified_name).get_category_details_for_period()
-
 
 class PeriodService:
     def __init__(self):
