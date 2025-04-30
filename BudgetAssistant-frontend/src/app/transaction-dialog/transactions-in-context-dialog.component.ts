@@ -1,5 +1,5 @@
 import {AfterViewInit, Component, Inject, OnInit} from '@angular/core';
-import {PaginationDataSource} from "@daanvdn/ngx-pagination-data-source";
+import {PaginationDataSource} from "ngx-pagination-data-source";
 import {AppService} from "../app.service";
 import {
     MAT_DIALOG_DATA,
@@ -27,6 +27,7 @@ import {AsyncPipe, DatePipe, NgIf, TitleCasePipe} from '@angular/common';
 import {CategoryTreeDropdownComponent} from '../category-tree-dropdown/category-tree-dropdown.component';
 import {MatPaginator} from '@angular/material/paginator';
 import {MatButton} from '@angular/material/button';
+import {DateUtilsService} from '../shared/date-utils.service';
 
 @Component({
     selector: 'transactions-in-context-dialog',
@@ -48,7 +49,7 @@ export class TransactionsInContextDialogComponent implements OnInit, AfterViewIn
     private categoryMap?: CategoryMap;
 
     constructor(private appService: AppService, public dialogRef: MatDialogRef<TransactionsInContextDialogComponent>,
-                @Inject(MAT_DIALOG_DATA) public query: TransactionInContextQuery) {
+                @Inject(MAT_DIALOG_DATA) public query: TransactionInContextQuery, private dateUtils: DateUtilsService) {
         this.appService.categoryMapObservable$.subscribe(categoryMap => {
             this.categoryMap = categoryMap;
         });
@@ -85,7 +86,7 @@ export class TransactionsInContextDialogComponent implements OnInit, AfterViewIn
         }
 
         this.dataSource = new PaginationDataSource<Transaction, TransactionInContextQuery>(
-            (request, query) => {
+            (request:any, query:any) => {
                 request.size = 50;
                 return this.appService.pageTransactionsInContext(request, query);
             },
@@ -113,8 +114,10 @@ export class TransactionsInContextDialogComponent implements OnInit, AfterViewIn
             return AmountType.BOTH;
         }
         return inferAmountType(transaction.amount)
+    }
 
-
+    parseDate(dateStr: string | undefined | null): Date | null {
+        return this.dateUtils.parseDate(dateStr);
     }
     onCloseClick(): void {
         this.dialogRef.close();

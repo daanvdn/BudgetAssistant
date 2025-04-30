@@ -1,11 +1,11 @@
 import { DatePipe, NgIf, AsyncPipe, TitleCasePipe } from '@angular/common';
-import {AfterViewInit, Component, OnInit, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, Input, OnInit, ViewChild} from '@angular/core';
 import {MatDialog} from '@angular/material/dialog';
 import {MatPaginator} from '@angular/material/paginator';
 import { MatRadioChange, MatRadioGroup, MatRadioButton } from '@angular/material/radio';
 import { MatSort, MatSortHeader } from '@angular/material/sort';
 import { MatTable, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatCellDef, MatCell, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow } from '@angular/material/table';
-import {PaginationDataSource} from '@daanvdn/ngx-pagination-data-source';
+import {PaginationDataSource} from 'ngx-pagination-data-source';
 import {AppService} from '../app.service';
 import {
   AmountType, CategoryMap,
@@ -27,6 +27,7 @@ import { MatTooltip } from '@angular/material/tooltip';
 import { MatBadge } from '@angular/material/badge';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CategoryTreeDropdownComponent } from '../category-tree-dropdown/category-tree-dropdown.component';
+import { DateUtilsService } from '../shared/date-utils.service';
 
 
 enum ViewType {
@@ -45,8 +46,8 @@ enum ViewType {
     imports: [MatToolbar, NgIf, MatProgressSpinner, BankAccountSelectionComponent, MatButton, MatIcon, MatTooltip, MatBadge, FaIconComponent, MatPaginator, MatTable, MatSort, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatSortHeader, MatCellDef, MatCell, CategoryTreeDropdownComponent, MatRadioGroup, MatRadioButton, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow, AsyncPipe, TitleCasePipe, DatePipe]
 })
 export class TransactionsComponent implements OnInit, AfterViewInit {
-
-
+  protected readonly ViewType = ViewType;
+  protected readonly faTag = faTag;
 
 
   //table stuff
@@ -60,7 +61,7 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
   filesAreUploading = false; // Add this line
   transactionToManuallyReview!: number;
 
-  dataSource: PaginationDataSource<Transaction, TransactionQuery>;
+  @Input() dataSource!: PaginationDataSource<Transaction, TransactionQuery>;
   displayedColumns = [
     "bookingDate",
     "counterparty",
@@ -79,10 +80,14 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
 
 
   constructor(private appService: AppService, private authService: AuthService, public dialog: MatDialog,
-              public datepipe: DatePipe, private errorDialogService: ErrorDialogService, private router: Router) {
+              public datepipe: DatePipe, private errorDialogService: ErrorDialogService, private router: Router,
+              private dateUtils: DateUtilsService) {
 
-    let account = undefined
-    this.dataSource = this.initDataSource(account);
+    // Only initialize dataSource if it's not provided via @Input()
+    if (!this.dataSource) {
+      let account = undefined;
+      this.dataSource = this.initDataSource(account);
+    }
     this.appService.categoryMapObservable$.subscribe(categoryMap => {
       this.categoryMap = categoryMap;
     })
@@ -165,8 +170,7 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
         }
 
         this.dataSource = new PaginationDataSource<Transaction, TransactionQuery>(
-          (request, query) => {
-            request.size = 50;
+          (request:any, query:any) => {
             return this.appService.pageTransactions(request, query);
           },
           newSort, transactionQuery
@@ -227,7 +231,10 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
       return "N/A";
     }
     return this.datepipe.transform(s, 'dd-MM-yyyy')
+  }
 
+  parseDate(dateStr: string | undefined | null): Date | null {
+    return this.dateUtils.parseDate(dateStr);
   }
 
   openDialog(): void {
@@ -286,12 +293,14 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
 
     this.doQuery(this.transactionQuery);
   }
+
   showAllTransactions() {
     this.dataSource = this.initDataSource(this.selectedAccount);
     this.transactionQuery = undefined;
     this.viewType = ViewType.SHOW_ALL;
 
   }
+
   ngAfterViewInit(): void {
 
   }
@@ -302,8 +311,6 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
   }
 
 
-
-
   private initDataSource(account:string | undefined): PaginationDataSource<Transaction, TransactionQuery> {
     let query = {} as TransactionQuery;
     if(account !== undefined){
@@ -311,8 +318,7 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
 
     }
     return new PaginationDataSource<Transaction, TransactionQuery>(
-      (request, query) => {
-        request.size = 50;
+      (request:any, query:any) => {
         return this.appService.pageTransactions(request, query);
       },
       {property: 'bookingDate', order: 'desc'}, query
@@ -373,8 +379,7 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
     }
 
     this.dataSource = new PaginationDataSource<Transaction, TransactionQuery>(
-      (request, query) => {
-        request.size = 50;
+      (request:any, query: any) => {
         return this.appService.pageTransactions(request, query);
       },
       newSort, transactionQuery
@@ -384,8 +389,6 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
   }
 
 
-  protected readonly ViewType = ViewType;
-  protected readonly faTag = faTag;
 
   getNrOfTransactionsToManuallyReview(): string {
     if (this.transactionToManuallyReview !== undefined && this.transactionToManuallyReview !== null){

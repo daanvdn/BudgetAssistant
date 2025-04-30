@@ -13,7 +13,7 @@ import {
   MatRowDef,
   MatTable
 } from "@angular/material/table";
-import {PaginationDataSource, SimpleDataSource} from "@daanvdn/ngx-pagination-data-source";
+import {PaginationDataSource, SimpleDataSource} from "ngx-pagination-data-source";
 import {AppService} from "../app.service";
 import {BehaviorSubject, map, Observable} from "rxjs";
 import {MatButtonToggle, MatButtonToggleChange, MatButtonToggleGroup} from "@angular/material/button-toggle";
@@ -138,7 +138,7 @@ export class ManualCategorizationViewComponent implements OnInit {
     let isExpense = transactionType === TransactionTypeEnum.EXPENSES;
 
     let paginationDataSource = new PaginationDataSource<Transaction, BankAccount>(
-      (request, query) => {
+      (request:any, query:any) => {
         request.size = 50;
         return this.appService.pageTransactionsToManuallyReview(request, transactionType);
       },

@@ -1,4 +1,4 @@
-import {SimpleCategory, TypeEnum} from '@daanvdn/budget-assistant-client';
+import {SimpleCategory, SimplifiedCategory, SimplifiedCategoryChildrenInnerValue, TypeEnum} from '@daanvdn/budget-assistant-client';
 
 export interface CategoryAndAmount {
     amount: number;
@@ -39,30 +39,6 @@ export interface Counterparty {
     streetAndNumber: string | null;
     zipCodeAndCity: string | null;
     category: string | null;
-
-}
-
-export interface Transaction {
-
-    transaction_id: string | null;
-    bankAccount: string | null;
-    bookingDate: Date | null;
-    statementNumber: string | null;
-    transactionNumber: number | null;
-    counterparty: Counterparty | null;
-    transaction: string | null;
-    currencyDate: Date | null;
-    amount: Number | null;
-    currency: string | null;
-    bic: string | null;
-    countryCode: string | null;
-    communications: string | null;
-    category: string | null;
-    manuallyAssignedCategory: Boolean | null;
-    isRecurring: Boolean | null;
-    isAdvanceSharedAccount: Boolean | null;
-    isManuallyReviewed: Boolean | null;
-
 
 }
 
@@ -307,16 +283,7 @@ export interface BudgetTrackerResult {
 
 export type CategoryType = "EXPENSES" | "REVENUE";
 
-export interface CategoryNode {
-
-    children: CategoryNode[];
-    name: string;
-    qualifiedName: string;
-    type: TypeEnum | undefined;
-    id: number;
-
-
-}
+// CategoryNode has been replaced by SimplifiedCategory
 
 export function inferAmountType(amount: number) {
     if (amount >= 0) {
@@ -342,21 +309,21 @@ export class FlatCategoryNode {
     name!: string;
     qualifiedName!: string;
     nodeId!: number;
-    type: TypeEnum | undefined;
+    type!: TypeEnum;
 }
 
-const DUMMY_CATEGORY: CategoryNode = {
+const DUMMY_CATEGORY: SimplifiedCategory = {
     children: [],
     name: "DUMMY CATEGORY",
     qualifiedName: "DUMMY CATEGORY",
-    type: undefined,
+    type: "EXPENSES" as TypeEnum,
     id: -1
 }
-export const NO_CATEGORY: CategoryNode = {
+export const NO_CATEGORY: SimplifiedCategory = {
     children: [],
     name: "NO CATEGORY",
     qualifiedName: "NO CATEGORY",
-    type: undefined ,
+    type: "EXPENSES" as TypeEnum,
     id: -1
 }
 
@@ -367,13 +334,13 @@ export class CategoryMap {
     private qualifiedNameToNameMap: Map<string, string> = new Map<string, string>();
     private simpleCategoryMap: Map<string, SimpleCategory> = new Map<string, SimpleCategory>();
 
-    constructor(nodes: CategoryNode[]) {
+    constructor(nodes: SimplifiedCategory[]) {
         for (let node of nodes) {
             this.populateMaps(node);
         }
     }
 
-    private populateMaps(node: CategoryNode) {
+    private populateMaps(node: SimplifiedCategory) {
         this.idToNameMap.set(node.id, node.name);
         this.qualifiedNameToIdMap.set(node.qualifiedName, node.id);
         this.qualifiedNameToNameMap.set(node.qualifiedName, node.name);
@@ -385,8 +352,17 @@ export class CategoryMap {
             id: node.id
         });
 
-        for (let child of node.children) {
-            this.populateMaps(child);
+        // Process children - note that SimplifiedCategory has a different children structure
+        if (node.children && node.children.length > 0) {
+            for (let childObj of node.children) {
+                const entries = Object.entries(childObj);
+                if (entries.length > 0) {
+                    const [_, value] = entries[0];
+                    // Assuming value is a SimplifiedCategory
+                    const childCategory = value as unknown as SimplifiedCategory;
+                    this.populateMaps(childCategory);
+                }
+            }
         }
     }
 

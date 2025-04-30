@@ -15,21 +15,21 @@ import {AppService} from '../app.service';
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {MatFormField} from "@angular/material/form-field";
 import {MatAutocomplete, MatAutocompleteTrigger} from "@angular/material/autocomplete";
-import {CategoryNode, FlatCategoryNode, NO_CATEGORY} from "../model";
+import {FlatCategoryNode, NO_CATEGORY} from "../model";
 import {MatInput} from '@angular/material/input';
 import {MatOption} from '@angular/material/core';
 import {MatIconButton} from '@angular/material/button';
 import {MatCheckbox} from '@angular/material/checkbox';
 import {MatIcon} from '@angular/material/icon';
-import {TransactionTypeEnum} from "@daanvdn/budget-assistant-client";
+import {TransactionTypeEnum, SimplifiedCategory} from "@daanvdn/budget-assistant-client";
 
 
 // @Injectable({ providedIn: "root" })
 export class BackingDatabase {
-  dataChange = new BehaviorSubject<CategoryNode[]>([]);
+  dataChange = new BehaviorSubject<SimplifiedCategory[]>([]);
   treeData?: any[];
 
-  get data(): CategoryNode[] {
+  get data(): SimplifiedCategory[] {
     return this.dataChange.value;
   }
 
@@ -137,20 +137,20 @@ export class BackingDatabase {
 export class CategoryTreeDropdownComponent implements OnInit  {
 
   /** Map from flat node to nested node. This helps us finding the nested node to be modified */
-  flatNodeMap = new Map<FlatCategoryNode, CategoryNode>();
+  flatNodeMap = new Map<FlatCategoryNode, SimplifiedCategory>();
 
   /** Map from nested node to flattened node. This helps us to keep the same object for selection */
-  nestedNodeMap = new Map<CategoryNode, FlatCategoryNode>();
+  nestedNodeMap = new Map<SimplifiedCategory, FlatCategoryNode>();
 
-  qualifiedNameToNodeMap = new Map<string, CategoryNode>();
+  qualifiedNameToNodeMap = new Map<string, SimplifiedCategory>();
 
   @Input()
   selectedCategoryQualifiedNameStr?: string;
-  selectedCategory?: CategoryNode;
+  selectedCategory?: SimplifiedCategory;
   selectedCategoryName?: string = "select category"
-  // treeControl = new NestedTreeControl<CategoryNode>(node => node.children);
+  // treeControl = new NestedTreeControl<SimplifiedCategory>(node => this.getChildren(node));
   treeControl!: FlatTreeControl<FlatCategoryNode>
-  dataSource!: MatTreeFlatDataSource<CategoryNode, FlatCategoryNode>;
+  dataSource!: MatTreeFlatDataSource<SimplifiedCategory, FlatCategoryNode>;
   @Input()
   transactionTypeEnum?: TransactionTypeEnum;
 
@@ -162,7 +162,7 @@ export class CategoryTreeDropdownComponent implements OnInit  {
 
 
 
-  treeFlattener: MatTreeFlattener<CategoryNode, FlatCategoryNode>;
+  treeFlattener: MatTreeFlattener<SimplifiedCategory, FlatCategoryNode>;
 
   /** The selection for checklist */
   checklistSelection = new SelectionModel<FlatCategoryNode>(false /* multiple */);
@@ -215,7 +215,7 @@ export class CategoryTreeDropdownComponent implements OnInit  {
   }
 
 
-  transformer = (node: CategoryNode, level: number) => {
+  transformer = (node: SimplifiedCategory, level: number) => {
     const existingNode = this.nestedNodeMap.get(node);
     const flatNode =
       existingNode && existingNode.qualifiedName === node.qualifiedName
@@ -237,7 +237,21 @@ export class CategoryTreeDropdownComponent implements OnInit  {
 
   isExpandable = (node: FlatCategoryNode) => node.expandable;
 
-  getChildren = (node: CategoryNode): CategoryNode[] => node.children;
+  getChildren = (node: SimplifiedCategory): SimplifiedCategory[] => {
+    const children: SimplifiedCategory[] = [];
+    if (node.children && node.children.length > 0) {
+      for (let childObj of node.children) {
+        const entries = Object.entries(childObj);
+        if (entries.length > 0) {
+          const [_, value] = entries[0];
+          // Assuming value is a SimplifiedCategory
+          const childCategory = value as unknown as SimplifiedCategory;
+          children.push(childCategory);
+        }
+      }
+    }
+    return children;
+  };
 
   hasChild = (_: number, _nodeData: FlatCategoryNode) => _nodeData.expandable;
 

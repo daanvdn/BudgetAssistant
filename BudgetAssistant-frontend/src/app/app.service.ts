@@ -2,10 +2,9 @@ import {HttpClient, HttpEvent, HttpResponse} from '@angular/common/http';
 import {Injectable} from '@angular/core';
 import {BehaviorSubject, map, Observable, of, Subject, tap} from 'rxjs';
 
-import {Page, PageRequest} from "@daanvdn/ngx-pagination-data-source";
+import {Page, PageRequest} from "ngx-pagination-data-source";
 import {
     CategoryMap,
-    CategoryNode,
     DistributionByCategoryForPeriodHandlerResult2,
     FileWrapper,
     ResolvedStartEndDateShortcut,
@@ -73,9 +72,9 @@ export class AppService {
     private categoryQueryForSelectedPeriod$ = new BehaviorSubject<RevenueExpensesQuery |undefined>(undefined);
     public categoryQueryForSelectedPeriodObservable$ = this.categoryQueryForSelectedPeriod$.asObservable();
 
-    public sharedCategoryTreeObservable$: Observable<CategoryNode[]> = of([]);
-    public sharedCategoryTreeExpensesObservable$: Observable<CategoryNode[]>;
-    public sharedCategoryTreeRevenueObservable$: Observable<CategoryNode[]>;
+    public sharedCategoryTreeObservable$: Observable<SimplifiedCategory[]> = of([]);
+    public sharedCategoryTreeExpensesObservable$: Observable<SimplifiedCategory[]>;
+    public sharedCategoryTreeRevenueObservable$: Observable<SimplifiedCategory[]>;
     public fileUploadComplete$ = new Subject<void>();
     public selectedBankAccount$ = new BehaviorSubject<BankAccount | undefined>(undefined);
     public selectedBankAccountObservable$ = this.selectedBankAccount$.asObservable();
@@ -93,9 +92,9 @@ export class AppService {
         this.sharedCategoryTreeExpensesObservable$ = this.getSharedCategoryTreeExpensesObservable$();
         this.sharedCategoryTreeRevenueObservable$ = this.getSharedCategoryTreeRevenueObservable$();
         (async () => {
-            let categoryNodes: CategoryNode[] = await this.getMergedCategoryTreeData();
-            this.categoryMapSubject.next(new CategoryMap(categoryNodes));
-            this.sharedCategoryTreeObservable$ = of(categoryNodes);
+            let categories: SimplifiedCategory[] = await this.getMergedCategoryTreeData();
+            this.categoryMapSubject.next(new CategoryMap(categories));
+            this.sharedCategoryTreeObservable$ = of(categories);
         })();
 
 
@@ -104,48 +103,37 @@ export class AppService {
     private getSharedCategoryTreeRevenueObservable$() {
         return this.apiBudgetAssistantBackendClientService.apiCategoryTreeRetrieve('REVENUE').pipe(
             map(categoryTree => {
-                const nodes: CategoryNode[] = [];
-                const rootNode = this.convertSimplifiedCategoryToCategoryNode(categoryTree.root, "REVENUE");
-                nodes.push(...rootNode.children);
-                return nodes;
+                let childrenCast: Array<SimplifiedCategory>  = []
+                let children = categoryTree.root.children;
+                for (let childObj of children) {
+                    childrenCast.push(childObj as unknown as SimplifiedCategory);
+                }
+                return childrenCast;
+
             })
         );
     }
 
-    private getSharedCategoryTreeExpensesObservable$() {
+    private getSharedCategoryTreeExpensesObservable$(): Observable<SimplifiedCategory[]> {
         return this.apiBudgetAssistantBackendClientService.apiCategoryTreeRetrieve('EXPENSES').pipe(
             map(categoryTree => {
-                const nodes: CategoryNode[] = [];
-                const rootNode = this.convertSimplifiedCategoryToCategoryNode(categoryTree.root, "EXPENSES");
-                nodes.push(...rootNode.children);
-                return nodes;
+                let childrenCast: Array<SimplifiedCategory>  = []
+                let children = categoryTree.root.children;
+                for (let childObj of children) {
+                    childrenCast.push(childObj as unknown as SimplifiedCategory);
+                }
+                return childrenCast;
+
             })
         );
     }
 
-    private convertSimplifiedCategoryToCategoryNode(simplified: SimplifiedCategory, type: TypeEnum): CategoryNode {
-        const children: CategoryNode[] = simplified.children.map(childObj => {
-            const [name, value] = Object.entries(childObj)[0];
-            return this.convertSimplifiedCategoryToCategoryNode({
-                name: name,
-                qualifiedName: (value as unknown as SimplifiedCategory).qualifiedName,
-                children: (value as unknown as SimplifiedCategory).children || [],
-            id : (value as unknown as SimplifiedCategory).id
-            }, type);
-        });
-
-        return {
-            name: simplified.name,
-            qualifiedName: simplified.qualifiedName,
-            children: children,
-            type: type, id : simplified.id
-        };
-    }
+    // The convertSimplifiedCategoryToCategoryNode method has been removed as we now use SimplifiedCategory directly
 
 
-    private async getMergedCategoryTreeData(): Promise<CategoryNode[]> {
+    private async getMergedCategoryTreeData(): Promise<SimplifiedCategory[]> {
 
-        let allData: CategoryNode[] = [];
+        let allData: SimplifiedCategory[] = [];
         let expenses = await this.getSharedCategoryTreeExpensesObservable$().toPromise();
         let revenue = await this.getSharedCategoryTreeRevenueObservable$().toPromise();
 
@@ -154,15 +142,12 @@ export class AppService {
         }
 
         allData = allData.concat(expenses);
-        for (const categoryNode of revenue) {
-            if (!(categoryNode.name === "NO CATEGORY" || categoryNode.name === "DUMMY CATEGORY")) {
-                allData.push(categoryNode);
+        for (const category of revenue) {
+            if (!(category.name === "NO CATEGORY" || category.name === "DUMMY CATEGORY")) {
+                allData.push(category);
             }
-
         }
         return allData;
-
-
     }
 
     setBankAccount(bankAccount: BankAccount) {
@@ -290,8 +275,15 @@ export class AppService {
 
             tmpSortProperty = request.sort.property;
         }
+        let page;
+        if (request.page == undefined || request.page < 1) {
+            page = 1;
+        } else {
+            page = request.page +1;
+        }
+
         let pageTransactionsRequest: PageTransactionsRequest = {
-            page: request.page,
+            page: page,
             size: request.size,
             sortOrder: tmpSortOrder as SortOrderEnum,
             sortProperty: this.camelToSnake(tmpSortProperty) as SortPropertyEnum,
@@ -323,7 +315,7 @@ export class AppService {
             tmpSortProperty = request.sort.property;
         }
         let pageTransactionsInContextRequest: PageTransactionsInContextRequest = {
-            page: request.page,
+            page: request.page < 1 ? 1 : request.page,
             size: request.size,
             sortOrder: tmpSortOrder as SortOrderEnum,
             sortProperty: this.camelToSnake(tmpSortProperty) as SortPropertyEnum,
@@ -378,7 +370,7 @@ export class AppService {
 
 
         let pageTransactionsToManuallyReviewRequest : PageTransactionsToManuallyReviewRequest = {
-            page: request.page,
+            page: request.page < 1 ? 1 : request.page,
             size: request.size,
             sortOrder: tmpSortOrder as SortOrderEnum,
             sortProperty: this.camelToSnake(tmpSortProperty) as SortPropertyEnum,
@@ -523,7 +515,13 @@ export class AppService {
         if (apiNode.children && apiNode.children.length > 0) {
             for (const childObj of apiNode.children) {
                 // Extract the child node from the object
-                const [childName, childValue] = Object.entries(childObj)[0];
+                // Each childObj is expected to have only one key-value pair where the key is the name
+                // and the value contains the node data
+                const entries = Object.entries(childObj);
+                if (entries.length > 1) {
+                    console.warn(`childObj has ${entries.length} entries, but only the first one will be used.`, childObj);
+                }
+                const [childName, childValue] = entries[0];
                 const childNode = childValue as unknown as BudgetTreeNodeApi;
 
                 // Process the child node recursively
@@ -560,7 +558,7 @@ export class AppService {
 
     }
 
-    public getOrCreateRuleSetWrapper(category: CategoryNode, categoryType: TypeEnum): Observable<RuleSetWrapper> {
+    public getOrCreateRuleSetWrapper(category: SimplifiedCategory, categoryType: TypeEnum): Observable<RuleSetWrapper> {
         const getOrCreateRuleSetWrapper: GetOrCreateRuleSetWrapper = {
             categoryQualifiedName : category.qualifiedName,
             type:  categoryType,

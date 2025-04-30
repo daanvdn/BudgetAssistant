@@ -8,10 +8,9 @@ import {
 import {AppService} from "../app.service";
 import {AuthService} from "../auth/auth.service";
 import {ErrorDialogService} from "../error-dialog/error-dialog.service";
-import {CategoryNode} from "../model";
 import {QueryBuilderComponent} from '../query-builder/query-builder.component';
 import {FormsModule} from '@angular/forms';
-import {TypeEnum, RuleSetWrapper} from "@daanvdn/budget-assistant-client";
+import {TypeEnum, RuleSetWrapper, SimplifiedCategory} from "@daanvdn/budget-assistant-client";
 
 
 @Component({
@@ -23,7 +22,7 @@ import {TypeEnum, RuleSetWrapper} from "@daanvdn/budget-assistant-client";
 })
 export class RulesBuilderComponent implements OnInit, OnChanges {
 
-  @Input() categoryNode!: CategoryNode;
+  @Input() categoryNode!: SimplifiedCategory;
 
   ruleSet!: RuleSet;
 
