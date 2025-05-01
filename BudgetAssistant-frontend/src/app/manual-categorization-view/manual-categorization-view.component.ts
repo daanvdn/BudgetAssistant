@@ -45,7 +45,7 @@ class GroupByCounterpartyDataSource implements SimpleDataSource<Transaction | Gr
       let mapByCounterpartyName = new Map<string, Transaction[]>();
 
       for (const transaction of data) {
-        let name = transaction.counterparty;
+        let name = transaction.counterparty.name;
         if (!name) {
           name = "";
         }

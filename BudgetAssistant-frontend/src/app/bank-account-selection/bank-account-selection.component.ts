@@ -29,10 +29,10 @@ export class BankAccountSelectionComponent implements OnInit, OnDestroy {
 
   constructor(private appService: AppService, private formBuilder: FormBuilder) {
     this.appService.fetchBankAccountsForUser()
-      .pipe(takeUntil(this.destroy$))
+      //.pipe(takeUntil(this.destroy$))
       .subscribe(result => {
         if (result == undefined || result.length === 0) {
-          console.error('No bank accounts found for user');
+          console.warn('No bank accounts found for user');
           return;
         }
         this.bankAccounts = result;

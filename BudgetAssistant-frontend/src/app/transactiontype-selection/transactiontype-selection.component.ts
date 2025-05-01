@@ -6,6 +6,7 @@ import { TransactionType } from '../model';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
 import { AsyncPipe } from '@angular/common';
+import {TransactionTypeEnum} from "@daanvdn/budget-assistant-client";
 
 @Component({
     selector: 'app-transactiontype-selection',
@@ -20,9 +21,9 @@ export class TransactiontypeSelectionComponent implements OnInit {
 
 
 
-  transactionTypes: Map<string, TransactionType> = new Map<string, TransactionType>();
+  transactionTypes: Map<string, TransactionTypeEnum> = new Map<string, TransactionTypeEnum>();
   transactionTypesObservable!: Observable<string[]>;
-  selectedTransactionType!: TransactionType;
+  selectedTransactionType!: TransactionTypeEnum;
   minAmount!:number;
   maxAmount!:number;
   @ViewChild(NgSelectComponent) ngSelect!:NgSelectComponent;
@@ -35,9 +36,9 @@ export class TransactiontypeSelectionComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.transactionTypes.set("in- & uitkomsten", TransactionType.BOTH)
-    this.transactionTypes.set("uitgaven", TransactionType.EXPENSES)
-    this.transactionTypes.set("inkomsten", TransactionType.REVENUE)
+    this.transactionTypes.set("in- & uitkomsten", TransactionTypeEnum.BOTH)
+    this.transactionTypes.set("uitgaven", TransactionTypeEnum.EXPENSES)
+    this.transactionTypes.set("inkomsten", TransactionTypeEnum.REVENUE)
     this.transactionTypesObservable = of(Array.from(this.transactionTypes.keys()))
   }
 
@@ -54,7 +55,7 @@ export class TransactiontypeSelectionComponent implements OnInit {
    * @returns
    */
 
-  private getSelectedTransactionType(): TransactionType | null | undefined{
+  private getSelectedTransactionType(): TransactionTypeEnum | null | undefined{
     let selectedItems = this.ngSelect.selectedItems;
     if (selectedItems == null || selectedItems.length ===0){
       return null;

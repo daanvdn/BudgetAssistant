@@ -9,7 +9,7 @@ import {PaginationDataSource} from 'ngx-pagination-data-source';
 import {AppService} from '../app.service';
 import {
   AmountType, CategoryMap,
-  CompositeTransactionsFileUploadResponse, EMPTY_TRANSACTION_QUERY, FileWrapper, inferAmountType
+  CompositeTransactionsFileUploadResponse,  FileWrapper, inferAmountType
 } from '../model';
 import {BankAccountSelectionComponent} from '../bank-account-selection/bank-account-selection.component';
 import {TransactionSearchDialogComponent} from '../transaction-search-dialog/transaction-search-dialog.component';

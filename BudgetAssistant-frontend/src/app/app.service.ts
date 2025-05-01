@@ -255,16 +255,20 @@ export class AppService {
     }
 
     private toPage(transactionsPage: TransactionsPage): Page<Transaction> {
-        return {
+        //const number =    transactionsPage.number-1
+        let page =  {
             content: transactionsPage.content,
             number: transactionsPage.number,
             size: transactionsPage.size,
             totalElements: transactionsPage.totalElements
         };
+         return page;
     }
 
     public pageTransactions(request: PageRequest<Transaction>,
                             transactionQuery: TransactionQuery | undefined): Observable<Page<Transaction>> {
+        //request.size = 1000;
+
         let tmpSortOrder = "asc";
         if (request.sort && request.sort.order) {
             tmpSortOrder = request.sort.order;
@@ -275,15 +279,8 @@ export class AppService {
 
             tmpSortProperty = request.sort.property;
         }
-        let page;
-        if (request.page == undefined || request.page < 1) {
-            page = 1;
-        } else {
-            page = request.page +1;
-        }
-
         let pageTransactionsRequest: PageTransactionsRequest = {
-            page: page,
+            page: request.page,
             size: request.size,
             sortOrder: tmpSortOrder as SortOrderEnum,
             sortProperty: this.camelToSnake(tmpSortProperty) as SortPropertyEnum,
