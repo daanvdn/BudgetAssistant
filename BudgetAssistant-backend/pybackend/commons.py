@@ -105,7 +105,7 @@ class TransactionQuerySerializer(Serializer):
     min_amount: Optional[float] = serializers.FloatField(required=False, default=None)
     max_amount: Optional[float] = serializers.FloatField(required=False, default=None)
     account_number: Optional[str] = serializers.CharField(required=False)
-    category_id: Optional[int] = serializers.CharField(required=False, default=None)
+    category_id: Optional[int] = serializers.IntegerField(required=False, default=None)
     transaction_or_communication: Optional[str] = serializers.CharField(required=False, default=None)
     counterparty_account_number: Optional[str] = serializers.CharField(required=False, default=None)
     start_date: Optional[date] = serializers.DateField(required=False, default=None)

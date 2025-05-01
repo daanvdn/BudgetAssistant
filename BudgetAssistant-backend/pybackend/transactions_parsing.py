@@ -1,6 +1,7 @@
 import csv
 import dataclasses
 import logging
+import traceback
 from abc import ABC, abstractmethod
 from typing import Dict, List, Tuple
 
@@ -32,7 +33,7 @@ def get_or_create_counterparty(data: Dict, user: CustomUser) -> Counterparty:
 
 
 
-def get_or_create_transaction(data: Dict) -> Tuple[Transaction, bool]:
+def get_or_create_transaction(data: Dict) -> tuple[Transaction, bool]:
 
     try:
         transaction = Transaction.objects.get(transaction_id=data['transaction_id'])
@@ -42,9 +43,11 @@ def get_or_create_transaction(data: Dict) -> Tuple[Transaction, bool]:
     except ObjectDoesNotExist:
         logger.info(f"Transaction with id  {data['transaction_id']} does not exist. Creating it")
         serializer = TransactionSerializer(data=data)
-        if serializer.is_valid(raise_exception=False):
-            return serializer.save(), True
-        else:
+        try:
+            if serializer.is_valid(raise_exception=True):
+                return serializer.save(), True
+        except Exception as e:
+            traceback.print_exc()
             logger.error(f"Error creating transaction with id {data['transaction_id']}")
             logger.error(serializer.errors)
             raise ValueError(f"Error creating transaction with id {data['transaction_id']}: {str(serializer.errors)}")
@@ -100,9 +103,9 @@ class BelfiusTransactionParser(AbstractTransactionParser):
             street_and_number = row["Straat en nummer"]
             zip_code_and_city = row["Postcode en plaats"]
 
-            counterparty = get_or_create_counterparty(
-                {'name': counterparty_str, 'account_number': counterparty_account,
-                 'street_and_number': street_and_number, 'zip_code_and_city': zip_code_and_city}, user)
+            counterparty: Counterparty = Counterparty.objects.get_or_create_counterparty(
+                name=counterparty_str, account_number=counterparty_account,
+                 street_and_number=street_and_number, zip_code_and_city=zip_code_and_city,user=user)
             booking_date = row["Boekingsdatum"]
             statement_number = row["Rekeninguittrekselnummer"]
             transaction_number = row["Transactienummer"]
@@ -115,6 +118,7 @@ class BelfiusTransactionParser(AbstractTransactionParser):
             communications = row["Mededelingen"]
 
             transaction_id = Transaction._create_transaction_id(transaction_number, bank_account)
+
             data = {
                 'transaction_id': transaction_id,
                 'bank_account': bank_account,

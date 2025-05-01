@@ -2,6 +2,7 @@ from abc import abstractmethod
 from datetime import datetime
 from typing import Dict, Generic, List, Optional, TypeVar, Union
 
+from django.core.exceptions import ObjectDoesNotExist
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
@@ -174,6 +175,7 @@ class TransactionSerializer(DeserializeInstanceMixin):
     category = SimpleCategorySerializer(required=False, allow_null=True)
     bank_account = serializers.PrimaryKeyRelatedField(queryset=BankAccount.objects.all(), required=False)
     counterparty = serializers.PrimaryKeyRelatedField(queryset=Counterparty.objects.all(), required=False)
+    #counterparty = CounterpartySerializer()
     booking_date = serializers.DateField(format="%d/%m/%Y",
                                          input_formats=["%d/%m/%Y", "%d-%m-%Y", "%Y/%m/%d", "%Y-%m-%d"], required=False)
     currency_date = serializers.DateField(format="%d/%m/%Y",
@@ -233,6 +235,13 @@ class TransactionSerializer(DeserializeInstanceMixin):
             validated_data['category'] = category
         else:
             validated_data['category'] = None
+        # counterparty_data = validated_data.pop('counterparty', None)
+        # if counterparty_data:
+        #     try:
+        #         counterparty = Counterparty.objects.get(name=counterparty_data['name'])
+        #     except ObjectDoesNotExist:
+        #         counterparty = CounterpartySerializer().create(counterparty_data)
+        #     validated_data['counterparty'] = counterparty
         transaction = Transaction(**validated_data)
         return transaction
 

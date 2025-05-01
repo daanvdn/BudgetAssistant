@@ -89,6 +89,10 @@ class TransactionsService:
     def page_transactions(self, query: Optional[TransactionQuery], page: int, size: int, sort_order: str,
                           sort_property: str, user:CustomUser) -> TransactionsPage:
 
+        if page <1:
+            page= 1
+        else:
+            page+=1
         direction = sort_order.upper()
         if direction not in ['ASC', 'DESC']:
             raise ValueError(f"Invalid sort order: {direction}")

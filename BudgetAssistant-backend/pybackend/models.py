@@ -87,7 +87,7 @@ class Transaction(RequiredFieldsMixin, models.Model):
     manually_assigned_category = models.BooleanField(default=False, blank=True, null=True)
     is_recurring = models.BooleanField(default=False, blank=True, null=True)
     is_advance_shared_account = models.BooleanField(default=False, blank=True, null=True)
-    upload_timestamp = models.DateTimeField(default=timezone.now, blank=False, null=False)
+    upload_timestamp = models.DateTimeField(default=None, blank=False, null=False)
     is_manually_reviewed = models.BooleanField(default=False, blank=True, null=True)
     objects = TransactionManager()
 

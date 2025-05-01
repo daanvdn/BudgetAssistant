@@ -96,6 +96,19 @@ class CounterpartyManager(models.Manager):
     def find_distinct_by_users_contains(self, user):
         return self.filter(users=user).distinct()
 
+    def get_or_create_counterparty(self, name:str, user, account_number:str, street_and_number:str, zip_code_and_city:str):
+
+        counterparty, created = self.get_or_create(name=name)
+        if created:
+            counterparty.users.add(user)
+            counterparty.account_number = account_number
+            counterparty.street_and_number = street_and_number
+            counterparty.zip_code_and_city = zip_code_and_city
+            counterparty.save()
+        elif user not in counterparty.users.all():
+            counterparty.users.add(user)
+        return counterparty
+
 
 class TransactionManager(models.Manager):
 

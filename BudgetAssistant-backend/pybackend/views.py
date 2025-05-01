@@ -19,7 +19,7 @@ from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
 from django.utils.http import urlsafe_base64_decode
 from drf_spectacular.utils import PolymorphicProxySerializer, extend_schema, inline_serializer
-from rest_framework import status
+from rest_framework import serializers, status
 from rest_framework.exceptions import UnsupportedMediaType, ValidationError
 from rest_framework.fields import BooleanField
 from rest_framework.parsers import FormParser, MultiPartParser
@@ -332,6 +332,7 @@ class PageTransactionsView(APIView):
                 sort_property = page_transactions_request.sort_property
                 response: TransactionsPage = get_transactions_service().page_transactions(query, page, size, sort_order,
                                                                                           sort_property, user)
+                response.number-=1
                 data = TransactionsPageSerializer(response).data
                 return JsonResponse(data, status=200)
 
@@ -549,6 +550,12 @@ class UploadTransactionsView(APIView):
             user = request.user
             if not isinstance(user, CustomUser):
                 raise ValueError(f"User must be an instance of CustomUser. Received {type(user)}")
+
+            def serialize_deserialize_datetime(dt: datetime) -> datetime:
+                data = serializers.DateTimeField().to_representation(dt)
+                #convert data back to datetime
+                return serializers.DateTimeField().to_internal_value(data)
+
             upload_timestamp = datetime.now()
 
             created = 0
@@ -560,7 +567,7 @@ class UploadTransactionsView(APIView):
                                                                               BelfiusTransactionParser(), file.name)
                 created += parse_result.created
                 updated += parse_result.updated
-            return JsonResponse({'created': created, 'updated': updated, 'upload_timestamp': upload_timestamp}, status=200)
+            return JsonResponse({'created': created, 'updated': updated, 'upload_timestamp': serializers.DateTimeField().to_representation(upload_timestamp)}, status=200)
         except UnsupportedMediaType as e:
             return JsonResponse({'error': f'Unsupported media type: {str(e)}'}, status=415)
         except Exception as e:

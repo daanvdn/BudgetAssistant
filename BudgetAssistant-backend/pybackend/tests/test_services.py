@@ -1,13 +1,16 @@
 import importlib.resources as pkg_resources
 import json
 import unittest
-from datetime import datetime
+from datetime import datetime, timezone
 
 from django.test import TestCase
 from model_bakery import baker
+from rest_framework import serializers
 
 from pybackend.commons import TransactionTypeEnum
-from pybackend.dto import FailedOperationResponse, SuccessfulOperationResponse, TransactionsPage
+from pybackend.dto import FailedOperationResponse, PageTransactionsRequest, PageTransactionsRequestSerializer, \
+    SuccessfulOperationResponse, \
+    TransactionsPage
 from pybackend.models import BankAccount, BudgetTree, Category, Counterparty, CustomUser, \
     Transaction
 from pybackend.providers import BudgetTreeProvider
@@ -222,6 +225,80 @@ class TransactionsServiceTests(TestCase):
         # Verify last page has 9 transactions
         self.assertEqual(len(response_page10.content), 9)
 
+    def test_page_transactions_upload_timestamp(self):
+        # Create a bank account and associate it with the user
+        bank_account = baker.make(BankAccount, account_number='test_account')
+        bank_account.users.add(self.user)
+        d = datetime(2025, 5, 1, 15, 53, 37, 170434, tzinfo=timezone.utc)
+
+        def serialize_deserialize_datetime(dt: datetime) -> datetime:
+            data = serializers.DateTimeField().to_representation(dt)
+            #convert data back to datetime
+            return serializers.DateTimeField().to_internal_value(data)
+        serialized_d = serialize_deserialize_datetime(d)
+        # Create 10 transactions with a first upload timestamp
+        upload_timestamp_1 = serialize_deserialize_datetime(datetime.now())
+
+        transactions_1 = baker.make(
+                Transaction,
+                _quantity=10,
+                bank_account=bank_account,
+                amount=-10.0,
+                manually_assigned_category=False,
+                category=None,
+                upload_timestamp=upload_timestamp_1
+
+
+            )
+        # Create 10 transactions with a second upload timestamp
+        upload_timestamp_2 = serialize_deserialize_datetime(datetime.now())
+        transaction_2 = baker.make(
+                Transaction,
+                _quantity=10,
+                bank_account=bank_account,
+                amount=-10.0,
+                manually_assigned_category=False,
+                category=None,
+                upload_timestamp=upload_timestamp_2
+
+
+            )
+        page_transactions_request_json = {
+            'page': 0,
+            'query': {
+                'transaction_type': 'BOTH',
+                'upload_timestamp': serializers.DateTimeField().to_representation(upload_timestamp_1)
+            },
+            'size': 10,
+            'sort_order': 'desc',
+            'sort_property': 'booking_date'
+        }
+        serializer = PageTransactionsRequestSerializer(data=page_transactions_request_json)
+        serializer.is_valid(raise_exception=True)
+
+        page_transactions_request= PageTransactionsRequest(**serializer.validated_data)
+        # Call page_transactions with the current page number
+        response_page = self.service.page_transactions(
+            query=page_transactions_request.query,
+            page=page_transactions_request.page,
+            size=page_transactions_request.size,
+            sort_order=page_transactions_request.sort_order,
+            sort_property=page_transactions_request.sort_property,
+            user=self.user
+        )
+
+        # Verify total_elements is always 10
+        self.assertEqual(response_page.total_elements, 10)
+
+        # Verify page number matches the requested page
+        self.assertEqual(response_page.number, 1)
+
+        # Verify that the content matches the expected transactions
+        for i, transaction in enumerate(response_page.content):
+            self.assertEqual(transaction.upload_timestamp, upload_timestamp_1,
+                            f"Transaction mismatch on page {1}, position {i}")
+        #assert that response_page.content is equal to transactions_1, regardless of the order
+        self.assertEqual(set(response_page.content), set(transactions_1))
 
 
 class BudgetTreeServiceTests(TestCase):
