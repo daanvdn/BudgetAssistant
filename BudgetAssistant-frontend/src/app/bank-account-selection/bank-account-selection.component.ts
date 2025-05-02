@@ -28,23 +28,31 @@ export class BankAccountSelectionComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
 
   constructor(private appService: AppService, private formBuilder: FormBuilder) {
-    this.appService.fetchBankAccountsForUser()
-      //.pipe(takeUntil(this.destroy$))
-      .subscribe(result => {
-        if (result == undefined || result.length === 0) {
-          console.warn('No bank accounts found for user');
-          return;
-        }
-        this.bankAccounts = result;
-        this.selectedBankAccount = this.bankAccounts[0];
-        if (this.selectedBankAccount && this.selectedBankAccount.accountNumber) {
-          this.appService.setBankAccount(this.selectedBankAccount);
-          this.change.emit(this.selectedBankAccount);
-        }
-        return this.bankAccounts;
-      }
-    )
+    this.appService.triggerRefreshBankAccounts();
     this.bankAccountFormFieldGroup = formBuilder.group({queryForm: ""});
+    this.appService.refreshBankAccountsObservable$.pipe(takeUntil(this.destroy$)).subscribe(result => {
+        if (result && result) {
+            this.appService.fetchBankAccountsForUser()
+                .pipe(takeUntil(this.destroy$))
+                .subscribe(result => {
+                        if (result == undefined || result.length === 0) {
+                            console.warn('No bank accounts found for user');
+                            return;
+                        }
+                        this.bankAccounts = result;
+                        this.selectedBankAccount = this.bankAccounts[0];
+                        if (this.selectedBankAccount && this.selectedBankAccount.accountNumber) {
+                            this.appService.setBankAccount(this.selectedBankAccount);
+                            this.change.emit(this.selectedBankAccount);
+                        }
+                        return this.bankAccounts;
+                    }
+                )
+
+
+        }
+
+    })
   }
 
 

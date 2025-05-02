@@ -80,7 +80,8 @@ export class AppService {
     public selectedBankAccountObservable$ = this.selectedBankAccount$.asObservable();
     public categoryMapSubject = new BehaviorSubject<CategoryMap | undefined >(undefined);
     public categoryMapObservable$ = this.categoryMapSubject.asObservable();
-
+    refreshBankAccounts = new BehaviorSubject<boolean | undefined>( undefined);
+    refreshBankAccountsObservable$ = this.refreshBankAccounts.asObservable();
 
 
     private backendUrl = environment.API_BASE_PATH;
@@ -99,6 +100,11 @@ export class AppService {
 
 
     }
+
+    public triggerRefreshBankAccounts() {
+        this.refreshBankAccounts.next(true);
+    }
+
 
     private getSharedCategoryTreeRevenueObservable$() {
         return this.apiBudgetAssistantBackendClientService.apiCategoryTreeRetrieve('REVENUE').pipe(
@@ -192,13 +198,13 @@ export class AppService {
 
     }
 
-    public countTransactionToManuallyReview(bankAccount: BankAccount): Observable<Number> {
-        if (!bankAccount || !bankAccount.accountNumber) {
-            console.error('Bank account or account number is undefined');
+    public countTransactionToManuallyReview(bankAccountNumber: string): Observable<Number> {
+        if (!bankAccountNumber) {
+            console.error('Bank account number is undefined');
             return of(0); // Return observable with 0 if bankAccount or accountNumber is undefined
         }
         return this.apiBudgetAssistantBackendClientService.apiTransactionsCountTransactionsToManuallyReviewRetrieve(
-            bankAccount.accountNumber).pipe(map(count => count.count));
+            bankAccountNumber).pipe(map(count => count.count));
 
 
     }
@@ -258,7 +264,7 @@ export class AppService {
         //const number =    transactionsPage.number-1
         let page =  {
             content: transactionsPage.content,
-            number: transactionsPage.number,
+            number: transactionsPage.number-1,
             size: transactionsPage.size,
             totalElements: transactionsPage.totalElements
         };
@@ -280,7 +286,7 @@ export class AppService {
             tmpSortProperty = request.sort.property;
         }
         let pageTransactionsRequest: PageTransactionsRequest = {
-            page: request.page,
+            page: request.page+1,
             size: request.size,
             sortOrder: tmpSortOrder as SortOrderEnum,
             sortProperty: this.camelToSnake(tmpSortProperty) as SortPropertyEnum,
@@ -312,7 +318,7 @@ export class AppService {
             tmpSortProperty = request.sort.property;
         }
         let pageTransactionsInContextRequest: PageTransactionsInContextRequest = {
-            page: request.page < 1 ? 1 : request.page,
+            page: request.page++,
             size: request.size,
             sortOrder: tmpSortOrder as SortOrderEnum,
             sortProperty: this.camelToSnake(tmpSortProperty) as SortPropertyEnum,
@@ -367,7 +373,7 @@ export class AppService {
 
 
         let pageTransactionsToManuallyReviewRequest : PageTransactionsToManuallyReviewRequest = {
-            page: request.page < 1 ? 1 : request.page,
+            page: request.page++,
             size: request.size,
             sortOrder: tmpSortOrder as SortOrderEnum,
             sortProperty: this.camelToSnake(tmpSortProperty) as SortPropertyEnum,
@@ -468,7 +474,6 @@ export class AppService {
             'events',
             true
         ).pipe(tap(() => {
-            this.fetchBankAccountsForUser(); //fixme: need for subscription?
             this.fileUploadComplete$.next();
         })) as Observable<HttpEvent<UploadTransactionsResponse>>;
 
