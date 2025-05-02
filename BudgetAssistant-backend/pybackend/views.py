@@ -332,7 +332,6 @@ class PageTransactionsView(APIView):
                 sort_property = page_transactions_request.sort_property
                 response: TransactionsPage = get_transactions_service().page_transactions(query, page, size, sort_order,
                                                                                           sort_property, user)
-                response.number-=1
                 data = TransactionsPageSerializer(response).data
                 return JsonResponse(data, status=200)
 

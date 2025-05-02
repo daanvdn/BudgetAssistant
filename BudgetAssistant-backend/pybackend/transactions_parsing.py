@@ -34,14 +34,26 @@ def get_or_create_counterparty(data: Dict, user: CustomUser) -> Counterparty:
 
 
 def get_or_create_transaction(data: Dict) -> tuple[Transaction, bool]:
+    def handle_counterparty_data(transaction_data:dict) -> dict:
+        counterparty = transaction_data.pop('counterparty', None)
+        if counterparty:
+            if isinstance(counterparty, dict):
+                transaction_data['counterparty_id'] = counterparty['name']
+            elif isinstance(counterparty, Counterparty):
+                transaction_data['counterparty_id'] = counterparty.name
+        if 'counterparty_id' not in transaction_data:
+            raise ValueError("counterparty_id is required")
+        return transaction_data
 
     try:
         transaction = Transaction.objects.get(transaction_id=data['transaction_id'])
+        data = handle_counterparty_data(data)
         serializer = TransactionSerializer(transaction, data=data)
         if serializer.is_valid(raise_exception=True):
             return serializer.save(), False
     except ObjectDoesNotExist:
         logger.info(f"Transaction with id  {data['transaction_id']} does not exist. Creating it")
+        data = handle_counterparty_data(data)
         serializer = TransactionSerializer(data=data)
         try:
             if serializer.is_valid(raise_exception=True):
@@ -125,7 +137,7 @@ class BelfiusTransactionParser(AbstractTransactionParser):
                 'booking_date': booking_date,
                 'statement_number': statement_number,
                 'transaction_number': transaction_number,
-                'counterparty': counterparty,
+                'counterparty_id': counterparty.name,
                 'transaction': transaction,
                 'currency_date': parse_date(currency_date),
                 'amount': float(amount),

@@ -145,17 +145,36 @@ class CounterpartySerializer(DeserializeInstanceMixin):
 
         extra_kwargs = {'users': {'required': False}, 'category': {'required': False}}
 
+    def to_internal_value0(self, data):
+        """
+        Handle both Counterparty objects and dictionaries.
+        """
+        if isinstance(data, Counterparty):
+            return data
+
+        # If data is a dictionary and contains a name, check if a counterparty with that name already exists
+        if isinstance(data, dict) and 'name' in data:
+            try:
+                # Normalize the name before querying
+                normalized_name = Counterparty.normalize_counterparty(data['name'])
+                counterparty = Counterparty.objects.get(name=normalized_name)
+                return counterparty
+            except ObjectDoesNotExist:
+                pass
+
+        return super().to_internal_value(data)
+
 
     def create(self, validated_data):
         users_data = validated_data.pop('users', [])
         category = validated_data.pop('category', None)
-        counterparty = Counterparty.objects.create(**validated_data)
+        counterparty = Counterparty.objects.create( **validated_data)
         counterparty.category = category
         counterparty.save()
         counterparty.users.set(users_data)
         return counterparty
 
-    def update(self, instance, validated_data):
+    def update0(self, instance, validated_data):
         users_data = validated_data.pop('users', [])
         category = validated_data.pop('category', None)
         instance.name = validated_data.get('name', instance.name)
@@ -169,13 +188,41 @@ class CounterpartySerializer(DeserializeInstanceMixin):
             instance.users.add(user)
             user.counterparties.add(instance)
         return instance
+    def update(self, instance, validated_data):
+        users_data = validated_data.pop('users', None)
+        category = validated_data.pop('category', None)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        instance.category = category
+        instance.save()
+
+        if users_data is not None:
+            instance.users.set(users_data)
+
+        return instance
+
+class SimpleCounterpartySerializer(serializers.Serializer):
+    name = serializers.CharField(required=True)
+    account_number = serializers.CharField(required=True)
+    street_and_number = serializers.CharField(required=True)
+    zip_code_and_city = serializers.CharField(required=True)
+
+    class Meta:
+        model = Counterparty
+        fields = ['name', 'account_number', 'street_and_number', 'zip_code_and_city']
+
 
 class TransactionSerializer(DeserializeInstanceMixin):
     transaction_id: str = serializers.CharField(required=True)
     category = SimpleCategorySerializer(required=False, allow_null=True)
     bank_account = serializers.PrimaryKeyRelatedField(queryset=BankAccount.objects.all(), required=False)
-    counterparty = serializers.PrimaryKeyRelatedField(queryset=Counterparty.objects.all(), required=False)
-    #counterparty = CounterpartySerializer()
+    #counterparty = serializers.PrimaryKeyRelatedField(queryset=Counterparty.objects.all(), required=False)
+    counterparty = CounterpartySerializer(read_only=True)
+    counterparty_id = serializers.PrimaryKeyRelatedField(
+        queryset=Counterparty.objects.all(), source='counterparty', write_only=True
+    )
     booking_date = serializers.DateField(format="%d/%m/%Y",
                                          input_formats=["%d/%m/%Y", "%d-%m-%Y", "%Y/%m/%d", "%Y-%m-%d"], required=False)
     currency_date = serializers.DateField(format="%d/%m/%Y",
@@ -198,16 +245,28 @@ class TransactionSerializer(DeserializeInstanceMixin):
     class Meta:
         model = Transaction
         fields = [
-            'transaction_id', 'bank_account', 'booking_date', 'statement_number', 'counterparty',
-            'transaction_number', 'transaction', 'currency_date', 'amount', 'currency', 'bic',
-            'country_code', 'communications', 'category', 'manually_assigned_category', 'is_recurring',
-            'is_advance_shared_account', 'upload_timestamp', 'is_manually_reviewed'
+            'transaction_id', 'bank_account', 'booking_date', 'statement_number',
+            'counterparty', 'counterparty_id', 'transaction_number', 'transaction',
+            'currency_date', 'amount', 'currency', 'bic', 'country_code',
+            'communications', 'category', 'manually_assigned_category',
+            'is_recurring', 'is_advance_shared_account', 'upload_timestamp',
+            'is_manually_reviewed'
         ]
         # category can be empty, so we need to set required to False
         extra_kwargs = {'category': {'required': False}, 'manually_assigned_category': {'required': False},
                         'is_recurring': {'required': False}, 'is_advance_shared_account': {'required': False},
                         'is_manually_reviewed': {'required': False}, 'communications': {'required': False},
                         'transaction': {'required': False}, 'bic': {'required': False}}
+
+    def to_representation(self, instance):
+        """
+        Override to_representation to include full Counterparty information.
+        """
+        representation = super().to_representation(instance)
+        # If the instance has a counterparty, serialize it with CounterpartySerializer
+        if instance.counterparty:
+            representation['counterparty'] = CounterpartySerializer(instance.counterparty).data
+        return representation
 
 
 
@@ -235,13 +294,28 @@ class TransactionSerializer(DeserializeInstanceMixin):
             validated_data['category'] = category
         else:
             validated_data['category'] = None
-        # counterparty_data = validated_data.pop('counterparty', None)
-        # if counterparty_data:
-        #     try:
-        #         counterparty = Counterparty.objects.get(name=counterparty_data['name'])
-        #     except ObjectDoesNotExist:
-        #         counterparty = CounterpartySerializer().create(counterparty_data)
-        #     validated_data['counterparty'] = counterparty
+
+        # Handle counterparty data
+        counterparty_data = validated_data.pop('counterparty', None)
+        if counterparty_data:
+            # If counterparty_data is already a Counterparty object, use it directly
+            if isinstance(counterparty_data, Counterparty):
+                validated_data['counterparty'] = counterparty_data
+            # Otherwise, it's a dictionary, so create or get a Counterparty
+            else:
+                try:
+                    counterparty = Counterparty.objects.get(name=counterparty_data['name'])
+                    # Update the counterparty with the new data
+                    serializer = CounterpartySerializer(counterparty, data=counterparty_data)
+                    if serializer.is_valid(raise_exception=True):
+                        counterparty = serializer.save()
+                except ObjectDoesNotExist:
+                    # Create a new counterparty
+                    serializer = CounterpartySerializer(data=counterparty_data)
+                    if serializer.is_valid(raise_exception=True):
+                        counterparty = serializer.save()
+                validated_data['counterparty'] = counterparty
+
         transaction = Transaction(**validated_data)
         return transaction
 
@@ -296,4 +370,3 @@ class BudgetTreeSerializer(DeserializeInstanceMixin):
     class Meta:
         model = BudgetTree
         fields = '__all__'
-

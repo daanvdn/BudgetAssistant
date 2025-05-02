@@ -1,6 +1,5 @@
 from datetime import datetime
 
-from django.db import connection
 from django.test import TestCase
 from model_bakery import baker
 
@@ -8,7 +7,7 @@ from pybackend.commons import normalize_counterparty_name_or_account
 from pybackend.models import BankAccount, BudgetTree, BudgetTreeNode, Category, CategoryTree, Counterparty, CustomUser, \
     Transaction
 from pybackend.rules import RuleSet, RuleSetWrapper
-from tests.utils import create_random_rule_set
+from utils import create_random_rule_set
 
 
 class TestBankAccountManager(TestCase):

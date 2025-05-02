@@ -88,11 +88,6 @@ class TransactionsService:
         return [account.account_number for account in accounts]
     def page_transactions(self, query: Optional[TransactionQuery], page: int, size: int, sort_order: str,
                           sort_property: str, user:CustomUser) -> TransactionsPage:
-
-        if page <1:
-            page= 1
-        else:
-            page+=1
         direction = sort_order.upper()
         if direction not in ['ASC', 'DESC']:
             raise ValueError(f"Invalid sort order: {direction}")
@@ -143,6 +138,9 @@ class TransactionsService:
         try:
             id = transaction_json['transaction_id']
             transaction = Transaction.objects.get(transaction_id=id)
+            counterparty = transaction_json.pop('counterparty', None)
+            if counterparty and isinstance(counterparty, dict):
+                transaction_json['counterparty_id']= counterparty['name']
             serializer = TransactionSerializer(transaction, data=transaction_json)
             if serializer.is_valid(raise_exception=False):
                 # update the transaction with the new data
@@ -172,6 +170,7 @@ class TransactionsService:
                 transaction.save()
             return parse_result
         except Exception as e:
+            traceback.print_exc()
             logger.error(str(e))
             raise Exception(f"Error when processing transactions file with name '{file_name}'. Exception: {str(e)}")
 

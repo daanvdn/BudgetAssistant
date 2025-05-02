@@ -239,16 +239,14 @@ class PageTransactionsTests(ProtectedApiTestCase):
         get_transactions_service.return_value = mock_service
         request = PageTransactionsRequestFactory.build()
         transactions = baker.make('Transaction', _quantity=10)
-        response = {
-            'content': [TransactionSerializer(transaction).data for transaction in transactions],
-            'number': 1,
-            'total_elements': 100,
-            'size': 10
-        }
-        mock_service.page_transactions.return_value = response
+        transactions_page = TransactionsPage(content=transactions, number=1, total_elements=100, size=10)
+        expected_response = TransactionsPageSerializer(transactions_page).data
+        mock_service.page_transactions.return_value = transactions_page
         url = reverse('page_transactions')
-        response = self.client.post(url, data=PageTransactionsRequestSerializer(request).data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        actual_response = self.client.post(url, data=PageTransactionsRequestSerializer(request).data, format='json')
+        self.assertEqual(actual_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(actual_response.json(), expected_response)
+
 
     def test_page_transactions_pagination(self):
         # Create a bank account and associate it with the user
@@ -349,7 +347,7 @@ class PageTransactionsInContextTests(ProtectedApiTestCase):
         self.do_test_fail_if_logged_out(fn)
 
 
-class TransactionsPageDTOFactory(DataclassFactory[TransactionsPage]):
+class TransactionsPageFactory(DataclassFactory[TransactionsPage]):
     __allow_none_optionals__ = False
     ...
 
@@ -368,7 +366,7 @@ class PageTransactionsToManuallyReviewTests(ProtectedApiTestCase):
         get_transactions_service.return_value = mock_service
 
         # transactions = baker.make('Transaction', _quantity=10)
-        service_response = TransactionsPageDTOFactory.build()
+        service_response = TransactionsPageFactory.build()
         mock_service.page_transactions_to_manually_review.return_value = service_response
         url = reverse('page_transactions_to_manually_review')
         request = PageTransactionsToManuallyReviewRequestFactory.build()
@@ -376,6 +374,15 @@ class PageTransactionsToManuallyReviewTests(ProtectedApiTestCase):
                                     format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         response_json = response.json()
+        def handle_counterparty(data: dict) -> dict:
+            content  = data['content']
+            for item in content:
+                if 'counterparty' in item:
+                    counterparty = item.pop('counterparty')
+                    item['counterparty_id'] = counterparty['name']
+            data['content'] = content
+            return data
+        response_json = handle_counterparty(response_json)
         serializer = TransactionsPageSerializer(data=response_json)
         if serializer.is_valid(raise_exception=True):
             validated_data = serializer.validated_data
@@ -413,6 +420,8 @@ class SaveTransactionTests(ProtectedApiTestCase):
         mock_service = MagicMock()
         transaction = baker.make(Transaction)
         data = TransactionSerializer(transaction).data
+        if 'counterparty' in data:
+            data['counterparty_id'] = data.pop('counterparty')['name']
         dto_serializer = TransactionSerializer(data=data)
         if dto_serializer.is_valid(raise_exception=True):
             dto = Transaction(**dto_serializer.validated_data)

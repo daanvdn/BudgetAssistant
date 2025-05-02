@@ -1,3 +1,4 @@
+import datetime
 import hashlib
 import json
 import re
@@ -87,7 +88,7 @@ class Transaction(RequiredFieldsMixin, models.Model):
     manually_assigned_category = models.BooleanField(default=False, blank=True, null=True)
     is_recurring = models.BooleanField(default=False, blank=True, null=True)
     is_advance_shared_account = models.BooleanField(default=False, blank=True, null=True)
-    upload_timestamp = models.DateTimeField(default=None, blank=False, null=False)
+    upload_timestamp = models.DateTimeField(default=datetime.datetime.now(), blank=False, null=False)
     is_manually_reviewed = models.BooleanField(default=False, blank=True, null=True)
     objects = TransactionManager()
 
@@ -298,4 +299,3 @@ class TreeNode(models.Model):
 
     def __str__(self):
         return self.name
-

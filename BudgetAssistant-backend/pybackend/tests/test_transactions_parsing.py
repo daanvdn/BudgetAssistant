@@ -1,6 +1,7 @@
 import csv
 # set up all loggers to use the console
 import logging
+from datetime import datetime
 from tempfile import NamedTemporaryFile
 
 from django.db import models
@@ -84,6 +85,7 @@ class BelfiusTransactionParserTest(TestCase):
         baker.generators.add(models.URLField, lambda: fake.url())
         baker.generators.add(models.BooleanField, lambda: fake.boolean())
 
+
         generated_numbers = set()
 
         def unique_random_number():
@@ -116,13 +118,13 @@ class BelfiusTransactionParserTest(TestCase):
             bank_account2.save()
         transactions1 = [baker.prepare(Transaction, counterparty=counterparty1, statement_number=str(
             unique_random_number()), transaction_number=str(unique_random_number()), bank_account=bank_account1,
-                                       booking_date=fake.date_object(), currency_date=fake.date_object(), _fill_optional=True) for _
+                                       booking_date=fake.date_object(), currency_date=fake.date_object(), upload_timestamp=datetime.now() , _fill_optional=True) for _
                          in
                          range(5)]
         transactions2 = [
             baker.prepare(Transaction, counterparty=counterparty2, statement_number=str(unique_random_number()),
                           transaction_number=str(unique_random_number()), bank_account=bank_account2,
-                          booking_date=fake.date_object(), currency_date=fake.date_object(),
+                          booking_date=fake.date_object(), currency_date=fake.date_object(), upload_timestamp=datetime.now(),
                           _fill_optional=True)
             for _ in range(5)]
         all_expected = transactions1 + transactions2

@@ -299,7 +299,7 @@ class CounterpartySerializerTests(TestCase):
             'users': [user.id]
         }
         serializer = CounterpartySerializer(counterparty, data=data)
-        self.assertTrue(serializer.is_valid())
+        self.assertTrue(serializer.is_valid(raise_exception=True))
         updated_counterparty = serializer.save()
         self.assertEqual(updated_counterparty.name, Counterparty.normalize_counterparty('Old Counterparty'))
         self.assertEqual(updated_counterparty.account_number, '0987654321')
@@ -338,7 +338,9 @@ class TransactionSerializerTests(TestCase):
         transaction_id = Transaction._create_transaction_id(transaction_number, bank_account)
         transaction = baker.make(Transaction, transaction_number=transaction_number, bank_account=bank_account,
                                  category=category, counterparty=counterparty, transaction_id=transaction_id)
+        # After creating the counterparty instance
         data = TransactionSerializer(instance=transaction).data
+        data['counterparty_id'] = counterparty.name
         serializer = TransactionSerializer(data=data)
         self.assertTrue(serializer.is_valid(raise_exception=True))
         deserialized = serializer.save()
@@ -384,7 +386,7 @@ class TransactionSerializerTests(TestCase):
         self.assertIn('transaction_id', serializer.errors)
         self.assertIn('bank_account', serializer.errors)
         self.assertIn('booking_date', serializer.errors)
-        self.assertIn('counterparty', serializer.errors)
+        self.assertIn('counterparty_id', serializer.errors)
         self.assertIn('transaction_number', serializer.errors)
         self.assertIn('currency_date', serializer.errors)
         self.assertIn('amount', serializer.errors)
@@ -411,12 +413,17 @@ class TransactionSerializerTests(TestCase):
                                  )
 
         data = TransactionSerializer(transaction).data
+        data['counterparty_id'] = counterparty.name  # Use primary key directly
         #fields that should not be updated
         data['transaction']='Updated Transaction'
         data['communications']='Updated communications'
         data['upload_timestamp']= datetime.now()
         #fields that should not be updated
-        data['category'] = {'qualified_name': category2.qualified_name}
+        data['category'] = {
+            'id': category2.id,
+            'name': category2.name,
+            'qualified_name': category2.qualified_name
+        }
         data['manually_assigned_category']= True
         data['is_recurring']= True
         data['is_advance_shared_account']= True
