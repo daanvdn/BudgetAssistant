@@ -70,13 +70,8 @@ class TransactionsService:
             TransactionPredicates.requires_manual_review(bank_account_obj, transaction_type)).order_by(sort)
         paginator = Paginator(transactions, size)
         page_obj = paginator.get_page(page)
-        response = {
-            "content": [transaction for transaction in page_obj],
-            "number": page_obj.number,
-            "total_elements": paginator.count,
-            "size": paginator.per_page
-        }
-        return TransactionsPage(**response)
+        return TransactionsPage(content=page_obj.object_list, number=page_obj.number, size=len(page_obj.object_list),
+                                total_elements=paginator.count)
 
     def count_transactions_to_manually_review(self, bank_account: str) -> int:
         bank_account_obj = BankAccount.objects.get(account_number=bank_account)
@@ -214,7 +209,7 @@ class RuleSetsService:
                 rule_set_wrapper.save()
                 rule_set_wrapper.users.add(user)
             return rule_set_wrapper
-        except Category.DoesNotExist:
+        except ObjectDoesNotExist:
             raise ValueError(f"Category with name {category_qualified_name} and type {type} does not exist")
         except Exception as e:
             logger.error(f"Error in get_or_create_rule_set_wrapper: {e}")

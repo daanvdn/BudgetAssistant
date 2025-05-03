@@ -148,7 +148,7 @@ class BasePageTransactionsRequestSerializer(Serializer):
                                             choices=['transaction_id', 'booking_date', 'amount', 'counterparty',
                                                      'category', 'manually_assigned_category', 'is_recurring',
                                                      'is_advance_shared_account', 'upload_timestamp',
-                                                     'is_manually_reviewed'])
+                                                     'is_manually_reviewed', 'transaction'])
 
 
 class PageTransactionsRequestSerializer(BasePageTransactionsRequestSerializer):
