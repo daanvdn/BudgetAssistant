@@ -33,7 +33,7 @@ print('TEST_MODE:', TEST_MODE)
 if TEST_MODE:
     SECRET_KEY = 'django-insecure-us#89kk1!imm+zl8yb$-(stb=ubi&j5ujz)id_&aj6=5f5lvz='
 else:
-    SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
+    SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", 'django-insecure-us#89kk1!imm+zl8yb$-(stb=ubi&j5ujz)id_&aj6=5f5lvz=')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'true').lower() == 'true'
@@ -54,7 +54,9 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',  # For CORS support
-    "drf_spectacular"
+    "drf_spectacular",
+    "silk"
+
 ]
 # Allow requests from Angular's frontend
 CORS_ALLOWED_ORIGINS = [
@@ -69,6 +71,10 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'silk.middleware.SilkyMiddleware',
+    'pybackend.middleware.RequestTimingMiddleware',
+
+
 
 ]
 MIDDLEWARE += [
@@ -123,10 +129,10 @@ if DATABASE_BACKEND == 'mysql':
     # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
     DATABASES = {'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'test_db' if TEST_MODE else os.environ['DATABASE_NAME'],
-        'USER': 'test_user' if TEST_MODE else os.environ['DATABASE_USERNAME'],
-        'PASSWORD': 'test_password' if TEST_MODE else os.environ['DATABASE_PASSWORD'],
-        'HOST': '127.0.0.1' if TEST_MODE else os.environ['DATABASE_HOST'],
+        'NAME': 'test_db' if TEST_MODE else os.environ.get('DATABASE_NAME', 'prod_db'),
+        'USER': 'test_user' if TEST_MODE else os.environ.get('DATABASE_USERNAME', 'django_user'),
+        'PASSWORD': 'test_password' if TEST_MODE else os.environ.get('DATABASE_PASSWORD', 'django_password'),
+        'HOST': '127.0.0.1' if TEST_MODE else os.environ.get('DATABASE_HOST', '127.0.0.1'),
         'PORT': '3306'
 
     }}
@@ -262,6 +268,10 @@ LOGGING = {
             'level': 'DEBUG',  # Log all debug-level messages
             'propagate': True,
         },
+        'pybackend.middleware': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
     },
 }
-

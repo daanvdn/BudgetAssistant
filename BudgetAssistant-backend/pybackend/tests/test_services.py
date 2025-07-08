@@ -3,6 +3,7 @@ import json
 import unittest
 from datetime import datetime, timezone
 
+from django.db.models import QuerySet
 from django.test import TestCase
 from model_bakery import baker
 from rest_framework import serializers
@@ -80,7 +81,7 @@ class TransactionsServiceTests(TestCase):
 
         self.assertEqual(response.total_elements, 3)
         self.assertEqual(response.number, 1)
-        self.assertEqual(response.size, 10)
+        self.assertEqual(response.size, 3)
         self.assertIn(transaction1, response.content)
         self.assertIn(transaction2, response.content)
         self.assertIn(transaction3, response.content)
@@ -91,10 +92,12 @@ class TransactionsServiceTests(TestCase):
             bank_account='123456789', page=1, size=10, sort_order='asc', sort_property='transaction_id',
             transaction_type=TransactionTypeEnum.EXPENSES
         )
-        self.assertEqual(response.content, [])
+        #response.content should be an empty QuerySet
+        self.assertIsInstance(response.content, QuerySet)
+        self.assertFalse(response.content.exists())
         self.assertEqual(response.number, 1)
         self.assertEqual(response.total_elements, 0)
-        self.assertEqual(response.size, 10)
+        self.assertEqual(response.size, 0)
 
     def test_count_transactions_to_manually_review_returns_count(self):
         account_number='123456789'

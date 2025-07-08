@@ -26,6 +26,7 @@ from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.serializers import CharField, EmailField
 from rest_framework.views import APIView
+from silk.profiling.profiler import silk_profile
 
 from pybackend.analysis import BudgetTrackerResult, BudgetTrackerResultSerializer, \
     CategoryDetailsForPeriodHandlerResult, \
@@ -317,6 +318,7 @@ class PageTransactionsView(APIView):
             200: TransactionsPageSerializer,
             400: None
         })
+    @silk_profile(name='PageTransactionsView.post')
     def post(self, request, *args, **kwargs):
         try:
             body = json.loads(request.body.decode('utf-8'))

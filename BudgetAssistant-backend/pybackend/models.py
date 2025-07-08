@@ -40,6 +40,11 @@ class BankAccount(RequiredFieldsMixin, models.Model):
     alias = models.CharField(max_length=255, blank=True, null=True)
     objects = BankAccountManager()
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['alias']),
+        ]
+
     def __str__(self):
         return self.account_number
 
@@ -91,6 +96,16 @@ class Transaction(RequiredFieldsMixin, models.Model):
     upload_timestamp = models.DateTimeField(default=datetime.datetime.now(), blank=False, null=False)
     is_manually_reviewed = models.BooleanField(default=False, blank=True, null=True)
     objects = TransactionManager()
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['booking_date']),
+            models.Index(fields=['amount']),
+            models.Index(fields=['currency']),
+            models.Index(fields=['country_code']),
+            models.Index(fields=['upload_timestamp']),
+            models.Index(fields=['booking_date', 'amount']),  # Composite index for common queries
+        ]
 
 
 
@@ -151,6 +166,11 @@ class Counterparty(models.Model, RequiredFieldsMixin):
 
     objects = CounterpartyManager()  # Custom manager
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['account_number']),
+        ]
+
     def __str__(self):
         return self.name
 
@@ -189,6 +209,15 @@ class Category(models.Model):
     type = CharEnumField(TransactionTypeEnum)
     _children_cache = None
     objects = CategoryManager()
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['name']),
+            models.Index(fields=['qualified_name']),
+            models.Index(fields=['is_root']),
+            models.Index(fields=['type']),
+            models.Index(fields=['name', 'type']),  # Composite index for filtering by name and type
+        ]
 
     def __str__(self):
         return self.name
@@ -258,6 +287,12 @@ class BudgetTreeNode(models.Model):
     parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='children')
     objects = BudgetTreeNodeManager()
     _children_cache = None
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['amount']),
+            models.Index(fields=['category', 'amount']),  # Composite index for filtering by category and amount
+        ]
 
 
     def __str__(self):
