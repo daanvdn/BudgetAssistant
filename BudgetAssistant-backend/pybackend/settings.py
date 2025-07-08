@@ -14,7 +14,6 @@ import sys
 from pathlib import Path
 
 import environ
-from MySQLdb.constants.ER import DATABASE_NAME
 from django.core.exceptions import ImproperlyConfigured
 from drf_spectacular.contrib import djangorestframework_camel_case
 
@@ -123,18 +122,17 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'pybackend.wsgi.application'
 
-DATABASE_BACKEND = 'sqlite' if TEST_MODE else env(var='DATABASE_BACKEND', default='mysql')
-if DATABASE_BACKEND == 'mysql':
+DATABASE_BACKEND = 'sqlite' if TEST_MODE else env(var='DATABASE_BACKEND', default='postgresql')
+if DATABASE_BACKEND == 'postgresql':
     # Database
     # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
     DATABASES = {'default': {
-        'ENGINE': 'django.db.backends.mysql',
+        'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'test_db' if TEST_MODE else os.environ.get('DATABASE_NAME', 'prod_db'),
         'USER': 'test_user' if TEST_MODE else os.environ.get('DATABASE_USERNAME', 'django_user'),
         'PASSWORD': 'test_password' if TEST_MODE else os.environ.get('DATABASE_PASSWORD', 'django_password'),
         'HOST': '127.0.0.1' if TEST_MODE else os.environ.get('DATABASE_HOST', '127.0.0.1'),
-        'PORT': '3306'
-
+        'PORT': '5432'
     }}
 
 elif DATABASE_BACKEND == 'sqlite':

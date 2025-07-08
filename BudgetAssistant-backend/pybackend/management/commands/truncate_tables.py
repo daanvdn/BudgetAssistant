@@ -10,16 +10,18 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         self.stdout.write(self.style.WARNING('Starting database truncation...'))
-        
+
         # Get cursor
         cursor = connection.cursor()
-        
+
         # Temporarily disable foreign key constraints
         if connection.vendor == 'mysql':
             cursor.execute('SET FOREIGN_KEY_CHECKS=0;')
         elif connection.vendor == 'sqlite':
             cursor.execute('PRAGMA foreign_keys=OFF;')
-        
+        elif connection.vendor == 'postgresql':
+            cursor.execute('SET CONSTRAINTS ALL DEFERRED;')
+
         # Truncate tables in reverse order of dependencies
         self.truncate_model(TreeNode)
         self.truncate_model(BudgetTreeNode)
@@ -31,15 +33,17 @@ class Command(BaseCommand):
         # Don't truncate CustomUser to preserve login credentials
         # self.truncate_model(CustomUser)
         self.truncate_model(BankAccount)
-        
+
         # Re-enable foreign key constraints
         if connection.vendor == 'mysql':
             cursor.execute('SET FOREIGN_KEY_CHECKS=1;')
         elif connection.vendor == 'sqlite':
             cursor.execute('PRAGMA foreign_keys=ON;')
-        
+        elif connection.vendor == 'postgresql':
+            cursor.execute('SET CONSTRAINTS ALL IMMEDIATE;')
+
         self.stdout.write(self.style.SUCCESS('Successfully truncated all tables!'))
-    
+
     def truncate_model(self, model):
         model_name = model.__name__
         self.stdout.write(f'Truncating {model_name}...')

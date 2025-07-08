@@ -18,37 +18,35 @@ function Get-DotEnv($filePath)
 }
 
 # Call function with the path to your .env file
-Get-DotEnv ".\pybackend\.env"
+Get-DotEnv ".\.env"
 
-$MY_SQL_USER = $Env:MY_SQL_USER
-$MY_SQL_PASSWORD = $Env:MY_SQL_PASSWORD
-$MY_SQL_PROD_DB = $Env:MY_SQL_PROD_DB
-$MYSQL_ROOT_PASSWORD = $Env:MYSQL_ROOT_PASSWORD
+$POSTGRES_USER = $Env:POSTGRES_USER
+$POSTGRES_PASSWORD = $Env:POSTGRES_PASSWORD
+$POSTGRES_DB = $Env:POSTGRES_DB
 #log the user and prod db
-Write-Output "User: $MY_SQL_USER"
-Write-Output "Password: $MY_SQL_PASSWORD"
-Write-Output "Database: $MY_SQL_PROD_DB"
+Write-Output "User: $POSTGRES_USER"
+Write-Output "Password: $POSTGRES_PASSWORD"
+Write-Output "Database: $POSTGRES_DB"
 
-Write-Output "Checking if MariaDB container exists"
-$container = docker ps -a --filter "name=mariadb" --format "{{.Names}}"
+Write-Output "Checking if PostgreSQL container exists"
+$container = docker ps -a --filter "name=postgres" --format "{{.Names}}"
 
-if ($container -eq "mariadb")
+if ($container -eq "postgres")
 {
-    Write-Output "Starting existing MariaDB container"
-    docker start mariadb
+    Write-Output "Starting existing PostgreSQL container"
+    docker start postgres
 }
 else
 {
-Write-Output "Starting new MariaDB docker image"
+Write-Output "Starting new PostgreSQL docker image"
 docker run -d `
-  --name mariadb `
-  -e MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD `
-  -e MYSQL_DATABASE=$MY_SQL_PROD_DB `
-  -e MYSQL_USER=$MY_SQL_USER `
-  -e MYSQL_PASSWORD=$MY_SQL_PASSWORD `
-  -p 3306:3306 `
-  --mount type=bind,source=C:\docker-data\mariadb,target=/var/lib/mysql `
-  mariadb:latest
+  --name postgres `
+  -e POSTGRES_DB=$POSTGRES_DB `
+  -e POSTGRES_USER=$POSTGRES_USER `
+  -e POSTGRES_PASSWORD=$POSTGRES_PASSWORD `
+  -p 5432:5432 `
+  --mount type=bind,source=C:\docker-data\postgres,target=/var/lib/postgresql/data `
+  postgres:latest
 #-v C:\Users\daanv\Git\BudgetAssistant\BudgetAssistant-backend\init.sql:/docker-entrypoint-initdb.d/init.sql `
 #
 }

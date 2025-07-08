@@ -1,15 +1,14 @@
 services:
   db:
-    image: mariadb:latest
+    image: postgres:latest
     environment:
-      MYSQL_DATABASE: ${MY_SQL_PROD_DB}
-      MYSQL_USER: ${MY_SQL_USER}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_PASSWORD: ${MY_SQL_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      - "3306:3306"
+      - "5432:5432"
     volumes:
-      - ${MARIADB_STORAGE}:/var/lib/mysql
+      - ${POSTGRES_STORAGE}:/var/lib/postgresql/data
     env_file:
       - .env
 
@@ -29,15 +28,15 @@ services:
       DJANGO_LOGLEVEL: ${DJANGO_LOGLEVEL}
       DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS}
       DATABASE_ENGINE: ${DATABASE_ENGINE}
-      DATABASE_NAME: ${MY_SQL_PROD_DB}
-      DATABASE_USERNAME: ${MY_SQL_USER}
-      DATABASE_PASSWORD: ${MY_SQL_PASSWORD}
+      DATABASE_NAME: ${POSTGRES_DB}
+      DATABASE_USERNAME: ${POSTGRES_USER}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
       #DATABASE_HOST: ${DATABASE_HOST}
       DATABASE_HOST: db
-      DATABASE_PORT: 3306
+      DATABASE_PORT: 5432
       DEBUG_PYCHARM: 'false'
       TRUNCATE_TABLES: ${TRUNCATE_TABLES:-false}
     env_file:
       - .env
 volumes:
-  mariadb_storage:
+  postgres_storage:
