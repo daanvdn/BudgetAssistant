@@ -144,7 +144,7 @@ class TransactionsServiceTests(TestCase):
                                                                          BelfiusTransactionParser(), file_name)
                 self.assertIsNotNone(parse_result)
                 self.assertEqual(parse_result.created, 10)
-                self.assertEqual(parse_result.updated, 0)
+                self.assertEqual(parse_result.ignored, 0)
                 #check if transactions are saved in db
                 transactions = Transaction.objects.all()
                 self.assertEqual(len(transactions), 10)

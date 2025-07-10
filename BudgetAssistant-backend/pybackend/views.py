@@ -334,8 +334,12 @@ class PageTransactionsView(APIView):
                 sort_property = page_transactions_request.sort_property
                 response: TransactionsPage = get_transactions_service().page_transactions(query, page, size, sort_order,
                                                                                           sort_property, user)
-                data = TransactionsPageSerializer(response).data
-                return JsonResponse(data, status=200)
+                @silk_profile(name='PageTransactionsView.post.serialize')
+                def serialize(response: TransactionsPage) -> dict:
+                    data = TransactionsPageSerializer(response).data
+                    return data
+
+                return JsonResponse(serialize(response), status=200)
 
         except Exception as e:
             traceback.print_exc()
@@ -379,6 +383,7 @@ class PageTransactionsToManuallyReviewView(APIView):
             400: None,
             500: None
         })
+    @silk_profile(name='PageTransactionsToManuallyReviewView.post')
     def post(self, request, *args, **kwargs):
         body = json.loads(request.body.decode('utf-8'))
         serializer = PageTransactionsToManuallyReviewRequestSerializer(data=body)
@@ -397,7 +402,11 @@ class PageTransactionsToManuallyReviewView(APIView):
         else:
             return JsonResponse({}, status=400)
 
-        return JsonResponse(TransactionsPageSerializer(transactions_page_dto).data, status=200)
+        @silk_profile(name='PageTransactionsToManuallyReviewView.post.serialize')
+        def serialize(response: TransactionsPage) -> dict:
+            data = TransactionsPageSerializer(response).data
+            return data
+        return JsonResponse(serialize(transactions_page_dto), status=200)
 
 class CountTransactionsToManuallyReviewView(APIView):
     permission_classes = [IsAuthenticated]
@@ -543,6 +552,7 @@ class UploadTransactionsView(APIView):
             500: None
         }
     )
+    @silk_profile(name='UploadTransactionsView.post')
     def post(self, request, *args, **kwargs):
         try:
             if not request.content_type.startswith('multipart/form-data'):
@@ -560,15 +570,15 @@ class UploadTransactionsView(APIView):
             upload_timestamp = datetime.now()
 
             created = 0
-            updated = 0
+            ignored = 0
             for file in files:
                 decoded_file = io.TextIOWrapper(file, encoding='utf-8')
                 lines = decoded_file.readlines()  # Reads all lines as a list
                 parse_result = get_transactions_service().upload_transactions(lines, user, upload_timestamp,
                                                                               BelfiusTransactionParser(), file.name)
                 created += parse_result.created
-                updated += parse_result.updated
-            return JsonResponse({'created': created, 'updated': updated, 'upload_timestamp': serializers.DateTimeField().to_representation(upload_timestamp)}, status=200)
+                ignored += parse_result.ignored
+            return JsonResponse({'created': created, 'ignored': ignored, 'upload_timestamp': serializers.DateTimeField().to_representation(upload_timestamp)}, status=200)
         except UnsupportedMediaType as e:
             return JsonResponse({'error': f'Unsupported media type: {str(e)}'}, status=415)
         except Exception as e:
