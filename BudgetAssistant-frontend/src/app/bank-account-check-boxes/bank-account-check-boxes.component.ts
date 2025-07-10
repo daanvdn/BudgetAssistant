@@ -1,10 +1,10 @@
-import {Component, EventEmitter, OnDestroy, OnInit, Output} from '@angular/core';
+import {Component, effect, EventEmitter, OnDestroy, OnInit, Output} from '@angular/core';
 import {AppService} from "../app.service";
 import {Subject, takeUntil} from "rxjs";
-import { FormBuilder, FormGroup, FormArray, FormsModule, ReactiveFormsModule } from "@angular/forms";
-import { BankAccount } from '@daanvdn/budget-assistant-client';
-import { NgFor, UpperCasePipe } from '@angular/common';
-import { MatCheckbox } from '@angular/material/checkbox';
+import {FormBuilder, FormGroup, FormArray, FormsModule, ReactiveFormsModule} from "@angular/forms";
+import {BankAccount} from '@daanvdn/budget-assistant-client';
+import {NgFor, UpperCasePipe} from '@angular/common';
+import {MatCheckbox} from '@angular/material/checkbox';
 
 @Component({
     selector: 'bank-account-check-boxes',
@@ -14,60 +14,59 @@ import { MatCheckbox } from '@angular/material/checkbox';
     imports: [FormsModule, ReactiveFormsModule, NgFor, MatCheckbox, UpperCasePipe]
 })
 export class BankAccountCheckBoxesComponent implements OnInit, OnDestroy {
-  private destroy$ = new Subject<void>();
-  bankAccounts: BankAccount[] = [];
-  form: FormGroup;
+    private destroy$ = new Subject<void>();
+    bankAccounts: BankAccount[] = [];
+    form: FormGroup;
 
-  @Output() change: EventEmitter<BankAccount[]> = new EventEmitter<BankAccount[]>();
+    @Output() change: EventEmitter<BankAccount[]> = new EventEmitter<BankAccount[]>();
 
-  constructor(private appService: AppService, private formBuilder: FormBuilder) {
-    this.form = this.formBuilder.group({
-      bankAccounts: new FormArray([])
-    });
-
-    this.appService.fetchBankAccountsForUser()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(result => {
-        if (result == undefined) {
-          return;
-        }
-        this.bankAccounts = result;
-        const bankAccountsFormArray = this.form.get('bankAccounts') as FormArray;
-        this.bankAccounts.forEach(() => {
-          bankAccountsFormArray.push(this.formBuilder.control(true));
+    constructor(private appService: AppService, private formBuilder: FormBuilder) {
+        this.form = this.formBuilder.group({
+            bankAccounts: new FormArray([])
         });
-      });
 
-  }
+        // Use effect to react to query data changes
+        effect(() => {
+            const bankAccountsData = this.appService.bankAccountsQuery.data();
+            if (bankAccountsData) {
+                this.bankAccounts = bankAccountsData;
+                const bankAccountsFormArray = this.form.get('bankAccounts') as FormArray;
+                this.bankAccounts.forEach(() => {
+                    bankAccountsFormArray.push(this.formBuilder.control(true));
+                });
+            }
+        });
 
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
+    }
 
-  ngOnInit(): void {
-    const bankAccountsFormArray = this.form.get('bankAccounts') as FormArray;
-    bankAccountsFormArray.valueChanges.subscribe(() => {
-      this.emitSelectedAccounts();
-    });
-  }
+    ngOnDestroy() {
+        this.destroy$.next();
+        this.destroy$.complete();
+    }
 
-  getFormArrayControls() {
-    return (this.form.get('bankAccounts') as FormArray).controls;
-  }
+    ngOnInit(): void {
+        const bankAccountsFormArray = this.form.get('bankAccounts') as FormArray;
+        bankAccountsFormArray.valueChanges.subscribe(() => {
+            this.emitSelectedAccounts();
+        });
+    }
 
-  emitSelectedAccounts() {
-    const formArrayControls = this.getFormArrayControls();
-    let selectedBankAccounts: BankAccount[] = [];
+    getFormArrayControls() {
+        return (this.form.get('bankAccounts') as FormArray).controls;
+    }
 
-    this.bankAccounts.forEach((bankAccount, index) => {
-      let selected: boolean = formArrayControls[index].value;
-      if (selected){
-        selectedBankAccounts.push(bankAccount);
-      }
-      });
+    emitSelectedAccounts() {
+        const formArrayControls = this.getFormArrayControls();
+        let selectedBankAccounts: BankAccount[] = [];
 
-    this.change.emit(selectedBankAccounts);
-  }
+        this.bankAccounts.forEach((bankAccount, index) => {
+            let selected: boolean = formArrayControls[index].value;
+            if (selected) {
+                selectedBankAccounts.push(bankAccount);
+            }
+        });
+
+        this.change.emit(selectedBankAccounts);
+    }
 
 }

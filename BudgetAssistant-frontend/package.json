@@ -30,6 +30,7 @@
     "@fortawesome/free-solid-svg-icons": "^6.5.1",
     "@ng-select/ng-select": "^13.9.1",
     "@swimlane/ngx-charts": "^20.1.0",
+    "@tanstack/angular-query-experimental": "^5.82.0",
     "chart.js": "^3.9.1",
     "chartjs-plugin-autocolors": "^0.2.2",
     "chartjs-plugin-datalabels": "^2.2.0",

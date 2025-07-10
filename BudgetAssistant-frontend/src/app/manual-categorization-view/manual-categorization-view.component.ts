@@ -1,4 +1,4 @@
-import {Component, ElementRef, OnInit, ViewChild} from '@angular/core';
+import {Component, effect, ElementRef, OnInit, ViewChild} from '@angular/core';
 import {MatPaginator} from "@angular/material/paginator";
 import {MatSort} from "@angular/material/sort";
 import {
@@ -108,12 +108,14 @@ export class ManualCategorizationViewComponent implements OnInit {
   private activeView: BehaviorSubject<TransactionTypeEnum> = new BehaviorSubject<TransactionTypeEnum>(TransactionTypeEnum.EXPENSES);
   private activeViewObservable = this.activeView.asObservable();
   constructor(private appService: AppService) {
-    appService.selectedBankAccountObservable$.subscribe(account => {
-      if (account){
-        this.bankAccount = account;
-        this.dataSource = this.initDataSource(account, this.activeView.getValue());
-      }
-    });
+
+    effect(() => {
+        const selectedBankAccount = this.appService.selectedBankAccount();
+        if (selectedBankAccount) {
+            this.bankAccount = selectedBankAccount;
+            this.dataSource = this.initDataSource(selectedBankAccount, this.activeView.getValue());
+        }
+    })
     appService.categoryMapObservable$.subscribe(categoryMap => {
       if (categoryMap) {
         this.categoryMap = categoryMap;

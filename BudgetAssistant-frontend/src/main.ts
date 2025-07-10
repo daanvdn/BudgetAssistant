@@ -1,5 +1,6 @@
 import {enableProdMode, importProvidersFrom} from '@angular/core';
 
+import {provideTanStackQuery, QueryClient} from '@tanstack/angular-query-experimental';
 
 import {environment} from './environments/environment';
 import {
@@ -80,7 +81,8 @@ bootstrapApplication(AppComponent, {
         },
         { provide: BASE_PATH, useValue: environment.API_BASE_PATH },
         provideHttpClient(withInterceptorsFromDi()),
-        provideAnimations()
+        provideAnimations(),
+        provideTanStackQuery(new QueryClient())
     ]
 })
   .catch(err => console.error(err));

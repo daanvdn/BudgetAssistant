@@ -1,5 +1,15 @@
 import {AsyncPipe, DatePipe, NgIf, TitleCasePipe} from '@angular/common';
-import {AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import {
+    AfterViewInit,
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    effect,
+    Input,
+    OnDestroy,
+    OnInit,
+    ViewChild
+} from '@angular/core';
 import {MatDialog} from '@angular/material/dialog';
 import {MatPaginator} from '@angular/material/paginator';
 import {MatRadioButton, MatRadioChange, MatRadioGroup} from '@angular/material/radio';
@@ -86,6 +96,7 @@ export class TransactionsComponent implements OnInit, AfterViewInit, OnDestroy {
     trackByFn(index: number, item: Transaction): string {
         return item.transactionId || index.toString();
     }
+
     transactionQuery?: TransactionQuery;
     transactionQueryAsJson?: string;
     selectedAccount?: string;
@@ -101,12 +112,12 @@ export class TransactionsComponent implements OnInit, AfterViewInit, OnDestroy {
                 private dateUtils: DateUtilsService, private cdr: ChangeDetectorRef) {
 
         // Only initialize dataSource if it's not provided via @Input()
-/*
-        if (!this.dataSource) {
-            let account = undefined;
-            this.dataSource = this.initDataSource(account);
-        }
-*/
+        /*
+         if (!this.dataSource) {
+         let account = undefined;
+         this.dataSource = this.initDataSource(account);
+         }
+         */
         this.appService.categoryMapObservable$
             .pipe(takeUntil(this.destroy$))
             .subscribe(categoryMap => {
@@ -115,25 +126,26 @@ export class TransactionsComponent implements OnInit, AfterViewInit, OnDestroy {
                 this.cdr.markForCheck();
             });
 
-        this.appService.selectedBankAccountObservable$
-            .pipe(takeUntil(this.destroy$))
-            .subscribe(bankAccount => {
-                if (bankAccount && bankAccount.accountNumber) {
-                    this.appService.countTransactionToManuallyReview(bankAccount.accountNumber)
-                        .pipe(takeUntil(this.destroy$))
-                        .subscribe(count => {
-                            this.transactionToManuallyReview = count.valueOf();
-                            // Only mark for check instead of triggering a full change detection cycle
-                            this.cdr.markForCheck();
-                        });
-                }
-                else {
-                    // Set a default value if bankAccount or accountNumber is undefined
-                    this.transactionToManuallyReview = 0;
-                    // Only mark for check instead of triggering a full change detection cycle
-                    this.cdr.markForCheck();
-                }
-            });
+        effect(() => {
+            const selectedBankAccount = this.appService.selectedBankAccount();
+            if (selectedBankAccount && selectedBankAccount.accountNumber) {
+                this.appService.countTransactionToManuallyReview(selectedBankAccount.accountNumber)
+                    .pipe(takeUntil(this.destroy$))
+                    .subscribe(count => {
+                        this.transactionToManuallyReview = count.valueOf();
+                        // Only mark for check instead of triggering a full change detection cycle
+                        this.cdr.markForCheck();
+                    });
+            }
+            else {
+                // Set a default value if bankAccount or accountNumber is undefined
+                this.transactionToManuallyReview = 0;
+                // Only mark for check instead of triggering a full change detection cycle
+                this.cdr.markForCheck();
+            }
+
+        })
+
 
     }
 

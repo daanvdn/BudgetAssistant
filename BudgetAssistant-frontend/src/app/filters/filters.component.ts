@@ -1,4 +1,4 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, effect, OnInit} from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {AppService} from '../app.service';
 import {StartEndDateShortcut} from '../model';
@@ -74,17 +74,20 @@ export class FiltersComponent implements OnInit {
   private destroy$ = new Subject<void>();
 
   constructor(private appService: AppService, private formBuilder: FormBuilder) {
-    this.appService.fetchBankAccountsForUser()
-      .pipe(takeUntil(this.destroy$))
+    effect(() => {
 
-      .subscribe(result => {
-          if (result == undefined) {
-            return;
-          }
-          this.appService.setBankAccount(result[0]);
-          return this.bankAccounts = result
+      const bankAccountsData = this.appService.bankAccountsQuery.data();
+      const isSuccess = this.appService.bankAccountsQuery.isSuccess();
+      if (isSuccess && bankAccountsData) {
+        this.bankAccounts = bankAccountsData;
+
+        if (this.bankAccounts.length > 0) {
+
+          this.appService.setBankAccount(this.bankAccounts[0]);
         }
-      )
+      }
+
+    })
     this.bankAccountFormFieldGroup = formBuilder.group({queryForm: ""});
     this.startEndDateFormFieldGroup = formBuilder.group({queryForm: ""});
     this.transactionTypeFormFieldGroup = formBuilder.group({queryForm: ""});

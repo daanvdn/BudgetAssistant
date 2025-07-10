@@ -1,4 +1,4 @@
-import {Component, EventEmitter, OnInit, Output, ViewChild} from '@angular/core';
+import {Component, effect, EventEmitter, OnInit, Output, ViewChild} from '@angular/core';
 import {NgSelectComponent} from '@ng-select/ng-select';
 import {Observable} from 'rxjs';
 import {AppService} from '../app.service';
@@ -32,10 +32,12 @@ export class CounterpartyNameSelectionComponent implements OnInit {
 
 
   ngOnInit() {
-    this.appService.selectedBankAccountObservable$.subscribe(bankAccount => {
-      if (bankAccount !== undefined) {
-        this.distinctCounterpartyNames = this.appService.getDistinctCounterpartyNames(bankAccount.accountNumber);
-      }
+
+    effect(() => {
+        const selectedBankAccount = this.appService.selectedBankAccount();
+        if (selectedBankAccount) {
+            this.distinctCounterpartyNames = this.appService.getDistinctCounterpartyNames(selectedBankAccount.accountNumber);
+        }
     })
 
   }

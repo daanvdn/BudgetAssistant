@@ -1,13 +1,13 @@
-import {Component, EventEmitter, OnDestroy, OnInit, Output} from '@angular/core';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import {Component, EventEmitter, OnDestroy, OnInit, Output, effect} from '@angular/core';
+import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {AppService} from '../app.service';
 import {Subject, takeUntil} from "rxjs";
 import {BankAccount} from "@daanvdn/budget-assistant-client";
-import { MatFormField, MatLabel } from '@angular/material/form-field';
-import { MatSelect } from '@angular/material/select';
-import { NgFor, UpperCasePipe } from '@angular/common';
-import { MatOption } from '@angular/material/core';
-import { IbanPipe } from '../iban.pipe';
+import {MatFormField, MatLabel} from '@angular/material/form-field';
+import {MatSelect} from '@angular/material/select';
+import {NgFor, UpperCasePipe} from '@angular/common';
+import {MatOption} from '@angular/material/core';
+import {IbanPipe} from '../iban.pipe';
 import {MatIconModule} from "@angular/material/icon";
 
 @Component({
@@ -20,57 +20,54 @@ import {MatIconModule} from "@angular/material/icon";
 export class BankAccountSelectionComponent implements OnInit, OnDestroy {
 
 
-  bankAccountFormFieldGroup: FormGroup;
-  selectedBankAccount!: BankAccount;
-  bankAccounts: BankAccount[] = [];
+    bankAccountFormFieldGroup: FormGroup;
+    selectedBankAccount!: BankAccount;
+    bankAccounts: BankAccount[] = [];
 
-  @Output() change: EventEmitter<BankAccount> = new EventEmitter<BankAccount>(true);
-  private destroy$ = new Subject<void>();
+    @Output() change: EventEmitter<BankAccount> = new EventEmitter<BankAccount>(true);
+    private destroy$ = new Subject<void>();
 
-  constructor(private appService: AppService, private formBuilder: FormBuilder) {
-    this.appService.triggerRefreshBankAccounts();
-    this.bankAccountFormFieldGroup = formBuilder.group({queryForm: ""});
-    this.appService.refreshBankAccountsObservable$.pipe(takeUntil(this.destroy$)).subscribe(result => {
-        if (result && result) {
-            this.appService.fetchBankAccountsForUser()
-                .pipe(takeUntil(this.destroy$))
-                .subscribe(result => {
-                        if (result == undefined || result.length === 0) {
-                            console.warn('No bank accounts found for user');
-                            return;
-                        }
-                        this.bankAccounts = result;
-                        this.selectedBankAccount = this.bankAccounts[0];
-                        if (this.selectedBankAccount && this.selectedBankAccount.accountNumber) {
-                            this.appService.setBankAccount(this.selectedBankAccount);
-                            this.change.emit(this.selectedBankAccount);
-                        }
-                        return this.bankAccounts;
-                    }
-                )
+    constructor(private appService: AppService, private formBuilder: FormBuilder) {
+        this.appService.triggerRefreshBankAccounts();
+        this.bankAccountFormFieldGroup = formBuilder.group({queryForm: ""});
+        effect(() => {
+            const bankAccountsData = this.appService.bankAccountsQuery.data();
+            const isSuccess = this.appService.bankAccountsQuery.isSuccess();
 
+            if (isSuccess && bankAccountsData) {
+                if (bankAccountsData.length === 0) {
+                    console.warn('No bank accounts found for user');
+                    return;
+                }
 
-        }
+                this.bankAccounts = bankAccountsData;
+                this.selectedBankAccount = this.bankAccounts[0];
 
-    })
-  }
-
-
-  ngOnInit() {
-  }
-
-  ngOnChanges() {
-    if (this.selectedBankAccount && this.selectedBankAccount.accountNumber) {
-      this.change.emit(this.selectedBankAccount);
-      this.appService.setBankAccount(this.selectedBankAccount);
-    } else {
-      console.error('Selected bank account or account number is undefined in ngOnChanges');
+                if (this.selectedBankAccount && this.selectedBankAccount.accountNumber) {
+                    this.appService.setBankAccount(this.selectedBankAccount);
+                    this.change.emit(this.selectedBankAccount);
+                }
+            }
+        }, {allowSignalWrites: true});
     }
-  }
 
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
+
+    ngOnInit() {
+    }
+
+    ngOnChanges() {
+        if (this.selectedBankAccount && this.selectedBankAccount.accountNumber) {
+            this.change.emit(this.selectedBankAccount);
+            this.appService.setBankAccount(this.selectedBankAccount);
+        }
+        else {
+            console.error('Selected bank account or account number is undefined in ngOnChanges');
+        }
+    }
+
+    ngOnDestroy() {
+        this.destroy$.next();
+        this.destroy$.complete();
+    }
 
 }

@@ -1,4 +1,4 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, effect, OnInit} from '@angular/core';
 import {AppService} from "../app.service";
 import {FlatTreeControl} from "@angular/cdk/tree";
 import {MatTreeFlatDataSource, MatTreeFlattener} from "@angular/material/tree";
@@ -203,7 +203,10 @@ export class BudgetComponent implements OnInit {
 
 
   ngOnInit(): void {
-    this.appService.selectedBankAccountObservable$.subscribe(selectedAccount => {
+
+    // Use effect to react to query data changes
+    effect(() => {
+      const selectedAccount = this.appService.selectedBankAccount();
       if (selectedAccount) {
         this.appService.findOrCreateBudget(selectedAccount).subscribe((response: BudgetTreeNode[]) => {
 
@@ -255,7 +258,10 @@ export class BudgetComponent implements OnInit {
 
         });
       }
+
     });
+
+
 
   }
 

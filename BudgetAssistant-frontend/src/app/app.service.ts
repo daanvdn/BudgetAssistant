@@ -1,7 +1,8 @@
 import {HttpClient, HttpEvent, HttpResponse} from '@angular/common/http';
-import {Injectable} from '@angular/core';
+import {Injectable, signal} from '@angular/core';
 import {BehaviorSubject, map, Observable, of, shareReplay, Subject, tap} from 'rxjs';
 import { firstValueFrom } from 'rxjs';
+import { injectQuery } from '@tanstack/angular-query-experimental';
 
 import {Page, PageRequest} from "ngx-pagination-data-source";
 import {
@@ -77,13 +78,16 @@ export class AppService {
     public sharedCategoryTreeExpensesObservable$: Observable<SimplifiedCategory[]>;
     public sharedCategoryTreeRevenueObservable$: Observable<SimplifiedCategory[]>;
     public fileUploadComplete$ = new Subject<void>();
-    public selectedBankAccount$ = new BehaviorSubject<BankAccount | undefined>(undefined);
-    public selectedBankAccountObservable$ = this.selectedBankAccount$.asObservable();
     public categoryMapSubject = new BehaviorSubject<CategoryMap | undefined >(undefined);
     public categoryMapObservable$ = this.categoryMapSubject.asObservable();
-    refreshBankAccounts = new BehaviorSubject<boolean | undefined>( undefined);
-    refreshBankAccountsObservable$ = this.refreshBankAccounts.asObservable();
+    public selectedBankAccount = signal<BankAccount | undefined>(undefined );
 
+
+    public bankAccountsQuery = injectQuery(() => ({
+        queryKey: ['bankAccounts'],
+        queryFn: () => firstValueFrom(this.apiBudgetAssistantBackendClientService.apiBankAccountsList('body')) as Promise<BankAccount[]>,
+        staleTime: 5 * 60 * 1000, // 5 minutes,
+    }));
 
     private backendUrl = environment.API_BASE_PATH;
 
@@ -103,7 +107,7 @@ export class AppService {
     }
 
     public triggerRefreshBankAccounts() {
-        this.refreshBankAccounts.next(true);
+        this.bankAccountsQuery.refetch();
     }
 
 
@@ -160,7 +164,8 @@ export class AppService {
     }
 
     setBankAccount(bankAccount: BankAccount) {
-        this.selectedBankAccount$.next(bankAccount);
+        this.selectedBankAccount.set(bankAccount);
+        //this.selectedBankAccount$.next(bankAccount);
     }
 
 
@@ -192,14 +197,6 @@ export class AppService {
         this.grouping$.next(grouping);
     }
 
-
-    public fetchBankAccountsForUser(): Observable<BankAccount[]> {
-
-
-        return this.apiBudgetAssistantBackendClientService.apiBankAccountsList('body');
-
-
-    }
 
     public countTransactionToManuallyReview(bankAccountNumber: string): Observable<Number> {
         if (!bankAccountNumber) {
@@ -359,7 +356,7 @@ export class AppService {
 
     public pageTransactionsToManuallyReview(request: PageRequest<Transaction>,
                                             transactionType: TransactionTypeEnum): Observable<Page<Transaction>> {
-        let bankAccount = this.selectedBankAccount$.getValue();
+        let bankAccount = this.selectedBankAccount();
         if (bankAccount == null) {
             throw new Error("Bank account is not defined!");
         }

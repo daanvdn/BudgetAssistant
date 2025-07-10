@@ -1,4 +1,4 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, effect, Injector, OnInit, inject, runInInjectionContext} from '@angular/core';
 import {AuthService} from "../auth/auth.service";
 import {User} from "../model";
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule} from "@angular/forms";
@@ -26,7 +26,7 @@ import {MatIconButton} from '@angular/material/button';
 import {MatIcon} from '@angular/material/icon';
 import {NgIf, UpperCasePipe} from '@angular/common';
 import {IbanPipe} from '../iban.pipe';
-import {map} from "rxjs";
+
 
 @Component({
     selector: 'app-profile',
@@ -36,6 +36,11 @@ import {map} from "rxjs";
     imports: [MatToolbar, FormsModule, ReactiveFormsModule, MatCard, MatCardContent, MatFormField, MatInput, MatIconButton, MatSuffix, MatIcon, NgIf, MatTable, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatCellDef, MatCell, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow, UpperCasePipe, IbanPipe]
 })
 export class ProfileComponent implements OnInit {
+  //inject an Injector instance
+  private injector: Injector = inject(Injector); // Define injector instance
+
+
+
 
   currentUser!: User;
   hidePassword = true;
@@ -60,12 +65,18 @@ export class ProfileComponent implements OnInit {
     this.authService.getUserObservable().subscribe(u => {
       this.currentUser = u;
     })
-    this.appService.fetchBankAccountsForUser().pipe(map(r => {
-      return r;
-    })).subscribe(bankAccounts => {
-      this.bankAccounts = bankAccounts;
-      this.dataSource = new MatTableDataSource(this.bankAccounts);
-    });
+
+    runInInjectionContext(this.injector, (): void => { // Use effect to react to query data changes
+      effect(() => {
+        const bankAccountsData = this.appService.bankAccountsQuery.data();
+        if (bankAccountsData) {
+          this.bankAccounts = bankAccountsData;
+          this.dataSource = new MatTableDataSource(this.bankAccounts);
+        }
+      });
+    })
+
+
   }
 
 

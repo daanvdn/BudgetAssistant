@@ -20,7 +20,7 @@ import {ChartModule} from 'primeng/chart';
 import {
     RevenueExpensesQueryWithCategory
 } from "@daanvdn/budget-assistant-client/dist/model/revenue-expenses-query-with-category";
-
+import {effect} from "@angular/core";
 
 interface Category {
     name: string;
@@ -52,12 +52,12 @@ export class CategoryDetailsComponent implements OnInit, OnChanges {
     @Input() criteria!: Criteria;
 
     constructor(private appService: AppService) {
-
-        this.appService.selectedBankAccountObservable$.subscribe(bankAccount => {
-            if (bankAccount) {
-                this.initCategoryLists(bankAccount);
+// Usage in components
+        effect(() => {
+            const selected = this.appService.selectedBankAccount();
+            if (selected) {
+                this.initCategoryLists(selected);
             }
-
         });
 
     }
