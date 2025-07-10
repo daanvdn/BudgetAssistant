@@ -17,11 +17,9 @@
               </mat-icon>
             </button>
             <mat-checkbox style="font-weight: lighter; font-size: large" [checked]="checklistSelection.isSelected(node)"
-              (change)="toggleSelection(node)">
-              {{node.name}}</mat-checkbox>
+              (change)="toggleSelection(node)">{{node.name}}</mat-checkbox>
           </mat-tree-node>
         </mat-tree>
       </mat-autocomplete>
     </mat-form-field>
 </div>
-

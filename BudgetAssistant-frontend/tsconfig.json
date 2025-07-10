@@ -23,11 +23,6 @@
       "es2020",
       "dom"
     ],
-    "paths": {
-     "@daanvdn/ngx-pagination-data-source": [
-        "node_modules/@daanvdn/ngx-pagination-data-source"
-      ]
-    },
     "useDefineForClassFields": false
   },
   "angularCompilerOptions": {

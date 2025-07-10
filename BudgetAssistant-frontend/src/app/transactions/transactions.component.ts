@@ -1,5 +1,5 @@
 import {AsyncPipe, DatePipe, NgIf, TitleCasePipe} from '@angular/common';
-import {AfterViewInit, Component, Input, OnInit, ViewChild} from '@angular/core';
+import {AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {MatDialog} from '@angular/material/dialog';
 import {MatPaginator} from '@angular/material/paginator';
 import {MatRadioButton, MatRadioChange, MatRadioGroup} from '@angular/material/radio';
@@ -36,7 +36,7 @@ import {MatBadge} from '@angular/material/badge';
 import {FaIconComponent} from '@fortawesome/angular-fontawesome';
 import {CategoryTreeDropdownComponent} from '../category-tree-dropdown/category-tree-dropdown.component';
 import {DateUtilsService} from '../shared/date-utils.service';
-import {takeUntil} from "rxjs";
+import {Subject, takeUntil} from "rxjs";
 
 
 enum ViewType {
@@ -52,9 +52,11 @@ enum ViewType {
     templateUrl: './transactions.component.html',
     styleUrls: ['./transactions.component.scss'],
     standalone: true,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [MatToolbar, NgIf, MatProgressSpinner, BankAccountSelectionComponent, MatButton, MatIcon, MatTooltip, MatBadge, FaIconComponent, MatPaginator, MatTable, MatSort, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatSortHeader, MatCellDef, MatCell, CategoryTreeDropdownComponent, MatRadioGroup, MatRadioButton, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow, AsyncPipe, TitleCasePipe, DatePipe]
 })
-export class TransactionsComponent implements OnInit, AfterViewInit {
+export class TransactionsComponent implements OnInit, AfterViewInit, OnDestroy {
+    private destroy$ = new Subject<void>();
     protected readonly ViewType = ViewType;
     protected readonly faTag = faTag;
 
@@ -70,14 +72,20 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
     filesAreUploading = false; // Add this line
     transactionToManuallyReview!: number;
 
-    @Input() dataSource!: PaginationDataSource<Transaction, TransactionQuery>;
-    displayedColumns = [
+    @Input() dataSource?: PaginationDataSource<Transaction, TransactionQuery>;
+    // Define columns as readonly to prevent unnecessary recreation
+    readonly displayedColumns = [
         "bookingDate",
         "counterparty",
         "transaction",
         "amount",
         "transactionType"
     ];
+
+    // Add trackBy function to improve rendering performance
+    trackByFn(index: number, item: Transaction): string {
+        return item.transactionId || index.toString();
+    }
     transactionQuery?: TransactionQuery;
     transactionQueryAsJson?: string;
     selectedAccount?: string;
@@ -90,28 +98,42 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
 
     constructor(private appService: AppService, private authService: AuthService, public dialog: MatDialog,
                 public datepipe: DatePipe, private errorDialogService: ErrorDialogService, private router: Router,
-                private dateUtils: DateUtilsService) {
+                private dateUtils: DateUtilsService, private cdr: ChangeDetectorRef) {
 
         // Only initialize dataSource if it's not provided via @Input()
+/*
         if (!this.dataSource) {
             let account = undefined;
             this.dataSource = this.initDataSource(account);
         }
-        this.appService.categoryMapObservable$.subscribe(categoryMap => {
-            this.categoryMap = categoryMap;
-        })
+*/
+        this.appService.categoryMapObservable$
+            .pipe(takeUntil(this.destroy$))
+            .subscribe(categoryMap => {
+                this.categoryMap = categoryMap;
+                // Only mark for check instead of triggering a full change detection cycle
+                this.cdr.markForCheck();
+            });
 
-        this.appService.selectedBankAccountObservable$.subscribe(bankAccount => {
-            if (bankAccount && bankAccount.accountNumber) {
-                this.appService.countTransactionToManuallyReview(bankAccount.accountNumber).subscribe(count => {
-                    this.transactionToManuallyReview = count.valueOf();
-                });
-            }
-            else {
-                // Set a default value if bankAccount or accountNumber is undefined
-                this.transactionToManuallyReview = 0;
-            }
-        })
+        this.appService.selectedBankAccountObservable$
+            .pipe(takeUntil(this.destroy$))
+            .subscribe(bankAccount => {
+                if (bankAccount && bankAccount.accountNumber) {
+                    this.appService.countTransactionToManuallyReview(bankAccount.accountNumber)
+                        .pipe(takeUntil(this.destroy$))
+                        .subscribe(count => {
+                            this.transactionToManuallyReview = count.valueOf();
+                            // Only mark for check instead of triggering a full change detection cycle
+                            this.cdr.markForCheck();
+                        });
+                }
+                else {
+                    // Set a default value if bankAccount or accountNumber is undefined
+                    this.transactionToManuallyReview = 0;
+                    // Only mark for check instead of triggering a full change detection cycle
+                    this.cdr.markForCheck();
+                }
+            });
 
     }
 
@@ -184,19 +206,24 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
                 }
 
                 this.dataSource = new PaginationDataSource<Transaction, TransactionQuery>(
-                    (request: any, query: any) => {
-                        return this.appService.pageTransactions(request, query);
+                    (pageable: any, query: any) => {
+                        return this.appService.pageTransactions(pageable, query);
                     },
                     newSort, transactionQuery
                 );
                 this.viewType = ViewType.UPLOAD_TRANSACTIONS;
                 this.filesAreUploading = false;
+                // Mark for check to update the view
+                this.cdr.markForCheck();
 
                 if (this.selectedAccount) {
-                    this.appService.countTransactionToManuallyReview(this.selectedAccount).subscribe(count => {
-                        this.transactionToManuallyReview = count.valueOf();
-                    });
-
+                    this.appService.countTransactionToManuallyReview(this.selectedAccount)
+                        .pipe(takeUntil(this.destroy$))
+                        .subscribe(count => {
+                            this.transactionToManuallyReview = count.valueOf();
+                            // Mark for check to update the view
+                            this.cdr.markForCheck();
+                        });
                 }
 
 
@@ -313,13 +340,15 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
         }
 
         this.doQuery(this.transactionQuery);
+        // No need to call markForCheck here as doQuery already does it
     }
 
     showAllTransactions() {
         this.dataSource = this.initDataSource(this.selectedAccount);
         this.transactionQuery = undefined;
         this.viewType = ViewType.SHOW_ALL;
-
+        // Mark for check to update the view
+        this.cdr.markForCheck();
     }
 
     ngAfterViewInit(): void {
@@ -329,6 +358,11 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
 
     ngOnInit() {
 
+    }
+
+    ngOnDestroy() {
+        this.destroy$.next();
+        this.destroy$.complete();
     }
 
 
@@ -354,12 +388,16 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
     setIsRecurring(transaction: Transaction, event: MatRadioChange) {
         transaction.isRecurring = event.value;
         this.saveTransaction(transaction);
+        // Mark for check to update the view
+        this.cdr.markForCheck();
     }
 
 
     setIsAdvanceSharedAccount(transaction: Transaction, event: MatRadioChange) {
         transaction.isAdvanceSharedAccount = event.value;
         this.saveTransaction(transaction);
+        // Mark for check to update the view
+        this.cdr.markForCheck();
     }
 
 
@@ -370,17 +408,22 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
         }
         transaction.category = category;
         this.saveTransaction(transaction);
+        // Mark for check to update the view
+        this.cdr.markForCheck();
     }
 
     sortBy(event: any) {
-        let key = event.active;
-        let direction = event.direction;
-        this.currentSort = {
-            property: key,
-            order: direction || "ASC"
-
-        };
-        this.dataSource.sortBy(this.currentSort);
+        if (this.dataSource) {
+            let key = event.active;
+            let direction = event.direction;
+            this.currentSort = {
+                property: key,
+                order: direction || "ASC"
+            };
+            this.dataSource.sortBy(this.currentSort);
+            // Mark for check to update the view
+            this.cdr.markForCheck();
+        }
     }
 
     doQuery(transactionQuery: TransactionQuery | undefined): void {
@@ -406,6 +449,8 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
         );
 
         this.viewType = ViewType.RUN_QUERY;
+        // Mark for check to update the view
+        this.cdr.markForCheck();
     }
 
 

@@ -1,6 +1,7 @@
 import {HttpClient, HttpEvent, HttpResponse} from '@angular/common/http';
 import {Injectable} from '@angular/core';
-import {BehaviorSubject, map, Observable, of, Subject, tap} from 'rxjs';
+import {BehaviorSubject, map, Observable, of, shareReplay, Subject, tap} from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 
 import {Page, PageRequest} from "ngx-pagination-data-source";
 import {
@@ -115,8 +116,9 @@ export class AppService {
                     childrenCast.push(childObj as unknown as SimplifiedCategory);
                 }
                 return childrenCast;
-
-            })
+            }),
+            // Cache the result and share it with all subscribers
+            shareReplay(1)
         );
     }
 
@@ -129,8 +131,9 @@ export class AppService {
                     childrenCast.push(childObj as unknown as SimplifiedCategory);
                 }
                 return childrenCast;
-
-            })
+            }),
+            // Cache the result and share it with all subscribers
+            shareReplay(1)
         );
     }
 
@@ -140,8 +143,8 @@ export class AppService {
     private async getMergedCategoryTreeData(): Promise<SimplifiedCategory[]> {
 
         let allData: SimplifiedCategory[] = [];
-        let expenses = await this.getSharedCategoryTreeExpensesObservable$().toPromise();
-        let revenue = await this.getSharedCategoryTreeRevenueObservable$().toPromise();
+        let expenses = await firstValueFrom(this.sharedCategoryTreeExpensesObservable$);
+        let revenue = await firstValueFrom(this.sharedCategoryTreeRevenueObservable$);
 
         if (expenses == undefined || revenue == undefined) {
             throw new Error("expenses or revenue is undefined!");
