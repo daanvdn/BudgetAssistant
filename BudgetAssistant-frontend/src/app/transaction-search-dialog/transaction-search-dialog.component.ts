@@ -1,4 +1,4 @@
-import {AfterViewInit, Component, Inject, OnInit, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, effect, Inject, OnInit, ViewChild} from '@angular/core';
 import {
     MatDialogRef,
     MAT_DIALOG_DATA,
@@ -54,11 +54,13 @@ export class TransactionSearchDialogComponent implements OnInit, AfterViewInit {
     constructor(
         public dialogRef: MatDialogRef<TransactionSearchDialogComponent>,
         @Inject(MAT_DIALOG_DATA) public data: TransactionQuery, private appService: AppService) {
-        this.appService.categoryMapObservable$.subscribe((categoryMap: CategoryMap | undefined) => {
-            this.categoryMap = categoryMap;
+        effect(() => {
 
+            const categoryMap = this.appService.categoryMap();
+            if (categoryMap) {
+                this.categoryMap = categoryMap;
+            }
         });
-
 
     }
 

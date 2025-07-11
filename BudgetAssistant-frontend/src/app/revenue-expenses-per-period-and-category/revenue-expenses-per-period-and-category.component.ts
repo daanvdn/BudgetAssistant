@@ -1,4 +1,4 @@
-import {Component, Input, OnChanges, OnInit, SimpleChanges, ViewChild} from '@angular/core';
+import {Component, effect, Input, OnChanges, OnInit, SimpleChanges, ViewChild} from '@angular/core';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 
 import {AppService} from '../app.service';
@@ -63,7 +63,9 @@ export class RevenueExpensesPerPeriodAndCategoryComponent implements OnInit, OnC
   categoryMap!: CategoryMap;
 
   constructor(private appService: AppService, public dialog: MatDialog, private apiBudgetAssistantBackendClientService: ApiBudgetAssistantBackendClientService) {
-    this.appService.categoryMapObservable$.subscribe((categoryMap) => {
+    effect(() => {
+
+      const categoryMap = this.appService.categoryMap();
       if (categoryMap) {
         this.categoryMap = categoryMap;
       }

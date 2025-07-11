@@ -1,5 +1,5 @@
 import {HttpClient, HttpEvent, HttpResponse} from '@angular/common/http';
-import {Injectable, signal} from '@angular/core';
+import {effect, Injectable, signal} from '@angular/core';
 import {BehaviorSubject, map, Observable, of, shareReplay, Subject, tap} from 'rxjs';
 import { firstValueFrom } from 'rxjs';
 import { injectQuery } from '@tanstack/angular-query-experimental';
@@ -57,8 +57,6 @@ import {
 export class AppService {
 
     public DUMMY_BANK_ACCOUNT = "dummy";
-    currentBankAccounts$ = new BehaviorSubject<BankAccount[]>([]);
-    currentBankAccountsObservable$ = this.currentBankAccounts$.asObservable();
     private startDate$ = new BehaviorSubject<Date | undefined>(undefined);
     selectedStartDate$ = this.startDate$.asObservable();
     private endDate$ = new BehaviorSubject<Date |undefined>(undefined);
@@ -74,98 +72,91 @@ export class AppService {
     private categoryQueryForSelectedPeriod$ = new BehaviorSubject<RevenueExpensesQuery |undefined>(undefined);
     public categoryQueryForSelectedPeriodObservable$ = this.categoryQueryForSelectedPeriod$.asObservable();
 
-    public sharedCategoryTreeObservable$: Observable<SimplifiedCategory[]> = of([]);
-    public sharedCategoryTreeExpensesObservable$: Observable<SimplifiedCategory[]>;
-    public sharedCategoryTreeRevenueObservable$: Observable<SimplifiedCategory[]>;
     public fileUploadComplete$ = new Subject<void>();
-    public categoryMapSubject = new BehaviorSubject<CategoryMap | undefined >(undefined);
-    public categoryMapObservable$ = this.categoryMapSubject.asObservable();
+    public categoryMap = signal<CategoryMap | undefined>(undefined);
     public selectedBankAccount = signal<BankAccount | undefined>(undefined );
 
 
     public bankAccountsQuery = injectQuery(() => ({
         queryKey: ['bankAccounts'],
-        queryFn: () => firstValueFrom(this.apiBudgetAssistantBackendClientService.apiBankAccountsList('body')) as Promise<BankAccount[]>,
+        queryFn: () => firstValueFrom(this.apiBudgetAssistantBackendClientService.apiBankAccountsList('body')),
         staleTime: 5 * 60 * 1000, // 5 minutes,
     }));
+
+    public categoryTreeRevenueQuery = this.createCategoryTreeQuery('REVENUE');
+    public categoryTreeExpensesQuery = this.createCategoryTreeQuery('EXPENSES');
+    public categoryTreeBothQuery = injectQuery(() => ({
+        queryKey: ['categoryTree', 'BOTH'],
+        queryFn: async () => {
+            // Get both revenue and expenses data
+            const [revenueData, expensesData] = await Promise.all([
+                this.categoryTreeRevenueQuery.promise(),
+                this.categoryTreeExpensesQuery.promise()
+            ]);
+
+            // Merge the data (same logic as getMergedCategoryTreeData)
+            let allData: SimplifiedCategory[] = [];
+            allData = allData.concat(expensesData);
+
+            for (const category of revenueData) {
+                if (!(category.name === "NO CATEGORY" || category.name === "DUMMY CATEGORY")) {
+                    allData.push(category);
+                }
+            }
+
+            return allData;
+        },
+        staleTime: Infinity,
+        enabled: true
+    }));
+
+
 
     private backendUrl = environment.API_BASE_PATH;
 
     constructor(private http: HttpClient, private authService: AuthService,
                 private apiBudgetAssistantBackendClientService: ApiBudgetAssistantBackendClientService) {
+        effect(() => {
+            const categoriesData = this.categoryTreeBothQuery.data();
+            const isSuccess = this.categoryTreeBothQuery.isSuccess();
 
+            if (isSuccess && categoriesData) {
+                this.categoryMap.set(new CategoryMap(categoriesData));
 
-        this.sharedCategoryTreeExpensesObservable$ = this.getSharedCategoryTreeExpensesObservable$();
-        this.sharedCategoryTreeRevenueObservable$ = this.getSharedCategoryTreeRevenueObservable$();
-        (async () => {
-            let categories: SimplifiedCategory[] = await this.getMergedCategoryTreeData();
-            this.categoryMapSubject.next(new CategoryMap(categories));
-            this.sharedCategoryTreeObservable$ = of(categories);
-        })();
+            }
+
+        })
 
 
     }
+
+    private createCategoryTreeQuery(type: 'REVENUE' | 'EXPENSES') {
+        return injectQuery(() => ({
+            queryKey: ['categoryTree', type],
+            queryFn: async () => {
+                const categoryTree = await firstValueFrom(
+                    this.apiBudgetAssistantBackendClientService.apiCategoryTreeRetrieve(type)
+                );
+
+                const childrenCast: Array<SimplifiedCategory> = [];
+                const children = categoryTree.root.children;
+                for (let childObj of children) {
+                    childrenCast.push(childObj as unknown as SimplifiedCategory);
+                }
+                return childrenCast;
+            },
+            staleTime: Infinity,
+        }));
+    }
+
 
     public triggerRefreshBankAccounts() {
         this.bankAccountsQuery.refetch();
     }
 
 
-    private getSharedCategoryTreeRevenueObservable$() {
-        return this.apiBudgetAssistantBackendClientService.apiCategoryTreeRetrieve('REVENUE').pipe(
-            map(categoryTree => {
-                let childrenCast: Array<SimplifiedCategory>  = []
-                let children = categoryTree.root.children;
-                for (let childObj of children) {
-                    childrenCast.push(childObj as unknown as SimplifiedCategory);
-                }
-                return childrenCast;
-            }),
-            // Cache the result and share it with all subscribers
-            shareReplay(1)
-        );
-    }
-
-    private getSharedCategoryTreeExpensesObservable$(): Observable<SimplifiedCategory[]> {
-        return this.apiBudgetAssistantBackendClientService.apiCategoryTreeRetrieve('EXPENSES').pipe(
-            map(categoryTree => {
-                let childrenCast: Array<SimplifiedCategory>  = []
-                let children = categoryTree.root.children;
-                for (let childObj of children) {
-                    childrenCast.push(childObj as unknown as SimplifiedCategory);
-                }
-                return childrenCast;
-            }),
-            // Cache the result and share it with all subscribers
-            shareReplay(1)
-        );
-    }
-
-    // The convertSimplifiedCategoryToCategoryNode method has been removed as we now use SimplifiedCategory directly
-
-
-    private async getMergedCategoryTreeData(): Promise<SimplifiedCategory[]> {
-
-        let allData: SimplifiedCategory[] = [];
-        let expenses = await firstValueFrom(this.sharedCategoryTreeExpensesObservable$);
-        let revenue = await firstValueFrom(this.sharedCategoryTreeRevenueObservable$);
-
-        if (expenses == undefined || revenue == undefined) {
-            throw new Error("expenses or revenue is undefined!");
-        }
-
-        allData = allData.concat(expenses);
-        for (const category of revenue) {
-            if (!(category.name === "NO CATEGORY" || category.name === "DUMMY CATEGORY")) {
-                allData.push(category);
-            }
-        }
-        return allData;
-    }
-
     setBankAccount(bankAccount: BankAccount) {
         this.selectedBankAccount.set(bankAccount);
-        //this.selectedBankAccount$.next(bankAccount);
     }
 
 

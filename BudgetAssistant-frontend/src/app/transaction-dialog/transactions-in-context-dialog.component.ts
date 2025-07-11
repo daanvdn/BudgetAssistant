@@ -1,4 +1,4 @@
-import {AfterViewInit, Component, Inject, OnInit} from '@angular/core';
+import {AfterViewInit, Component, effect, Inject, OnInit} from '@angular/core';
 import {PaginationDataSource} from "ngx-pagination-data-source";
 import {AppService} from "../app.service";
 import {
@@ -50,8 +50,12 @@ export class TransactionsInContextDialogComponent implements OnInit, AfterViewIn
 
     constructor(private appService: AppService, public dialogRef: MatDialogRef<TransactionsInContextDialogComponent>,
                 @Inject(MAT_DIALOG_DATA) public query: TransactionInContextQuery, private dateUtils: DateUtilsService) {
-        this.appService.categoryMapObservable$.subscribe(categoryMap => {
-            this.categoryMap = categoryMap;
+        effect(() => {
+
+            const categoryMap = this.appService.categoryMap();
+            if (categoryMap) {
+                this.categoryMap = categoryMap;
+            }
         });
     }
 

@@ -118,13 +118,14 @@ export class TransactionsComponent implements OnInit, AfterViewInit, OnDestroy {
          this.dataSource = this.initDataSource(account);
          }
          */
-        this.appService.categoryMapObservable$
-            .pipe(takeUntil(this.destroy$))
-            .subscribe(categoryMap => {
+        effect(() => {
+
+            const categoryMap = this.appService.categoryMap();
+            if (categoryMap) {
                 this.categoryMap = categoryMap;
-                // Only mark for check instead of triggering a full change detection cycle
                 this.cdr.markForCheck();
-            });
+            }
+        });
 
         effect(() => {
             const selectedBankAccount = this.appService.selectedBankAccount();

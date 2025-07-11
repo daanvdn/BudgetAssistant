@@ -183,15 +183,22 @@ class CategoryTreeWrapper {
 
         switch (type) {
             case "revenue":
-                this.appService.sharedCategoryTreeRevenueObservable$.subscribe(nodes => {
-                    this.dataSource.data = filterAndSortNodes(nodes);
-                })
+                const categoryTreeRevenueData = this.appService.categoryTreeRevenueQuery.data()
+                const categoryTreeRevenueQueryIsSuccess = this.appService.categoryTreeRevenueQuery.isSuccess()
+                if (categoryTreeRevenueData && categoryTreeRevenueQueryIsSuccess) {
+                    this.dataSource.data = filterAndSortNodes(categoryTreeRevenueData);
+
+                }
                 break;
             case "expenses":
-                this.appService.sharedCategoryTreeExpensesObservable$.subscribe(nodes => {
-                    this.dataSource.data = filterAndSortNodes(nodes);
-                })
+                const categoryTreeExpensesData = this.appService.categoryTreeExpensesQuery.data()
+                const categoryTreeExpensesQueryIsSuccess = this.appService.categoryTreeExpensesQuery.isSuccess()
+                if (categoryTreeExpensesData && categoryTreeExpensesQueryIsSuccess) {
+                    this.dataSource.data = filterAndSortNodes(categoryTreeExpensesData);
+
+                }
                 break;
+
             default:
                 throw new Error("Unknown type " + type + "!");
         }
