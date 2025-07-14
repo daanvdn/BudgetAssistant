@@ -47,5 +47,10 @@ class Command(BaseCommand):
     def truncate_model(self, model):
         model_name = model.__name__
         self.stdout.write(f'Truncating {model_name}...')
+        if model_name == 'Category' and connection.vendor == 'postgresql':
+            with connection.cursor() as cursor:
+                cursor.execute('TRUNCATE TABLE pybackend_category CASCADE;')
+        else:
+            model.objects.all().delete()
         model.objects.all().delete()
         self.stdout.write(self.style.SUCCESS(f'Successfully truncated {model_name}!'))

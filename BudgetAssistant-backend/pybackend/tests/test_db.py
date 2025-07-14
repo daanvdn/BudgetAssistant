@@ -91,6 +91,7 @@ class CategoryTreeManagerTests(TestCase):
         result = CategoryTree.objects.find_category_tree_by_type("EXPENSES")
         self.assertEqual(result, category_tree)
 
+
     def test_find_category_tree_by_type_no_result(self):
         result = CategoryTree.objects.find_category_tree_by_type("REVENUE")
         self.assertIsNone(result)
