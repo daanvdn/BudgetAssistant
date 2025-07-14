@@ -26,9 +26,11 @@ import {
     MatRowDef,
     MatTable
 } from '@angular/material/table';
-import {PaginationDataSource} from 'ngx-pagination-data-source';
 import {AppService} from '../app.service';
 import {AmountType, CategoryMap, CompositeTransactionsFileUploadResponse, FileWrapper, inferAmountType} from '../model';
+import {TanstackPaginatedDataSource} from '../tanstack-paginated-datasource';
+// Keep PaginationDataSource for backward compatibility during migration
+import {PaginationDataSource} from 'ngx-pagination-data-source';
 import {BankAccountSelectionComponent} from '../bank-account-selection/bank-account-selection.component';
 import {TransactionSearchDialogComponent} from '../transaction-search-dialog/transaction-search-dialog.component';
 import {AuthService} from "../auth/auth.service";
@@ -46,7 +48,7 @@ import {MatBadge} from '@angular/material/badge';
 import {FaIconComponent} from '@fortawesome/angular-fontawesome';
 import {CategoryTreeDropdownComponent} from '../category-tree-dropdown/category-tree-dropdown.component';
 import {DateUtilsService} from '../shared/date-utils.service';
-import {Subject, takeUntil} from "rxjs";
+import {Subject, takeUntil, firstValueFrom} from "rxjs";
 
 
 enum ViewType {
@@ -82,7 +84,7 @@ export class TransactionsComponent implements OnInit, AfterViewInit, OnDestroy {
     filesAreUploading = false; // Add this line
     transactionToManuallyReview!: number;
 
-    @Input() dataSource?: PaginationDataSource<Transaction, TransactionQuery>;
+    dataSource: TanstackPaginatedDataSource<Transaction, TransactionQuery>;
     // Define columns as readonly to prevent unnecessary recreation
     readonly displayedColumns = [
         "bookingDate",
@@ -110,6 +112,7 @@ export class TransactionsComponent implements OnInit, AfterViewInit, OnDestroy {
     constructor(private appService: AppService, private authService: AuthService, public dialog: MatDialog,
                 public datepipe: DatePipe, private errorDialogService: ErrorDialogService, private router: Router,
                 private dateUtils: DateUtilsService, private cdr: ChangeDetectorRef) {
+        this.dataSource = this.initDataSource(undefined); // Initialize dataSource with undefined account
 
         // Only initialize dataSource if it's not provided via @Input()
         /*
@@ -218,12 +221,9 @@ export class TransactionsComponent implements OnInit, AfterViewInit, OnDestroy {
                     uploadTimestamp: uploadTimestamp
                 }
 
-                this.dataSource = new PaginationDataSource<Transaction, TransactionQuery>(
-                    (pageable: any, query: any) => {
-                        return this.appService.pageTransactions(pageable, query);
-                    },
-                    newSort, transactionQuery
-                );
+                // Set the initial query and sort
+                this.dataSource.setQuery(transactionQuery);
+                this.dataSource.setSort(newSort);
                 this.viewType = ViewType.UPLOAD_TRANSACTIONS;
                 this.filesAreUploading = false;
                 // Mark for check to update the view
@@ -249,34 +249,6 @@ export class TransactionsComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
 
-    translateBooleanToDutchJaNee(b: Boolean | undefined): string {
-        if (b === undefined) {
-            return "N/A";
-        }
-
-        if (b) {
-            return "ja";
-        }
-
-        return "nee";
-    }
-
-    displayNumberOrNA(number: Number | undefined): string {
-        if (number === undefined) {
-            return "N/A";
-        }
-
-        return number.toString();
-    }
-
-    displayStringOrNA(s: string | undefined | null): string {
-        if (s === undefined || s === null) {
-            return "N/A";
-        }
-
-        return s;
-    }
-
     amountType(transaction: Transaction): AmountType {
         if (transaction.amount === undefined || transaction.amount === null) {
             return AmountType.BOTH;
@@ -284,13 +256,6 @@ export class TransactionsComponent implements OnInit, AfterViewInit, OnDestroy {
         return inferAmountType(transaction.amount)
 
 
-    }
-
-    displayDateOrNA(s: Date | undefined | null): string | null {
-        if (s === undefined || s === null) {
-            return "N/A";
-        }
-        return this.datepipe.transform(s, 'dd-MM-yyyy')
     }
 
     parseDate(dateStr: string | undefined | null): Date | null {
@@ -357,15 +322,21 @@ export class TransactionsComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     showAllTransactions() {
-        this.dataSource = this.initDataSource(this.selectedAccount);
-        this.transactionQuery = undefined;
+        let query = {} as TransactionQuery;
+        query.accountNumber = this.selectedAccount;
+        this.transactionQuery = query;
         this.viewType = ViewType.SHOW_ALL;
+        this.dataSource.setQuery(query);
         // Mark for check to update the view
         this.cdr.markForCheck();
     }
 
     ngAfterViewInit(): void {
-
+        // If dataSource exists, attach paginator and sort
+        if (this.dataSource && this.paginator && this.sort) {
+            this.dataSource.attachPaginator(this.paginator);
+            this.dataSource.attachSort(this.sort);
+        }
     }
 
 
@@ -379,18 +350,15 @@ export class TransactionsComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
 
-    private initDataSource(account: string | undefined): PaginationDataSource<Transaction, TransactionQuery> {
+    private initDataSource(account: string | undefined): TanstackPaginatedDataSource<Transaction, TransactionQuery> {
         let query = {} as TransactionQuery;
         if (account !== undefined) {
             query.accountNumber = account;
-
         }
-        return new PaginationDataSource<Transaction, TransactionQuery>(
-            (request: any, query: any) => {
-                return this.appService.pageTransactions(request, query);
-            },
-            {property: 'bookingDate', order: 'desc'}, query
-        );
+
+        // Create a new TanstackPaginatedDataSource using the pageTransactionsQuery
+        return new TanstackPaginatedDataSource<Transaction, TransactionQuery>(
+            (params) => this.appService.pageTransactions2(params));
     }
 
 
@@ -431,9 +399,10 @@ export class TransactionsComponent implements OnInit, AfterViewInit, OnDestroy {
             let direction = event.direction;
             this.currentSort = {
                 property: key,
-                order: direction || "ASC"
+                order: direction || "asc"
             };
-            this.dataSource.sortBy(this.currentSort);
+            // Use setSort method for TanstackPaginatedDataSource
+            this.dataSource.setSort(this.currentSort);
             // Mark for check to update the view
             this.cdr.markForCheck();
         }
@@ -454,12 +423,8 @@ export class TransactionsComponent implements OnInit, AfterViewInit, OnDestroy {
             this.currentSort = newSort;
         }
 
-        this.dataSource = new PaginationDataSource<Transaction, TransactionQuery>(
-            (request: any, query: any) => {
-                return this.appService.pageTransactions(request, query);
-            },
-            newSort, transactionQuery
-        );
+        this.dataSource.setQuery(transactionQuery);
+        this.dataSource.setSort(newSort);
 
         this.viewType = ViewType.RUN_QUERY;
         // Mark for check to update the view

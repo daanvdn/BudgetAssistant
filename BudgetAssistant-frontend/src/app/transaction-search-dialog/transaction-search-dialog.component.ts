@@ -182,7 +182,7 @@ export class TransactionSearchDialogComponent implements OnInit, AfterViewInit {
 
     }
 
-    handleTegenpartijSelectionChange() {
+    handleCounterpartySelectionChange() {
         let vTegenpartij: string | undefined = this.tegenpartijSelection.selectedCounterpartyName;
 
         if (this.currentQuery === undefined) {
@@ -206,7 +206,7 @@ export class TransactionSearchDialogComponent implements OnInit, AfterViewInit {
 
     }
 
-    handleRekeningTegenpartijSelectionChange() {
+    handleCounterpartyAccountSelectionChange() {
         let vAccountNumberCounterparty: string | undefined = this.accountNumberCounterpartySelection.selectedCounterpartAccountNumber;
 
         if (this.currentQuery === undefined) {

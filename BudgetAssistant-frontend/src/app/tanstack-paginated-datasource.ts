@@ -1,99 +1,133 @@
 // Generic Tanstack Query-based DataSource for Angular Material Table with pagination
-import {DataSource, CollectionViewer} from '@angular/cdk/collections';
-import {injectQuery} from '@tanstack/angular-query-experimental';
-import {signal, effect} from '@angular/core';
-import {BehaviorSubject, Observable, firstValueFrom} from 'rxjs';
-import {Page} from 'ngx-pagination-data-source';
+import {CollectionViewer, DataSource} from '@angular/cdk/collections';
+import {injectQuery, keepPreviousData} from '@tanstack/angular-query-experimental';
+import {effect, signal} from '@angular/core';
+import {BehaviorSubject, firstValueFrom, Observable} from 'rxjs';
 import {MatPaginator} from '@angular/material/paginator';
-import {MatSort, SortDirection} from '@angular/material/sort';
+import {MatSort} from '@angular/material/sort';
+import {SortOrderEnum, SortPropertyEnum} from "@daanvdn/budget-assistant-client";
 
-export interface Sort { property: string; direction: SortDirection; }
+export interface Sort {
+    property: SortPropertyEnum;
+    direction: SortOrderEnum;
+}
+
+// no longer using ngx-pagination-data-source; define Page locally
+export interface Page<T> {
+    content: T[];
+    totalElements: number;
+    size: number;
+    number: number;
+}
 
 export class TanstackPaginatedDataSource<T, Q> implements DataSource<T> {
 
-  private dataSubject = new BehaviorSubject<T[]>([]);
-  readonly totalElements = signal(0);
-  readonly isLoading = signal(false);
+    private dataSubject = new BehaviorSubject<T[]>([]);
+    readonly totalElements = signal(0);
+    readonly isLoading = signal(false);
 
-  private pageSignal = signal<{ pageIndex: number; pageSize: number }>({ pageIndex: 0, pageSize: 10 });
-  private sortSignal = signal<Sort>({ property: '', direction: 'asc' });
-  private querySignal = signal<Q>(undefined as unknown as Q);
+    private pageSignal = signal<{ pageIndex: number; pageSize: number }>({pageIndex: 0, pageSize: 10});
+    private sortSignal = signal<Sort>({property: SortPropertyEnum.booking_date, direction: SortOrderEnum.asc});
+    private querySignal = signal<Q>(undefined as unknown as Q);
+    private q: any;
 
-  constructor(
-    private queryKey: unknown[],
-    private fetchPageFn: (params: { page: number; size: number; sort: Sort; query: Q }) => Promise<Page<T>> | Observable<Page<T>>,
-    initialQuery: Q,
-    initialSort?: Sort
-  ) {
-    // initialize signals
-    this.querySignal.set(initialQuery);
-    if (initialSort) {
-      this.sortSignal.set(initialSort);
+    constructor(
+        private fetchPageFn: (params: {
+            page: number;
+            size: number;
+            sort: Sort;
+            query: Q
+        }) => Promise<Page<T>> | Observable<Page<T>>
+    ) {
+        // signals initialized with default values
+
+        this.q = injectQuery<Page<T>>(() => ({
+            queryKey: [
+                fetchPageFn.name, // use function name as part of the query key
+                this.pageSignal().pageIndex,
+                this.pageSignal().pageSize,
+                this.sortSignal(),
+                this.querySignal()
+            ],
+            queryFn: async (): Promise<Page<T>> => {
+                const result = await this.fetchPageFn({
+                    page: this.pageSignal().pageIndex,
+                    size: this.pageSignal().pageSize,
+                    sort: this.sortSignal(),
+                    query: this.querySignal()
+                });
+                if (result instanceof Observable) {
+                    return firstValueFrom(result as Observable<Page<T>>);
+                }
+                return result as Page<T>;
+            },
+            placeholderData: keepPreviousData
+        }));
+
+        effect(() => {
+            const data = this.q.data();
+            this.isLoading.set(this.q.isFetching());
+            if (data) {
+                this.dataSubject.next(data.content);
+                this.totalElements.set(data.totalElements);
+            }
+        }, {allowSignalWrites: true}
+
+            );
     }
 
-    const q = injectQuery<Page<T>>(() => ({
-      queryKey: [
-        ...this.queryKey,
-        this.pageSignal().pageIndex,
-        this.pageSignal().pageSize,
-        this.sortSignal(),
-        this.querySignal()
-      ],
-      queryFn: async (): Promise<Page<T>> => {
-        const result = await this.fetchPageFn({
-          page: this.pageSignal().pageIndex,
-          size: this.pageSignal().pageSize,
-          sort: this.sortSignal(),
-          query: this.querySignal()
-        });
-        if (result instanceof Observable) {
-          return firstValueFrom(result as Observable<Page<T>>);
-        }
-        return result as Page<T>;
-      }
-    }));
+    /**
+     * Update the current query parameters and refetch
+     */
+    public setQuery(query: Q): void {
+        this.querySignal.set(query);
+    }
 
-    effect(() => {
-      const data = q.data();
-      this.isLoading.set(q.isFetching());
-      if (data) {
-        this.dataSubject.next(data.content);
-        this.totalElements.set(data.totalElements);
-      }
-    });
-  }
+    /**
+     * Update the sort and refetch
+     */
+    public setSort(sort: Sort): void {
+        this.sortSignal.set(sort);
+    }
 
-  connect(_viewer: CollectionViewer): Observable<T[]> {
-    return this.dataSubject.asObservable();
-  }
+    connect(_viewer: CollectionViewer): Observable<T[]> {
+        return this.dataSubject.asObservable();
+    }
 
-  disconnect(_viewer: CollectionViewer): void {
-    this.dataSubject.complete();
-  }
+    disconnect(_viewer: CollectionViewer): void {
+        this.dataSubject.complete();
+    }
 
-  // allow external controls to drive pagination/sorting/query
-  setPage(pageIndex: number, pageSize: number): void {
-    this.pageSignal.set({ pageIndex, pageSize });
-  }
+    // allow external controls to drive pagination/sorting/query
+    setPage(pageIndex: number, pageSize: number): void {
+        this.pageSignal.set({pageIndex, pageSize});
+    }
 
-  setSort(property: string, direction: SortDirection): void {
-    this.sortSignal.set({ property, direction });
-  }
+    // convenience methods for Angular Material controls
+    attachPaginator(paginator: MatPaginator): void {
+        paginator.page.subscribe(ev => this.setPage(ev.pageIndex, ev.pageSize));
+        // trigger initial
+        this.setPage(paginator.pageIndex, paginator.pageSize);
+    }
 
-  setQuery(query: Q): void {
-    this.querySignal.set(query);
-  }
+    attachSort(sort: MatSort): void {
+        sort.sortChange.subscribe(ev => this.setSort(
+            {
+                property: ev.active as SortPropertyEnum,
+                direction: ev.direction as SortOrderEnum
+            }
+        ));
+        // trigger initial
+        this.setSort(
+            {
+                property: sort.active as SortPropertyEnum,
+                direction: sort.direction as SortOrderEnum
+            }
+        );
+    }
 
-  // convenience methods for Angular Material controls
-  attachPaginator(paginator: MatPaginator): void {
-    paginator.page.subscribe(ev => this.setPage(ev.pageIndex, ev.pageSize));
-    // trigger initial
-    this.setPage(paginator.pageIndex, paginator.pageSize);
-  }
+    refresh(): void {
+        this.q.refetch();
+    }
 
-  attachSort(sort: MatSort): void {
-    sort.sortChange.subscribe(ev => this.setSort(ev.active, ev.direction as SortDirection));
-    // trigger initial
-    this.setSort(sort.active, sort.direction as SortDirection);
-  }
 }

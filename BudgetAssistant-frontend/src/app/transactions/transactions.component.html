@@ -65,8 +65,8 @@
       </ng-template>
 
       <div *ngIf="dataSource" class="flex-child">
-        <mat-paginator *ngIf="dataSource.page$ | async as page" [length]="page.totalElements" [pageSize]="page.size"
-                       [pageIndex]="page.number" (page)="dataSource.fetch($event.pageIndex)">
+        <mat-paginator [length]="dataSource.totalElements()" [pageSize]="10"
+                       [pageIndex]="0" (page)="dataSource.setPage($event.pageIndex, $event.pageSize)">
         </mat-paginator>
       </div>
     </div>
@@ -179,8 +179,8 @@
         <tr VALIGN=TOP mat-row *matRowDef="let row; columns: displayedColumns; let i = index"></tr>
       </table>
 
-      <mat-paginator *ngIf="dataSource.page$ | async as page" [length]="page.totalElements" [pageSize]="page.size"
-                     [pageIndex]="page.number" (page)="dataSource.fetch($event.pageIndex)">
+      <mat-paginator [length]="dataSource.totalElements()" [pageSize]="10"
+                     [pageIndex]="0" (page)="dataSource.setPage($event.pageIndex, $event.pageSize)">
       </mat-paginator>
     </div>
   </div>

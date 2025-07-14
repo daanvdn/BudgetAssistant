@@ -1,9 +1,8 @@
 import {HttpClient, HttpEvent, HttpResponse} from '@angular/common/http';
 import {effect, Injectable, signal} from '@angular/core';
-import {BehaviorSubject, map, Observable, of, shareReplay, Subject, tap} from 'rxjs';
-import { firstValueFrom } from 'rxjs';
-import { injectQuery } from '@tanstack/angular-query-experimental';
-
+import {BehaviorSubject, firstValueFrom, map, Observable, of, Subject, tap} from 'rxjs';
+import {injectQuery} from '@tanstack/angular-query-experimental';
+import {Page as TanstackPage, Sort} from './tanstack-paginated-datasource'
 import {Page, PageRequest} from "ngx-pagination-data-source";
 import {
     CategoryMap,
@@ -85,6 +84,7 @@ export class AppService {
 
     public categoryTreeRevenueQuery = this.createCategoryTreeQuery('REVENUE');
     public categoryTreeExpensesQuery = this.createCategoryTreeQuery('EXPENSES');
+
     public categoryTreeBothQuery = injectQuery(() => ({
         queryKey: ['categoryTree', 'BOTH'],
         queryFn: async () => {
@@ -130,6 +130,33 @@ export class AppService {
 
     }
 
+    public pageTransactions2(params: {
+        page: number;
+        size: number;
+        sort: Sort;
+        query: TransactionQuery
+    }): Observable<TanstackPage<Transaction>> {
+        try {
+            let pageTransactionsRequest: PageTransactionsRequest = {
+                page: params.page + 1,
+                size: params.size,
+                sortOrder: params.sort.direction as SortOrderEnum,
+                sortProperty: this.camelToSnake(params.sort.property) as SortPropertyEnum,
+                query: params.query
+
+            }
+            return this.apiBudgetAssistantBackendClientService.apiTransactionsPageTransactionsCreate(
+                pageTransactionsRequest).pipe(map((result: TransactionsPage) => {
+
+                return this.toPage2(result);
+
+
+            }));
+        } catch (e: any) {
+            throw new Error(`Error in pageTransactions2: ${e.message}`);
+        }
+
+    }
     private createCategoryTreeQuery(type: 'REVENUE' | 'EXPENSES') {
         return injectQuery(() => ({
             queryKey: ['categoryTree', type],
@@ -252,6 +279,16 @@ export class AppService {
     }
 
     private toPage(transactionsPage: TransactionsPage): Page<Transaction> {
+        //const number =    transactionsPage.number-1
+        let page =  {
+            content: transactionsPage.content,
+            number: transactionsPage.number-1,
+            size: transactionsPage.size,
+            totalElements: transactionsPage.totalElements
+        };
+         return page;
+    }
+    private toPage2(transactionsPage: TransactionsPage): TanstackPage<Transaction> {
         //const number =    transactionsPage.number-1
         let page =  {
             content: transactionsPage.content,
