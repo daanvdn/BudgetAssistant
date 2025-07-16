@@ -17,20 +17,13 @@ import {PaginationDataSource, SimpleDataSource} from "ngx-pagination-data-source
 import {AppService} from "../app.service";
 import {BehaviorSubject, map, Observable} from "rxjs";
 import {MatButtonToggle, MatButtonToggleChange, MatButtonToggleGroup} from "@angular/material/button-toggle";
-import {BankAccount, SimpleCategory, Transaction, TransactionTypeEnum} from "@daanvdn/budget-assistant-client";
-import {AmountType, CategoryMap, inferAmountType} from "../model";
+import {BankAccount, Transaction, TransactionTypeEnum} from "@daanvdn/budget-assistant-client";
+import {AmountType, CategoryMap, GroupBy, inferAmountType} from "../model";
 import {MatToolbar} from '@angular/material/toolbar';
 import {BankAccountSelectionComponent} from '../bank-account-selection/bank-account-selection.component';
 import {AsyncPipe, NgIf} from '@angular/common';
 import {CategoryTreeDropdownComponent} from '../category-tree-dropdown/category-tree-dropdown.component';
 
-
-interface GroupBy {
-    counterparty: string;
-    isGroupBy: boolean;
-    transactions: Transaction[];
-    isExpense: boolean;
-}
 
 class GroupByCounterpartyDataSource implements SimpleDataSource<Transaction | GroupBy> {
 

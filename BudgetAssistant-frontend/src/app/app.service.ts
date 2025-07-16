@@ -7,7 +7,7 @@ import {Page, PageRequest} from "ngx-pagination-data-source";
 import {
     CategoryMap,
     DistributionByCategoryForPeriodHandlerResult2,
-    FileWrapper,
+    FileWrapper, GroupBy,
     ResolvedStartEndDateShortcut,
     StartEndDateShortcut,
     TransactionsCategorizationResponse
@@ -130,7 +130,7 @@ export class AppService {
 
     }
 
-    public pageTransactions2(params: {
+    public pageTransactions(params: {
         page: number;
         size: number;
         sort: Sort;
@@ -157,6 +157,59 @@ export class AppService {
         }
 
     }
+
+    public pageTransactionsInContext2(params: {
+        page: number;
+        size: number;
+        sort: Sort;
+        query: TransactionInContextQuery
+    }): Observable<Array<GroupBy>> {
+
+        let pageTransactionsInContextRequest: PageTransactionsInContextRequest = {
+            page: params.page+1,
+            size: params.size,
+            sortOrder: params.sort.direction as SortOrderEnum,
+            sortProperty: this.camelToSnake(params.sort.property) as SortPropertyEnum,
+            query: params.query
+
+        }
+        function toGroupBy(transactionPage: TransactionsPage): Array<Transaction | GroupBy> {
+            let mapByCounterpartyName = new Map<string, Transaction[]>();
+            const transactions = transactionPage.content;
+
+            for (const transaction of transactions) {
+                let name = transaction.counterparty.name;
+                if (!name) {
+                    name = "";
+                }
+                let transactionsForCounterparty = mapByCounterpartyName.has(name) ? mapByCounterpartyName.get(
+                    name) : [];
+                transactionsForCounterparty?.push(transaction);
+                mapByCounterpartyName.set(name, transactionsForCounterparty as Transaction[]);
+            }
+            let sortedKeys = Array.from(mapByCounterpartyName.keys()).sort();
+            let result = new Array<Transaction | GroupBy>();
+            for (const aKey of sortedKeys) {
+                let transactionsForKey = mapByCounterpartyName.get(aKey) as Transaction[];
+                let groupBy: GroupBy = {
+                    counterparty: aKey, isGroupBy: true, transactions: transactionsForKey, isExpense: this.isExpense
+                };
+                result.push(groupBy)
+                result.push(...transactionsForKey)
+
+            }
+
+            return result;
+        }
+        return this.apiBudgetAssistantBackendClientService.apiTransactionsPageTransactionsInContextCreate(
+            pageTransactionsInContextRequest).pipe( map(result => {
+            return toGroupBy(result);
+        }));
+
+    }
+
+
+
     private createCategoryTreeQuery(type: 'REVENUE' | 'EXPENSES') {
         return injectQuery(() => ({
             queryKey: ['categoryTree', type],
@@ -299,40 +352,6 @@ export class AppService {
          return page;
     }
 
-    public pageTransactions(request: PageRequest<Transaction>,
-                            transactionQuery: TransactionQuery | undefined): Observable<Page<Transaction>> {
-        //request.size = 1000;
-
-        let tmpSortOrder = "asc";
-        if (request.sort && request.sort.order) {
-            tmpSortOrder = request.sort.order;
-        }
-
-        let tmpSortProperty = "bookingDate";
-        if (request.sort && request.sort.property) {
-
-            tmpSortProperty = request.sort.property;
-        }
-        let pageTransactionsRequest: PageTransactionsRequest = {
-            page: request.page+1,
-            size: request.size,
-            sortOrder: tmpSortOrder as SortOrderEnum,
-            sortProperty: this.camelToSnake(tmpSortProperty) as SortPropertyEnum,
-            query: transactionQuery
-
-        }
-        return this.apiBudgetAssistantBackendClientService.apiTransactionsPageTransactionsCreate(
-            pageTransactionsRequest).pipe(map((result: TransactionsPage) => {
-
-            return this.toPage(result);
-
-
-        }));
-
-
-
-    }
-
     public pageTransactionsInContext(request: PageRequest<Transaction>,
                                      query: TransactionInContextQuery): Observable<Page<Transaction>> {
         let tmpSortOrder = "asc";
@@ -443,6 +462,75 @@ export class AppService {
         }))
 */
 
+    }
+
+
+    public pageTransactionsToManuallyReview2(request: PageRequest<Transaction>,
+                                            transactionType: TransactionTypeEnum): Observable<Array<Transaction | GroupBy>> {
+        let bankAccount = this.selectedBankAccount();
+        if (bankAccount == null) {
+            throw new Error("Bank account is not defined!");
+        }
+        let tmpSortOrder = "asc";
+        if (request.sort && request.sort.order) {
+            tmpSortOrder = request.sort.order;
+        }
+
+        let tmpSortProperty = "counterparty";
+        if (request.sort && request.sort.property) {
+
+            tmpSortProperty = request.sort.property;
+        }
+
+
+
+
+        let pageTransactionsToManuallyReviewRequest : PageTransactionsToManuallyReviewRequest = {
+            page: request.page++,
+            size: request.size,
+            sortOrder: tmpSortOrder as SortOrderEnum,
+            sortProperty: this.camelToSnake(tmpSortProperty) as SortPropertyEnum,
+            bankAccount: bankAccount.accountNumber,
+            transactionType: transactionType
+
+
+        }
+
+        function toGroupBy(transactionPage: TransactionsPage): Array<Transaction | GroupBy> {
+            let mapByCounterpartyName = new Map<string, Transaction[]>();
+            const transactions = transactionPage.content;
+
+            for (const transaction of transactions) {
+                let name = transaction.counterparty.name;
+                if (!name) {
+                    name = "";
+                }
+                let transactionsForCounterparty = mapByCounterpartyName.has(name) ? mapByCounterpartyName.get(
+                    name) : [];
+                transactionsForCounterparty?.push(transaction);
+                mapByCounterpartyName.set(name, transactionsForCounterparty as Transaction[]);
+            }
+            let sortedKeys = Array.from(mapByCounterpartyName.keys()).sort();
+            let result = new Array<Transaction | GroupBy>();
+            for (const aKey of sortedKeys) {
+                let transactionsForKey = mapByCounterpartyName.get(aKey) as Transaction[];
+                let groupBy: GroupBy = {
+                    counterparty: aKey, isGroupBy: true, transactions: transactionsForKey, isExpense: this.isExpense
+                };
+                result.push(groupBy)
+                result.push(...transactionsForKey)
+
+            }
+
+            return result;
+        }
+
+        return this.apiBudgetAssistantBackendClientService.apiTransactionsPageTransactionsToManuallyReviewCreate(pageTransactionsToManuallyReviewRequest).pipe(
+            map(result => {
+                return toGroupBy(result);
+            })
+
+        );
     }
 
 

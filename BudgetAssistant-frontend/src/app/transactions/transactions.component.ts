@@ -358,7 +358,7 @@ export class TransactionsComponent implements OnInit, AfterViewInit, OnDestroy {
 
         // Create a new TanstackPaginatedDataSource using the pageTransactionsQuery
         return new TanstackPaginatedDataSource<Transaction, TransactionQuery>(
-            (params) => this.appService.pageTransactions2(params));
+            (params) => this.appService.pageTransactions(params));
     }
 
 
