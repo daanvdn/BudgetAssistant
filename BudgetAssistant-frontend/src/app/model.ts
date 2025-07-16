@@ -1,4 +1,4 @@
-import {SimpleCategory, SimplifiedCategory, SimplifiedCategoryChildrenInnerValue, TypeEnum} from '@daanvdn/budget-assistant-client';
+import {SimpleCategory, SimplifiedCategory, Transaction, TypeEnum} from '@daanvdn/budget-assistant-client';
 
 export interface CategoryAndAmount {
     amount: number;
@@ -403,4 +403,11 @@ export class CategoryMap {
         return simpleCategory;
     }
 
+}
+
+export interface GroupBy {
+    counterparty: string;
+    isGroupBy: boolean;
+    transactions: Transaction[];
+    isExpense: boolean;
 }
