@@ -1,4 +1,11 @@
-import {SimpleCategory, SimplifiedCategory, Transaction, TypeEnum} from '@daanvdn/budget-assistant-client';
+import {
+    BankAccount,
+    SimpleCategory,
+    SimplifiedCategory,
+    Transaction,
+    TransactionTypeEnum,
+    TypeEnum
+} from '@daanvdn/budget-assistant-client';
 
 export interface CategoryAndAmount {
     amount: number;
@@ -410,4 +417,9 @@ export interface GroupBy {
     isGroupBy: boolean;
     transactions: Transaction[];
     isExpense: boolean;
+}
+
+export interface TransactionTypeAndBankAccount {
+    transactionType: TransactionTypeEnum;
+    bankAccount: BankAccount;
 }

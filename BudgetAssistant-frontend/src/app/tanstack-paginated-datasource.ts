@@ -37,7 +37,7 @@ export class TanstackPaginatedDataSource<T, Q> implements DataSource<T> {
             size: number;
             sort: Sort;
             query: Q
-        }) => Promise<Page<T>> | Observable<Page<T>>
+        }) => Promise<Page<T>> | Observable<Page<T>>, private staleTime: number = 1000 * 60 * 5, // default to 5 minutes
     ) {
         // signals initialized with default values
 
@@ -61,7 +61,8 @@ export class TanstackPaginatedDataSource<T, Q> implements DataSource<T> {
                 }
                 return result as Page<T>;
             },
-            placeholderData: keepPreviousData
+            placeholderData: keepPreviousData,
+            staleTime : staleTime
         }));
 
         effect(() => {

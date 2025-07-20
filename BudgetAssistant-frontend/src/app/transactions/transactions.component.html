@@ -65,7 +65,8 @@
       </ng-template>
 
       <div *ngIf="dataSource" class="flex-child">
-        <mat-paginator [length]="dataSource.totalElements()" [pageSize]="10"
+        <mat-paginator [length]="dataSource.totalElements()"
+                       [pageSize]="10"
                        [pageIndex]="0" (page)="dataSource.setPage($event.pageIndex, $event.pageSize)">
         </mat-paginator>
       </div>

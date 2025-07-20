@@ -112,7 +112,7 @@ export class TransactionsComponent implements OnInit, AfterViewInit, OnDestroy {
     constructor(private appService: AppService, private authService: AuthService, public dialog: MatDialog,
                 public datepipe: DatePipe, private errorDialogService: ErrorDialogService, private router: Router,
                 private dateUtils: DateUtilsService, private cdr: ChangeDetectorRef) {
-        this.dataSource = this.initDataSource(undefined); // Initialize dataSource with undefined account
+        this.dataSource = this.initDataSource();
 
         // Only initialize dataSource if it's not provided via @Input()
         /*
@@ -350,15 +350,11 @@ export class TransactionsComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
 
-    private initDataSource(account: string | undefined): TanstackPaginatedDataSource<Transaction, TransactionQuery> {
-        let query = {} as TransactionQuery;
-        if (account !== undefined) {
-            query.accountNumber = account;
-        }
+    private initDataSource(): TanstackPaginatedDataSource<Transaction, TransactionQuery> {
 
         // Create a new TanstackPaginatedDataSource using the pageTransactionsQuery
         return new TanstackPaginatedDataSource<Transaction, TransactionQuery>(
-            (params) => this.appService.pageTransactions(params));
+            (params) => this.appService.pageTransactions(params), 1000 * 60 * 5);
     }
 
 

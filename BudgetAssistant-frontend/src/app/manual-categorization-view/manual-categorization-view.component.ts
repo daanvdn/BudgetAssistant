@@ -17,70 +17,28 @@ import {PaginationDataSource, SimpleDataSource} from "ngx-pagination-data-source
 import {AppService} from "../app.service";
 import {BehaviorSubject, map, Observable} from "rxjs";
 import {MatButtonToggle, MatButtonToggleChange, MatButtonToggleGroup} from "@angular/material/button-toggle";
-import {BankAccount, Transaction, TransactionTypeEnum} from "@daanvdn/budget-assistant-client";
-import {AmountType, CategoryMap, GroupBy, inferAmountType} from "../model";
+import {
+    BankAccount,
+    PageTransactionsToManuallyReviewRequest,
+    Transaction,
+    TransactionTypeEnum
+} from "@daanvdn/budget-assistant-client";
+import {AmountType, CategoryMap, GroupBy, inferAmountType, TransactionTypeAndBankAccount} from "../model";
 import {MatToolbar} from '@angular/material/toolbar';
 import {BankAccountSelectionComponent} from '../bank-account-selection/bank-account-selection.component';
 import {AsyncPipe, NgIf} from '@angular/common';
 import {CategoryTreeDropdownComponent} from '../category-tree-dropdown/category-tree-dropdown.component';
+import {TanstackPaginatedDataSource} from "../tanstack-paginated-datasource";
 
-
-class GroupByCounterpartyDataSource implements SimpleDataSource<Transaction | GroupBy> {
-
-
-    constructor(public backingPaginationDataSource: PaginationDataSource<Transaction, BankAccount>,
-                private isExpense: boolean) {
-    }
-
-    connect(): Observable<Array<Transaction | GroupBy>> {
-        return this.backingPaginationDataSource.connect().pipe(map(data => {
-
-            let mapByCounterpartyName = new Map<string, Transaction[]>();
-
-            for (const transaction of data) {
-                let name = transaction.counterparty.name;
-                if (!name) {
-                    name = "";
-                }
-                let transactionsForCounterparty = mapByCounterpartyName.has(name) ? mapByCounterpartyName.get(
-                    name) : [];
-                transactionsForCounterparty?.push(transaction);
-                mapByCounterpartyName.set(name, transactionsForCounterparty as Transaction[]);
-            }
-            let sortedKeys = Array.from(mapByCounterpartyName.keys()).sort();
-            let result = new Array<Transaction | GroupBy>();
-            for (const aKey of sortedKeys) {
-                let transactionsForKey = mapByCounterpartyName.get(aKey) as Transaction[];
-                let groupBy: GroupBy = {
-                    counterparty: aKey, isGroupBy: true, transactions: transactionsForKey, isExpense: this.isExpense
-                };
-                result.push(groupBy)
-                result.push(...transactionsForKey)
-
-            }
-
-            return result;
-        }));
-    }
-
-    disconnect(): void {
-        this.backingPaginationDataSource.disconnect();
-    }
-
-
-    fetch(page: number, pageSize?: number): void {
-        this.backingPaginationDataSource.fetch(page, pageSize);
-    }
-
-
-}
 
 @Component({
     selector: 'app-manual-categorization-view',
     templateUrl: './manual-categorization-view.component.html',
     styleUrls: ['./manual-categorization-view.component.scss'],
     standalone: true,
-    imports: [MatToolbar, BankAccountSelectionComponent, MatButtonToggleGroup, MatButtonToggle, NgIf, MatPaginator, MatTable, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatCellDef, MatCell, CategoryTreeDropdownComponent, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow, AsyncPipe]
+    imports: [MatToolbar, BankAccountSelectionComponent, MatButtonToggleGroup, MatButtonToggle, NgIf,
+        MatPaginator, MatTable, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatCellDef, MatCell,
+        CategoryTreeDropdownComponent, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow]
 })
 export class ManualCategorizationViewComponent implements OnInit {
 
@@ -90,7 +48,8 @@ export class ManualCategorizationViewComponent implements OnInit {
     @ViewChild('table', {read: ElementRef, static: false}) tableElement!: ElementRef;
 
 
-    dataSource!: GroupByCounterpartyDataSource;
+    expensesDataSource: TanstackPaginatedDataSource<Transaction | GroupBy, TransactionTypeAndBankAccount> = this.initDataSource();
+    revenueDataSource: TanstackPaginatedDataSource<Transaction | GroupBy, TransactionTypeAndBankAccount> = this.initDataSource();
     categoryMap!: CategoryMap;
 
     private bankAccount!: BankAccount;
@@ -109,7 +68,6 @@ export class ManualCategorizationViewComponent implements OnInit {
             const selectedBankAccount = this.appService.selectedBankAccount();
             if (selectedBankAccount) {
                 this.bankAccount = selectedBankAccount;
-                this.dataSource = this.initDataSource(selectedBankAccount, this.activeView.getValue());
             }
         });
 
@@ -123,33 +81,56 @@ export class ManualCategorizationViewComponent implements OnInit {
 
 
         this.activeViewObservable.subscribe(activeView => {
-            this.dataSource = this.initDataSource(this.bankAccount, activeView);
-        })
+                if (activeView) {
+                    if (this.bankAccount) {
+                        let query: TransactionTypeAndBankAccount = {
+                            bankAccount: this.bankAccount,
+                            transactionType: activeView
+                        }
+                        if (activeView === TransactionTypeEnum.EXPENSES) {
+                            this.expensesDataSource.setQuery(query);
 
+                        }else if (activeView === TransactionTypeEnum.REVENUE) {
+                            this.revenueDataSource.setQuery(query);
+
+                        } else {
+                            throw new Error("Unknown active view: " + activeView);
+                        }
+                    }
+
+
+                }
+
+            }
+        )
+
+    }
+
+    public getDataSource(): TanstackPaginatedDataSource<Transaction | GroupBy, TransactionTypeAndBankAccount> {
+        const value = this.activeView.getValue();
+        if (value === TransactionTypeEnum.EXPENSES) {
+            return this.expensesDataSource;
+        }
+        else if (value === TransactionTypeEnum.REVENUE) {
+            return this.revenueDataSource;
+        }
+        else {
+            throw new Error("Unknown active view: " + value);
+        }
     }
 
     ngOnInit(): void {
     }
 
-    private initDataSource(account: BankAccount, transactionType: TransactionTypeEnum): GroupByCounterpartyDataSource {
-        if (transactionType == TransactionTypeEnum.BOTH) {
-            throw new Error("TransactionType.BOTH not supported")
-        }
+    private initDataSource(): TanstackPaginatedDataSource<Transaction | GroupBy, TransactionTypeAndBankAccount> {
+        return new TanstackPaginatedDataSource<Transaction | GroupBy, TransactionTypeAndBankAccount>(
+            params => this.appService.pageTransactionsToManuallyReview(params), 1000 * 60 * 5
+        )
 
-        let isExpense = transactionType === TransactionTypeEnum.EXPENSES;
-
-        let paginationDataSource = new PaginationDataSource<Transaction, BankAccount>(
-            (request: any, query: any) => {
-                request.size = 50;
-                return this.appService.pageTransactionsToManuallyReview(request, transactionType);
-            },
-            {property: 'counterparty', order: 'asc'}, account
-        );
-        return new GroupByCounterpartyDataSource(paginationDataSource, isExpense);
     }
 
 
-    saveTransaction(transaction: Transaction) {
+    saveTransaction(transaction:Transaction) {
         this.appService.saveTransaction(transaction)
     }
 
@@ -172,7 +153,8 @@ export class ManualCategorizationViewComponent implements OnInit {
         }
     }
 
-    amountType(transaction: Transaction | GroupBy): AmountType {
+    amountType(transaction: Transaction | GroupBy):
+        AmountType {
         if ("isGroupBy" in transaction) {
             return transaction.isExpense ? AmountType.EXPENSES : AmountType.REVENUE;
         }
@@ -203,4 +185,6 @@ export class ManualCategorizationViewComponent implements OnInit {
 
 
     }
+
+    protected readonly TanstackPaginatedDataSource = TanstackPaginatedDataSource;
 }

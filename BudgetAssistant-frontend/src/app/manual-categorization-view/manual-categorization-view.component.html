@@ -16,16 +16,18 @@
     </div>
     <!--    <div #three style="flex-grow: 1">-->
     <div #three style="position: absolute; right: 0;">
-      <mat-paginator *ngIf="dataSource.backingPaginationDataSource.page$ | async as page"
-                     [length]="page.totalElements"
-                     [pageSize]="page.size"
-                     [pageIndex]="page.number" (page)="dataSource.fetch($event.pageIndex)">
-      </mat-paginator>
+        <mat-paginator
+                       [length]="getDataSource().totalElements()"
+                       [pageSize]="10"
+                       [pageIndex]="0"
+                       (page)="getDataSource().setPage($event.pageIndex, $event.pageSize)">
+        </mat-paginator>
+
 
     </div>
   </div>
   <div style="height: 75vh;background-color:white; align-content: space-between; overflow-y: auto;">
-    <table #table mat-table [dataSource]="dataSource" class="mat-z8" style="border-collapse: separate; width: 100%">
+    <table *ngIf="getDataSource()"  #table mat-table [dataSource]="getDataSource()" class="mat-z8" style="border-collapse: separate; width: 100%">
       <ng-container matColumnDef="transaction">
         <th mat-header-cell *matHeaderCellDef style="font-size: large;width: 50%"></th>
         <td mat-cell style="font-size: large" *matCellDef="let item">
@@ -74,10 +76,11 @@
     </table>
   </div>
   <div #three style="position: absolute; right: 0;height: 5vh">
-    <mat-paginator *ngIf="dataSource.backingPaginationDataSource.page$ | async as page"
-                   [length]="page.totalElements"
-                   [pageSize]="page.size"
-                   [pageIndex]="page.number" (page)="dataSource.fetch($event.pageIndex)">
+    <mat-paginator
+                   [length]="getDataSource().totalElements()"
+                   [pageSize]="10"
+                   [pageIndex]="0"
+                   (page)="getDataSource().setPage($event.pageIndex, $event.pageSize)">
     </mat-paginator>
 
   </div>
