@@ -1,14 +1,32 @@
 import { formatDate, NgIf, NgFor } from '@angular/common';
-import {Component, EventEmitter, OnChanges, OnInit, Output, ViewChild} from '@angular/core';
+import {
+  Component,
+  effect,
+  EventEmitter,
+  OnChanges,
+  OnInit,
+  Output,
+  signal,
+  ViewChild,
+  WritableSignal
+} from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { DateAdapter, MAT_DATE_FORMATS, NativeDateAdapter, MatOption } from '@angular/material/core';
+import {
+  DateAdapter,
+  MAT_DATE_FORMATS,
+  NativeDateAdapter,
+  MatOption,
+  provideNativeDateAdapter
+} from '@angular/material/core';
 import {NgSelectComponent} from '@ng-select/ng-select';
 import {AppService} from '../app.service';
-import {StartEndDateShortcut} from '../model';
+import {ResolvedStartEndDateShortcut, StartEndDateShortcut} from '../model';
 import { DateFilterFn, MatDateRangeInput, MatStartDate, MatEndDate, MatDatepickerToggle, MatDateRangePicker } from "@angular/material/datepicker";
 import { MatFormField, MatLabel, MatSuffix } from '@angular/material/form-field';
 import { MatButton } from '@angular/material/button';
 import { MatSelect } from '@angular/material/select';
+import {CreateQueryResult, injectQuery, keepPreviousData} from "@tanstack/angular-query-experimental";
+import {firstValueFrom} from "rxjs";
 
 export const PICK_FORMATS = {
   parse: { dateInput: { month: 'short', year: 'numeric', day: 'numeric' } },
@@ -47,6 +65,7 @@ export class PeriodSelectionComponent implements OnInit, OnChanges {
   formFieldGroup: FormGroup;
   startDate: any;
   endDate: any;
+  selectedShortcut: WritableSignal<StartEndDateShortcut> = signal<StartEndDateShortcut>(StartEndDateShortcut.ALL);
 
 
   startEndDateShortCuts: Map<string, StartEndDateShortcut> = new Map<string, StartEndDateShortcut>();
@@ -61,7 +80,8 @@ export class PeriodSelectionComponent implements OnInit, OnChanges {
 
   displayShortcutsAsDropdown: boolean = true;
   periodShortcutDropDownSelection!: string;
-  @ViewChild(NgSelectComponent) ngSelect!: NgSelectComponent;
+  public resolvedPeriodShortcutQuery: CreateQueryResult<ResolvedStartEndDateShortcut, Error>;
+
 
   allowDate: DateFilterFn<any> = function (date: Date | null): boolean {
     if (!date) {
@@ -85,20 +105,33 @@ export class PeriodSelectionComponent implements OnInit, OnChanges {
     this.startEndDateShortCuts.set("vorig jaar", StartEndDateShortcut.PREVIOUS_YEAR);
     this.startEndDateShortCuts.set("alles", StartEndDateShortcut.ALL);
     this.startEndDateShortCutStringValues = Array.from(this.startEndDateShortCuts.keys());
+    this.resolvedPeriodShortcutQuery = injectQuery(() => ({
+      queryKey: ['resolvedPeriodShortcut', this.selectedShortcut()],
+      queryFn: () => firstValueFrom(this.appService.resolveStartEndDateShortcut(this.selectedShortcut())),
+      staleTime: 5 * 60 * 1000, // 5 minutes,
+      placeholderData: keepPreviousData
+    }));
+
+    effect(() => {
+
+      const resolvedShortCut: ResolvedStartEndDateShortcut | undefined = this.resolvedPeriodShortcutQuery.data();
+      if (resolvedShortCut ) {
+        this.range.controls.start.setValue(new Date(resolvedShortCut.start));
+        this.range.controls.end.setValue(new Date(resolvedShortCut.end));
+        this.startDate = resolvedShortCut.start;
+        this.endDate = resolvedShortCut.end;
+        this.change.emit([this.startDate, this.endDate]);
+        this.appService.setStartAndEndDate(this.startDate, this.endDate);
 
 
+
+      }
+    }, {allowSignalWrites: true});
   }
 
-  ngOnInit() {
-    this.appService.resolveStartEndDateShortcut(StartEndDateShortcut.ALL).subscribe(resolved => {
-      this.range.controls.start = new FormControl<Date>(new Date(resolved.start));
-      this.range.controls.end = new FormControl<Date>(new Date(resolved.end));
-      this.startDate = resolved.start;
-      this.endDate = resolved.end;
-      this.change.emit([this.startDate, this.endDate]);
-      this.appService.setStartAndEndDate(this.startDate, this.endDate);
 
-    })
+
+  ngOnInit() {
 
 
 
@@ -118,21 +151,11 @@ export class PeriodSelectionComponent implements OnInit, OnChanges {
 
 
   onPeriodShortCutClick(periodStr: string) {
-
-    var shortCut: StartEndDateShortcut | undefined = this.startEndDateShortCuts.get(periodStr);
-    if (shortCut == undefined) {
-      shortCut = StartEndDateShortcut.ALL;
+    let value = this.startEndDateShortCuts.get(periodStr);
+    if( value === undefined) {
+      value = StartEndDateShortcut.ALL;
     }
-
-    this.appService.resolveStartEndDateShortcut(shortCut).subscribe(resolved => {
-
-      this.range.controls.start.setValue(new Date(resolved.start));
-      this.range.controls.end.setValue(new Date(resolved.end));
-      this.startDate = resolved.start;
-      this.endDate = resolved.end;
-      this.ngOnChanges();
-
-    })
+    this.selectedShortcut.set(value);
 
 
   }
@@ -151,26 +174,10 @@ export class PeriodSelectionComponent implements OnInit, OnChanges {
     if (shortCut == undefined) {
       shortCut = StartEndDateShortcut.ALL;
     }
-
-    this.appService.resolveStartEndDateShortcut(shortCut).subscribe(resolved => {
-
-      this.range.controls.start.setValue(new Date(resolved.start));
-      this.range.controls.end.setValue(new Date(resolved.end));
-      this.startDate = resolved.start;
-      this.endDate = resolved.end;
-      this.ngOnChanges();
-
-    })
-
-
-
-
+    this.selectedShortcut.set(shortCut);
 
   }
 
 
-  doFileter() {
 
-
-  }
 }

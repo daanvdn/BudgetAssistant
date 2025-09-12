@@ -1,5 +1,5 @@
-import {Component, effect, ElementRef, OnInit, ViewChild} from '@angular/core';
-import {MatPaginator} from "@angular/material/paginator";
+import {ChangeDetectorRef, Component, effect, ElementRef, OnInit, ViewChild} from '@angular/core';
+import {MatPaginator, PageEvent} from "@angular/material/paginator";
 import {MatSort} from "@angular/material/sort";
 import {
     MatCell,
@@ -13,22 +13,16 @@ import {
     MatRowDef,
     MatTable
 } from "@angular/material/table";
-import {PaginationDataSource, SimpleDataSource} from "ngx-pagination-data-source";
-import {AppService} from "../app.service";
-import {BehaviorSubject, map, Observable} from "rxjs";
+import {BehaviorSubject} from "rxjs";
 import {MatButtonToggle, MatButtonToggleChange, MatButtonToggleGroup} from "@angular/material/button-toggle";
-import {
-    BankAccount,
-    PageTransactionsToManuallyReviewRequest,
-    Transaction,
-    TransactionTypeEnum
-} from "@daanvdn/budget-assistant-client";
+import {BankAccount, Transaction, TransactionTypeEnum} from "@daanvdn/budget-assistant-client";
 import {AmountType, CategoryMap, GroupBy, inferAmountType, TransactionTypeAndBankAccount} from "../model";
 import {MatToolbar} from '@angular/material/toolbar';
 import {BankAccountSelectionComponent} from '../bank-account-selection/bank-account-selection.component';
 import {AsyncPipe, NgIf} from '@angular/common';
 import {CategoryTreeDropdownComponent} from '../category-tree-dropdown/category-tree-dropdown.component';
 import {TanstackPaginatedDataSource} from "../tanstack-paginated-datasource";
+import {AppService} from "../app.service";
 
 
 @Component({
@@ -44,13 +38,14 @@ export class ManualCategorizationViewComponent implements OnInit {
 
     @ViewChild(MatPaginator, {static: false}) paginator!: MatPaginator;
     @ViewChild(MatSort, {static: false}) sort!: MatSort;
-    @ViewChild(MatTable) table!: MatTable<Transaction>;
+    @ViewChild(MatTable) table!: MatTable<Transaction | GroupBy>;
     @ViewChild('table', {read: ElementRef, static: false}) tableElement!: ElementRef;
 
 
-    expensesDataSource: TanstackPaginatedDataSource<Transaction | GroupBy, TransactionTypeAndBankAccount> = this.initDataSource();
-    revenueDataSource: TanstackPaginatedDataSource<Transaction | GroupBy, TransactionTypeAndBankAccount> = this.initDataSource();
+    datasource: TanstackPaginatedDataSource<Transaction | GroupBy, TransactionTypeAndBankAccount> = this.initDataSource();
     categoryMap!: CategoryMap;
+    public toggleValue = 'expenses';
+
 
     private bankAccount!: BankAccount;
     displayedColumns = [
@@ -62,14 +57,44 @@ export class ManualCategorizationViewComponent implements OnInit {
         TransactionTypeEnum.EXPENSES);
     private activeViewObservable = this.activeView.asObservable();
 
-    constructor(private appService: AppService) {
+    expensesPageIndex = 0;
+    expensesPageSize = 10;
+    revenuePageIndex = 0;
+    revenuePageSize = 10;
+
+    constructor(private appService: AppService, private cdr: ChangeDetectorRef) {
 
         effect(() => {
             const selectedBankAccount = this.appService.selectedBankAccount();
             if (selectedBankAccount) {
                 this.bankAccount = selectedBankAccount;
+                // Trigger initial data load for current view
+                const currentView: TransactionTypeEnum = this.activeView.getValue();
+                const query: TransactionTypeAndBankAccount = {
+                    bankAccount: this.bankAccount,
+                    transactionType: currentView
+                };
+
+                let currentPageIndex: number | undefined =undefined;
+                let currentPageSize: number | undefined =undefined;
+                switch (currentView) {
+                    case TransactionTypeEnum.EXPENSES:
+                        currentPageIndex = this.expensesPageIndex;
+                        currentPageSize = this.expensesPageSize;
+                        break;
+                    case TransactionTypeEnum.REVENUE:
+                        currentPageIndex = this.revenuePageIndex;
+                        currentPageSize = this.revenuePageSize;
+                        break;
+                    default:
+                        throw new Error("Unknown active view: " + currentView);
+                }
+                this.datasource.setPage(currentPageIndex, currentPageSize);
+                this.datasource.setQuery(query);
+
             }
-        });
+
+        }, {allowSignalWrites: true});
 
         effect(() => {
 
@@ -77,25 +102,36 @@ export class ManualCategorizationViewComponent implements OnInit {
             if (categoryMap) {
                 this.categoryMap = categoryMap;
             }
-        });
+        }, {allowSignalWrites: true});
 
 
-        this.activeViewObservable.subscribe(activeView => {
-                if (activeView) {
+        this.activeViewObservable.subscribe(currentView => {
+                if (currentView) {
                     if (this.bankAccount) {
-                        let query: TransactionTypeAndBankAccount = {
+
+                        const currentView: TransactionTypeEnum = this.activeView.getValue();
+                        const query: TransactionTypeAndBankAccount = {
                             bankAccount: this.bankAccount,
-                            transactionType: activeView
-                        }
-                        if (activeView === TransactionTypeEnum.EXPENSES) {
-                            this.expensesDataSource.setQuery(query);
+                            transactionType: currentView
+                        };
 
-                        }else if (activeView === TransactionTypeEnum.REVENUE) {
-                            this.revenueDataSource.setQuery(query);
-
-                        } else {
-                            throw new Error("Unknown active view: " + activeView);
+                        let currentPageIndex: number | undefined =undefined;
+                        let currentPageSize: number | undefined =undefined;
+                        switch (currentView) {
+                            case TransactionTypeEnum.EXPENSES:
+                                currentPageIndex = this.expensesPageIndex;
+                                currentPageSize = this.expensesPageSize;
+                                break;
+                            case TransactionTypeEnum.REVENUE:
+                                currentPageIndex = this.revenuePageIndex;
+                                currentPageSize = this.revenuePageSize;
+                                break;
+                            default:
+                                throw new Error("Unknown active view: " + currentView);
                         }
+                        this.datasource.setPage(currentPageIndex, currentPageSize);
+                        this.datasource.setQuery(query);
+
                     }
 
 
@@ -103,21 +139,8 @@ export class ManualCategorizationViewComponent implements OnInit {
 
             }
         )
-
     }
 
-    public getDataSource(): TanstackPaginatedDataSource<Transaction | GroupBy, TransactionTypeAndBankAccount> {
-        const value = this.activeView.getValue();
-        if (value === TransactionTypeEnum.EXPENSES) {
-            return this.expensesDataSource;
-        }
-        else if (value === TransactionTypeEnum.REVENUE) {
-            return this.revenueDataSource;
-        }
-        else {
-            throw new Error("Unknown active view: " + value);
-        }
-    }
 
     ngOnInit(): void {
     }
@@ -130,7 +153,7 @@ export class ManualCategorizationViewComponent implements OnInit {
     }
 
 
-    saveTransaction(transaction:Transaction) {
+    saveTransaction(transaction: Transaction) {
         this.appService.saveTransaction(transaction)
     }
 
@@ -173,18 +196,83 @@ export class ManualCategorizationViewComponent implements OnInit {
     onToggleChange($event: MatButtonToggleChange) {
         this.tableElement.nativeElement.scrollIntoView({behavior: 'smooth', block: 'start'});
         const value = $event.value;
-        if (value === "expenses") {
-            this.activeView.next(TransactionTypeEnum.EXPENSES);
+        this.toggleValue = value;
+        let activeView = undefined;
+
+        switch (value) {
+            case "expenses":
+                activeView = TransactionTypeEnum.EXPENSES;
+                this.activeView.next(activeView);
+                break;
+            case "revenue":
+                activeView = TransactionTypeEnum.REVENUE;
+                this.activeView.next(activeView);
+                break;
+            default:
+                throw new Error("Unknown value: " + value);
         }
-        else if (value === "revenue") {
-            this.activeView.next(TransactionTypeEnum.REVENUE);
-        }
-        else {
-            throw new Error("Unknown value " + value);
+        if (!activeView) {
+            return;
         }
 
 
     }
 
-    protected readonly TanstackPaginatedDataSource = TanstackPaginatedDataSource;
+    onPageEvent(event: PageEvent): void {
+        this.setPageIndex(event.pageIndex);
+        this.setPageSize(event.pageSize);
+        this.datasource.setPage(event.pageIndex, event.pageSize);
+    }
+
+    getPageIndex(): number {
+        switch (this.activeView.getValue()) {
+            case TransactionTypeEnum.EXPENSES:
+                return this.expensesPageIndex;
+            case TransactionTypeEnum.REVENUE:
+                return this.revenuePageIndex;
+            default:
+                throw new Error("Unknown active view: " + this.activeView.getValue());
+        }
+
+    }
+
+    getPageSize(): number {
+        switch (this.activeView.getValue()) {
+            case TransactionTypeEnum.EXPENSES:
+                return this.expensesPageSize;
+            case TransactionTypeEnum.REVENUE:
+                return this.revenuePageSize;
+            default:
+                throw new Error("Unknown active view: " + this.activeView.getValue());
+        }
+    }
+
+    setPageSize(size: number): void {
+        switch (this.activeView.getValue()) {
+            case TransactionTypeEnum.EXPENSES:
+                this.expensesPageSize = size;
+                break;
+            case TransactionTypeEnum.REVENUE:
+                this.revenuePageSize = size;
+                break;
+            default:
+                throw new Error("Unknown active view: " + this.activeView.getValue());
+        }
+
+    }
+
+    setPageIndex(index: number): void {
+        switch (this.activeView.getValue()) {
+            case TransactionTypeEnum.EXPENSES:
+                this.expensesPageIndex = index;
+                break;
+            case TransactionTypeEnum.REVENUE:
+                this.revenuePageIndex = index;
+                break;
+            default:
+                throw new Error("Unknown active view: " + this.activeView.getValue());
+
+        }
+    }
+
 }

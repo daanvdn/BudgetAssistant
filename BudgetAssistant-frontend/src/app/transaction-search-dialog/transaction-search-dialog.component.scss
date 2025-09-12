@@ -13,4 +13,10 @@
 .bottom-border{
     border-bottom: 1px gray solid
 }
- 
+.grid-container {
+    display: flex;
+    //grid-template-columns: 50px 1fr 1fr;
+    //grid-gap: 20px;
+    grid-template-columns: 1fr 1fr;
+    grid-gap: 20px;
+}

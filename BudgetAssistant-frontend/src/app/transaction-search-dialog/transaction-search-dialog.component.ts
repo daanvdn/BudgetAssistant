@@ -1,53 +1,65 @@
 import {AfterViewInit, Component, effect, Inject, OnInit, ViewChild} from '@angular/core';
 import {
-    MatDialogRef,
     MAT_DIALOG_DATA,
-    MatDialogTitle,
+    MatDialogActions,
     MatDialogContent,
-    MatDialogActions
+    MatDialogRef,
+    MatDialogTitle
 } from '@angular/material/dialog';
 import {CategoryTreeDropdownComponent} from '../category-tree-dropdown/category-tree-dropdown.component';
-import {AmountType, CategoryMap, TransactionType} from '../model';
+import {AmountType, CategoryMap} from '../model';
 import {PeriodSelectionComponent} from '../period-selection/period-selection.component';
 import {
-    CounterpartyAccountNumberSelectionComponent
+    CounterpartyAccountNumberSelectionComponent,
+    CounterpartyAccountNumberSelectionComponent as CounterpartyAccountNumberSelectionComponent_1
 } from '../counterparty-account-number-selection/counterparty-account-number-selection.component';
 import {
-    CounterpartyNameSelectionComponent
+    CounterpartyNameSelectionComponent,
+    CounterpartyNameSelectionComponent as CounterpartyNameSelectionComponent_1
 } from '../counterparty-name-selection/counterparty-name-selection.component';
 import {
     TransactionCommunicationsSearchComponent
 } from '../transaction-mededelingen-search/transaction-communications-search.component';
-import {TransactiontypeSelectionComponent} from '../transactiontype-selection/transactiontype-selection.component';
-import {
-    CounterpartyNameSelectionComponent as CounterpartyNameSelectionComponent_1
-} from '../counterparty-name-selection/counterparty-name-selection.component';
-import {
-    CounterpartyAccountNumberSelectionComponent as CounterpartyAccountNumberSelectionComponent_1
-} from '../counterparty-account-number-selection/counterparty-account-number-selection.component';
 import {MatButton} from '@angular/material/button';
 import {TransactionQuery, TransactionTypeEnum} from "@daanvdn/budget-assistant-client";
 import {AppService} from "../app.service";
+import {MatFormField, MatLabel} from "@angular/material/form-field";
+import {MatInput} from "@angular/material/input";
+import {MatOption} from "@angular/material/core";
+import {MatSelect, MatSelectChange} from "@angular/material/select";
+import {NgForOf} from "@angular/common";
+import {PaginatorModule} from "primeng/paginator";
 
 @Component({
     selector: 'app-transaction-search-dialog',
     templateUrl: './transaction-search-dialog.component.html',
     styleUrls: ['./transaction-search-dialog.component.scss'],
     standalone: true,
-    imports: [MatDialogTitle, MatDialogContent, TransactiontypeSelectionComponent, PeriodSelectionComponent,
+    imports: [MatDialogTitle, MatDialogContent, PeriodSelectionComponent,
         CategoryTreeDropdownComponent, CounterpartyNameSelectionComponent_1, CounterpartyAccountNumberSelectionComponent_1,
-        TransactionCommunicationsSearchComponent, MatDialogActions, MatButton]
+        TransactionCommunicationsSearchComponent, MatDialogActions, MatButton, MatFormField, MatInput, MatLabel, MatOption, MatSelect, NgForOf, PaginatorModule]
 })
 export class TransactionSearchDialogComponent implements OnInit, AfterViewInit {
 
-    @ViewChild(TransactiontypeSelectionComponent) transactiontypeSelectionComponent!: TransactiontypeSelectionComponent;
     @ViewChild(PeriodSelectionComponent) periodSelection!: PeriodSelectionComponent;
     @ViewChild(CategoryTreeDropdownComponent) categorySelection!: CategoryTreeDropdownComponent;
-    @ViewChild(CounterpartyNameSelectionComponent) tegenpartijSelection!: CounterpartyNameSelectionComponent;
+    @ViewChild(CounterpartyNameSelectionComponent) counterpartNameSelection!: CounterpartyNameSelectionComponent;
     @ViewChild(
         CounterpartyAccountNumberSelectionComponent) accountNumberCounterpartySelection!: CounterpartyAccountNumberSelectionComponent;
     @ViewChild(
         TransactionCommunicationsSearchComponent) transactionCommunicationsSearch!: TransactionCommunicationsSearchComponent;
+    transactionTypes: Map<string, TransactionTypeEnum> = new Map<string, TransactionTypeEnum>();
+    transactionTypeKeys: string[] = [];
+    transactionType?: TransactionTypeEnum;
+    minAmount?: number;
+    maxAmount?: number;
+    startDate?: Date;
+    endDate?: Date;
+    categoryId?: number;
+    counterpartyName?: string;
+    counterpartAccountNumber?: string;
+    transactionOrCommunication?: string;
+
 
     private categoryMap?: CategoryMap;
 
@@ -61,6 +73,11 @@ export class TransactionSearchDialogComponent implements OnInit, AfterViewInit {
                 this.categoryMap = categoryMap;
             }
         });
+        this.transactionTypes.set("in- & uitkomsten", TransactionTypeEnum.BOTH)
+        this.transactionTypes.set("uitgaven", TransactionTypeEnum.EXPENSES)
+        this.transactionTypes.set("inkomsten", TransactionTypeEnum.REVENUE)
+        this.transactionTypeKeys = Array.from(this.transactionTypes.keys());
+
 
     }
 
@@ -81,69 +98,19 @@ export class TransactionSearchDialogComponent implements OnInit, AfterViewInit {
     }
 
 
-    currentQuery?: TransactionQuery;
-
-
-    handleTransactionTypeSelectionChange() {
-        let vType: TransactionTypeEnum = this.transactiontypeSelectionComponent.selectedTransactionType;
-
-        if (this.currentQuery === undefined) {
-            this.currentQuery = {
-                transactionType: vType,
-                counterpartyName: undefined,
-                minAmount: undefined,
-                maxAmount: undefined,
-                accountNumber: undefined,
-                counterpartyAccountNumber: undefined,
-                startDate: undefined,
-                endDate: undefined,
-                transactionOrCommunication: undefined,
-                uploadTimestamp: undefined
-
-
-            }
+  private dateToString(date: Date | null): string | undefined {
+        if (date === null) {
+            return undefined;
         }
-        else {
-            this.currentQuery.transactionType = vType;
-        }
-
+        return date.toISOString().split('T')[0];
     }
 
     handlePeriodSelectionChange() {
 
-        function dateToString(date: Date | null): string | undefined {
-            if (date === null) {
-                return undefined;
-            }
-            return date.toISOString().split('T')[0];
-        }
 
-        let vStartDate: Date | null = this.periodSelection.range.controls.start.value;
-        let vEndDate: Date | null = this.periodSelection.range.controls.end.value;
+        this.startDate = this.periodSelection.range.controls.start.value ?? undefined;
+        this.endDate = this.periodSelection.range.controls.end.value ?? undefined;
 
-
-        if (this.currentQuery === undefined) {
-            this.currentQuery = {
-                transactionType: undefined,
-                counterpartyName: undefined,
-                minAmount: undefined,
-                maxAmount: undefined,
-                accountNumber: undefined,
-                categoryId: undefined,
-                transactionOrCommunication: undefined,
-                counterpartyAccountNumber: undefined,
-                startDate: dateToString(vStartDate),
-                endDate: dateToString(vEndDate),
-                uploadTimestamp: undefined,
-                manuallyAssignedCategory: undefined
-            }
-
-        }
-        else {
-            this.currentQuery.startDate = dateToString(vStartDate);
-            this.currentQuery.endDate = dateToString(vEndDate);
-
-        }
 
     }
 
@@ -156,109 +123,52 @@ export class TransactionSearchDialogComponent implements OnInit, AfterViewInit {
             console.warn("Category is undefined");
             return;
         }
-        let categoryId: number = this.categoryMap.getId(vCategory);
-
-
-        if (this.currentQuery === undefined) {
-            this.currentQuery = {
-                transactionType: undefined,
-                counterpartyName: undefined,
-                minAmount: undefined,
-                maxAmount: undefined,
-                accountNumber: undefined,
-                categoryId: categoryId,
-                transactionOrCommunication: undefined,
-                counterpartyAccountNumber: undefined,
-                startDate: undefined,
-                endDate: undefined,
-                uploadTimestamp: undefined,
-                manuallyAssignedCategory: undefined
-
-            }
-        }
-        else {
-            this.currentQuery.categoryId = categoryId;
-        }
+        this.categoryId = this.categoryMap.getId(vCategory);
 
     }
 
     handleCounterpartySelectionChange() {
-        let vTegenpartij: string | undefined = this.tegenpartijSelection.selectedCounterpartyName;
-
-        if (this.currentQuery === undefined) {
-            this.currentQuery = {
-                counterpartyName: vTegenpartij,
-                minAmount: undefined,
-                maxAmount: undefined,
-                accountNumber: undefined,
-                counterpartyAccountNumber: undefined,
-                startDate: undefined,
-                endDate: undefined,
-                transactionOrCommunication: undefined,
-                uploadTimestamp: undefined
-
-
-            }
-        }
-        else {
-            this.currentQuery.counterpartyName = vTegenpartij;
-        }
-
+        this.counterpartyName = this.counterpartNameSelection.selectedCounterpartyName;
     }
 
     handleCounterpartyAccountSelectionChange() {
-        let vAccountNumberCounterparty: string | undefined = this.accountNumberCounterpartySelection.selectedCounterpartAccountNumber;
+        this.counterpartAccountNumber = this.accountNumberCounterpartySelection.selectedCounterpartAccountNumber;
 
-        if (this.currentQuery === undefined) {
-            this.currentQuery = {
-                counterpartyName: undefined,
-                minAmount: undefined,
-                maxAmount: undefined,
-                accountNumber: undefined,
-                counterpartyAccountNumber: vAccountNumberCounterparty,
-                startDate: undefined,
-                endDate: undefined,
-                transactionOrCommunication: undefined,
-                uploadTimestamp: undefined
-
-            }
-        }
-        else {
-            this.currentQuery.counterpartyAccountNumber = vAccountNumberCounterparty;
-        }
 
     }
 
     handleTransactionCommunicationsSearchChange() {
-        let vSearchText: string | undefined = this.transactionCommunicationsSearch.searchText;
-
-        if (this.currentQuery === undefined) {
-            this.currentQuery = {
-                counterpartyName: undefined,
-                minAmount: undefined,
-                maxAmount: undefined,
-                accountNumber: undefined,
-                counterpartyAccountNumber: undefined,
-                startDate: undefined,
-                endDate: undefined,
-                transactionOrCommunication: vSearchText,
-                uploadTimestamp: undefined
-
-            }
-        }
-        else {
-            this.currentQuery.transactionOrCommunication = vSearchText;
-        }
+        this.transactionOrCommunication = this.transactionCommunicationsSearch.searchText;
 
     }
+
 
     onCancelClick(): void {
         this.dialogRef.close();
     }
 
     onSearchClick(): void {
-        this.dialogRef.close(this.currentQuery);
+        const query: TransactionQuery = {
+            transactionType: this.transactionType,
+            counterpartyName: this.counterpartyName,
+            minAmount: this.minAmount,
+            maxAmount: this.maxAmount,
+            accountNumber: undefined,
+            counterpartyAccountNumber: this.counterpartAccountNumber,
+            startDate: this.startDate ? this.dateToString(this.startDate) : undefined,
+            endDate: this.endDate ? this.dateToString(this.endDate) : undefined,
+            transactionOrCommunication: this.transactionOrCommunication,
+            uploadTimestamp: undefined
+
+
+        }
+
+        this.dialogRef.close(query);
     }
 
     protected readonly AmountType = AmountType;
+
+    handleTransactionTypeChange(event: MatSelectChange) {
+        this.transactionType =  this.transactionTypes.get(event.value);
+    }
 }

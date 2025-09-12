@@ -57,9 +57,7 @@ export class AppService {
 
     public DUMMY_BANK_ACCOUNT = "dummy";
     private startDate$ = new BehaviorSubject<Date | undefined>(undefined);
-    selectedStartDate$ = this.startDate$.asObservable();
     private endDate$ = new BehaviorSubject<Date |undefined>(undefined);
-    selectedEndDate$ = this.endDate$.asObservable();
     private grouping$ = new BehaviorSubject<GroupingEnum | undefined>(undefined);
     selectedGrouping$ = this.grouping$.asObservable();
     private transactionType$ = new BehaviorSubject<TransactionTypeEnum | undefined>(undefined);
@@ -82,17 +80,21 @@ export class AppService {
         staleTime: 5 * 60 * 1000, // 5 minutes,
     }));
 
+
     public categoryTreeRevenueQuery = this.createCategoryTreeQuery('REVENUE');
+
     public categoryTreeExpensesQuery = this.createCategoryTreeQuery('EXPENSES');
 
     public categoryTreeBothQuery = injectQuery(() => ({
         queryKey: ['categoryTree', 'BOTH'],
         queryFn: async () => {
             // Get both revenue and expenses data
-            const [revenueData, expensesData] = await Promise.all([
-                this.categoryTreeRevenueQuery.promise(),
-                this.categoryTreeExpensesQuery.promise()
-            ]);
+            try {
+                const [revenueData, expensesData] = await Promise.all([
+                    this.categoryTreeRevenueQuery.promise(),
+                    this.categoryTreeExpensesQuery.promise()
+                ]);
+
 
             // Merge the data (same logic as getMergedCategoryTreeData)
             let allData: SimplifiedCategory[] = [];
@@ -105,9 +107,15 @@ export class AppService {
             }
 
             return allData;
+            } catch (e) {
+                console.error(`Error fetching category tree data: ${e}`);
+                throw new Error(`Error fetching category tree data: ${e}`);
+            }
         },
         staleTime: Infinity,
-        enabled: true
+        enabled: true,
+        experimental_prefetchInRender: true, // Enable prefetching in render
+
     }));
 
 
@@ -125,7 +133,7 @@ export class AppService {
 
             }
 
-        })
+        }, {allowSignalWrites: true})
 
 
     }
@@ -176,6 +184,7 @@ export class AppService {
                 return childrenCast;
             },
             staleTime: Infinity,
+            experimental_prefetchInRender: true, // Enable prefetching in render
         }));
     }
 
@@ -187,11 +196,6 @@ export class AppService {
 
     setBankAccount(bankAccount: BankAccount) {
         this.selectedBankAccount.set(bankAccount);
-    }
-
-
-    setCategoryQueryForSelectedPeriod$(query: RevenueExpensesQuery) {
-        this.categoryQueryForSelectedPeriod$.next(query);
     }
 
 
@@ -252,12 +256,12 @@ export class AppService {
 
     private parseDate(json: string): Date {
         let parts: string[] = json.split('-');
-        let day: number = parseInt(parts[0])
+        let year: number = parseInt(parts[0])
         let month: number = parseInt(parts[1])
-        let year: number = parseInt(parts[2])
+        let day: number = parseInt(parts[2])
         let dateObj = new Date();
         dateObj.setDate(day);
-        dateObj.setMonth(month);
+        dateObj.setMonth(month-1);
         dateObj.setFullYear(year);
 
 
@@ -351,7 +355,7 @@ export class AppService {
 
 
         let pageTransactionsToManuallyReviewRequest : PageTransactionsToManuallyReviewRequest = {
-            page: params.page++,
+            page: params.page + 1,
             size: params.size,
             sortOrder: tmpSortOrder as SortOrderEnum,
             sortProperty: this.camelToSnake(tmpSortProperty) as SortPropertyEnum,

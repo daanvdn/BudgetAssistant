@@ -1,4 +1,14 @@
-import {Component, effect, EventEmitter, OnInit, Output, ViewChild} from '@angular/core';
+import {
+  Component,
+  effect,
+  EventEmitter,
+  inject,
+  Injector,
+  OnInit,
+  Output,
+  runInInjectionContext,
+  ViewChild
+} from '@angular/core';
 import {NgSelectComponent} from '@ng-select/ng-select';
 import {Observable} from 'rxjs';
 import {AppService} from '../app.service';
@@ -16,6 +26,8 @@ export class CounterpartyAccountNumberSelectionComponent implements OnInit {
 
   @Output() change: EventEmitter<boolean> = new EventEmitter<boolean>();
   @ViewChild(NgSelectComponent) ngSelect!:NgSelectComponent;
+  private injector: Injector = inject(Injector); // Define injector instance
+
 
   selectedCounterpartAccountNumber!: string;
   distinctCounterpartAccountNumbers!: Observable<string[]>;
@@ -25,12 +37,15 @@ export class CounterpartyAccountNumberSelectionComponent implements OnInit {
   }
 
   ngOnInit() {
-    effect(() => {
+    runInInjectionContext(this.injector, (): void => {
+      effect(() => {
         const selectedBankAccount = this.appService.selectedBankAccount();
         if (selectedBankAccount) {
-          this.distinctCounterpartAccountNumbers = this.appService.getDistinctCounterpartyAccounts(selectedBankAccount.accountNumber);
+          this.distinctCounterpartAccountNumbers = this.appService.getDistinctCounterpartyAccounts(
+              selectedBankAccount.accountNumber);
 
         }
+      });
     });
 
 

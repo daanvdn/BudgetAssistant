@@ -5,9 +5,30 @@
       <div id="first" style="padding-top: 5px;font-weight: bold; color: rgb(59, 58, 58); font-size: larger;">
         Transactie type
       </div>
-      <app-transactiontype-selection style="min-width: 350px;"
-        (transactionTypeChange)="handleTransactionTypeSelectionChange()"></app-transactiontype-selection>
+        <div class="grid-container" style="width: 100%;" appearance="fill">
+            <div>
+                <mat-form-field class="grid-child" >
+                    <mat-label>min. bedrag</mat-label>
+                    <input matInput [(ngModel)]="minAmount">
+                </mat-form-field>
+            </div>
+            <div>
+                <mat-form-field class="grid-child" >
+                    <mat-label>max. bedrag</mat-label>
+                    <input matInput [(ngModel)]="maxAmount">
+                </mat-form-field>
+            </div>
 
+        </div>
+
+        <mat-form-field>
+            <mat-label>inkomsten / uitgaven</mat-label>
+            <mat-select (selectionChange)="handleTransactionTypeChange($event)">
+                <mat-option *ngFor="let type of transactionTypeKeys" [value]="type">
+                    {{type}}
+                </mat-option>
+            </mat-select>
+        </mat-form-field>
     </div>
     <div style="padding-top: 5px;" class="top-border bottom-border">
       <div style="padding-top: 5px;font-weight: bold; color: rgb(59, 58, 58); font-size: larger;">

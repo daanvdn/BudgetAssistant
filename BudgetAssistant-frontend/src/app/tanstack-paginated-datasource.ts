@@ -37,7 +37,7 @@ export class TanstackPaginatedDataSource<T, Q> implements DataSource<T> {
             size: number;
             sort: Sort;
             query: Q
-        }) => Promise<Page<T>> | Observable<Page<T>>, private staleTime: number = 1000 * 60 * 5, // default to 5 minutes
+        }) => Promise<Page<T>> | Observable<Page<T>>, staleTime: number = 1000 * 60 * 5, // default to 5 minutes
     ) {
         // signals initialized with default values
 
@@ -69,6 +69,7 @@ export class TanstackPaginatedDataSource<T, Q> implements DataSource<T> {
             const data = this.q.data();
             this.isLoading.set(this.q.isFetching());
             if (data) {
+                //console.log(data.content);
                 this.dataSubject.next(data.content);
                 this.totalElements.set(data.totalElements);
             }

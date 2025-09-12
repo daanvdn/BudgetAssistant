@@ -8,24 +8,34 @@
   <div>
     <mat-form-field class="grid-child" >
       <mat-label>min. bedrag</mat-label>
-      <input matInput [(ngModel)]="minAmount" (change)="onSelectionChange()">
+      <input matInput [(ngModel)]="minAmount" (change)="onMinAmountChange()">
     </mat-form-field>
   </div>
   <div>
     <mat-form-field class="grid-child" >
       <mat-label>max. bedrag</mat-label>
-      <input matInput [(ngModel)]="maxAmount" (change)="onSelectionChange()">
+      <input matInput [(ngModel)]="maxAmount" (change)="onMaxAmountChange()">
     </mat-form-field>
   </div>
 
 </div>
 
-
+<mat-form-field>
+    <mat-label>inkomsten / uitgaven</mat-label>
+    <mat-select [(value)]="selectedTransactionType"
+    (selectionChange)="onTransactionTypeChange()"
+    >
+        <mat-option *ngFor="let type of transactionTypeKeys" [value]="type">
+            {{type}}
+        </mat-option>
+    </mat-select>
+</mat-form-field>
+<!--
 
 <ng-select style="font-size: larger;" [items]="transactionTypesObservable | async"
-           autofocus
+           autofocus="true"
            [(ngModel)]="selectedTransactionType"
            (change)="onSelectionChange()" 
            placeholder="inkomsten / uitgaven"
            >
-</ng-select>
+</ng-select>-->

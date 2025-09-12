@@ -9,25 +9,26 @@
       </bank-account-selection>
     </div>
     <div #two style="position: absolute; left: 50%; transform: translateX(-50%);">
-      <mat-button-toggle-group (change)="onToggleChange($event)" name="fontStyle" aria-label="Font Style">
-        <mat-button-toggle [checked]="true" value="expenses">Expenses</mat-button-toggle>
+      <mat-button-toggle-group   [(value)]="toggleValue"
+                                 (change)="onToggleChange($event)" name="fontStyle" aria-label="Font Style">
+        <mat-button-toggle value="expenses">Expenses</mat-button-toggle>
         <mat-button-toggle value="revenue">Revenue</mat-button-toggle>
       </mat-button-toggle-group>
     </div>
     <!--    <div #three style="flex-grow: 1">-->
     <div #three style="position: absolute; right: 0;">
         <mat-paginator
-                       [length]="getDataSource().totalElements()"
-                       [pageSize]="10"
-                       [pageIndex]="0"
-                       (page)="getDataSource().setPage($event.pageIndex, $event.pageSize)">
+                       [length]="datasource.totalElements()"
+                       [pageSize]="getPageSize()"
+                       [pageIndex]="getPageIndex()"
+                       (page)="onPageEvent($event)">
         </mat-paginator>
 
 
     </div>
   </div>
   <div style="height: 75vh;background-color:white; align-content: space-between; overflow-y: auto;">
-    <table *ngIf="getDataSource()"  #table mat-table [dataSource]="getDataSource()" class="mat-z8" style="border-collapse: separate; width: 100%">
+    <table *ngIf="datasource" #table [dataSource]="datasource" mat-table class="mat-z8" style="border-collapse: separate; width: 100%">
       <ng-container matColumnDef="transaction">
         <th mat-header-cell *matHeaderCellDef style="font-size: large;width: 50%"></th>
         <td mat-cell style="font-size: large" *matCellDef="let item">
@@ -76,12 +77,13 @@
     </table>
   </div>
   <div #three style="position: absolute; right: 0;height: 5vh">
-    <mat-paginator
-                   [length]="getDataSource().totalElements()"
-                   [pageSize]="10"
-                   [pageIndex]="0"
-                   (page)="getDataSource().setPage($event.pageIndex, $event.pageSize)">
-    </mat-paginator>
+      <mat-paginator
+              [length]="datasource.totalElements()"
+              [pageSize]="getPageSize()"
+              [pageIndex]="getPageIndex()"
+              (page)="onPageEvent($event)">
+      </mat-paginator>
+
 
   </div>
 

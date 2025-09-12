@@ -1,7 +1,7 @@
 <!-- <div formGroupName="startEndDateFormFieldGroup"  [formGroup]="startEndDateFormFieldGroup" class="inline_block" style="width: 100%;"> -->
 <div class="inline_block" style=" padding-right: 10px">
   <mat-form-field appearance="fill" style="min-width: 290px; width: 100% ">
-    <mat-label style=";">Kies periode</mat-label>
+    <mat-label>Kies periode</mat-label>
     <mat-date-range-input [formGroup]="range" [rangePicker]="picker" [dateFilter]="allowDate">
       <input matStartDate placeholder="Startdatum" formControlName="start" (dateChange)="ngOnChanges()"
         [value]="startDate">

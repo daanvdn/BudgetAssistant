@@ -1,0 +1,18 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Angular CLI Server" type="js.build_tools.npm">
+    <package-json value="$PROJECT_DIR$/package.json" />
+    <command value="run" />
+    <scripts>
+      <script value="start" />
+    </scripts>
+    <node-interpreter value="project" />
+    <envs />
+    <method v="2" />
+  </configuration>
+  <configuration default="false" name="Angular CLI Server" type="NodeJSConfigurationType" application-parameters="serve" path-to-js-file="node_modules/@angular/cli/bin/ng.js" working-dir="$PROJECT_DIR$">
+    <EXTENSION ID="com.jetbrains.nodejs.run.NodeJSProfilingRunConfigurationExtension">
+      <profiling allow-runtime-heap-snapshot="true" one-log-file="true" do-profile="true" />
+    </EXTENSION>
+    <method v="2" />
+  </configuration>
+</component>

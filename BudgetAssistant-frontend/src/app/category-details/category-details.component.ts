@@ -58,7 +58,9 @@ export class CategoryDetailsComponent implements OnInit, OnChanges {
             if (selected) {
                 this.initCategoryLists(selected);
             }
-        });
+        }
+            , {allowSignalWrites: true}
+        );
 
     }
 
