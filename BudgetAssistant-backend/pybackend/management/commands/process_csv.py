@@ -49,6 +49,7 @@ class Command(BaseCommand):
                     writer = csv.DictWriter(outfile, fieldnames=fieldnames, delimiter=';')
                     writer.writeheader()
                     
+
                     # Process each row
                     for row in reader:
                         transaction_number = row['Transactienummer']

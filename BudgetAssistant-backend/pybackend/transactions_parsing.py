@@ -269,8 +269,9 @@ class BelfiusTransactionParser(AbstractTransactionParser):
 
     @silk_profile(name='BelfiusTransactionParser.read_csv_step1')
     def read_csv_step1(self, lines):
-        # skip the first 12 lines
-        lines = lines[self.SKIP_LINES:]
+        # skip leading empty lines
+        lines = [line for line in lines if line.strip()]
+        #lines = lines[self.SKIP_LINES:]
         # skip one more line
         reader = csv.DictReader(f=lines, delimiter=';')
         actual_field_names = reader.fieldnames

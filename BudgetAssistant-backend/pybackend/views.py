@@ -456,6 +456,8 @@ class SaveTransactionView(APIView):
 
             return JsonResponse(serialize_succesful_or_failed_operation_reponse(response), status=response.status_code)
         except Exception as e:
+            traceback.print_exc()
+            traceback.print_tb(e.__traceback__)
             return JsonResponse(
                 serialize_succesful_or_failed_operation_reponse(FailedOperationResponse(error=str(e), status_code=500)),
                 status=500)
@@ -498,7 +500,7 @@ class DistinctCounterpartyNamesView(APIView):
         })
     def get(self, request):
         try:
-            account = request.query_params.get('account')
+            account = request.query_params.get('bank_account')
             account = BankAccount.normalize_account_number(account)
             names: QuerySet = Transaction.objects.find_distinct_counterparty_names(account)
             # convert this QuerySet to a list

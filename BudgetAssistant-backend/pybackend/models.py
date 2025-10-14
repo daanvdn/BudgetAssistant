@@ -81,7 +81,7 @@ class Transaction(RequiredFieldsMixin, models.Model):
     booking_date = models.DateField(blank=False, null=False)
     statement_number = models.TextField(blank=False, null=False)
     counterparty = models.ForeignKey('Counterparty', on_delete=models.CASCADE, blank=False, null=False)
-    transaction_number = models.TextField(unique=True, blank=False, null=False)
+    transaction_number = models.TextField(unique=False, blank=False, null=False)
     transaction = models.TextField(blank=True, null=True)
     currency_date = models.DateField(blank=False, null=False)
     amount = models.FloatField(blank=False, null=False)
@@ -126,13 +126,14 @@ class Transaction(RequiredFieldsMixin, models.Model):
 
 
     def save(self, *args, **kwargs):
-        self.transaction_id = Transaction._create_transaction_id(self.transaction_number, self.bank_account)
+        self.transaction_id = Transaction._create_transaction_id(self.transaction_number, self.bank_account) #fixme: method _create_transaction_id is non correct, is non-deterministic
         return super().save(*args, **kwargs)
 
     @staticmethod
     def _create_transaction_id(transaction_number:str, bank_account: BankAccount) -> str:
-        raw_value = '_'.join([transaction_number, str(hash(bank_account.account_number))])
-        return hashlib.sha256(raw_value.encode()).hexdigest()[:64]  # Trim if needed
+        raw_value = '_'.join([bank_account.account_number, transaction_number])
+        #return hashlib.sha256(raw_value.encode()).hexdigest()[:64]  # Trim if needed
+        return raw_value
 
 
 

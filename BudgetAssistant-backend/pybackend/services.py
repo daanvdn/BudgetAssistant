@@ -170,6 +170,7 @@ class TransactionsService:
         FailedOperationResponse
     ]:
         try:
+
             id = transaction_json['transaction_id']
             transaction = Transaction.objects.get(transaction_id=id)
             counterparty = transaction_json.pop('counterparty', None)
@@ -196,7 +197,7 @@ class TransactionsService:
             parse_result = transaction_parser.parse(lines, user)
             transactions = parse_result.transactions
             if not transactions or len(transactions) == 0:
-                raise Exception(f"No transactions were parsed from file '{lines.name}'")
+                raise Exception(f"No transactions were parsed from file '{file_name}'")
 
             # Set upload_timestamp for all transactions
             for transaction in transactions:

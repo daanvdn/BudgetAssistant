@@ -271,6 +271,12 @@ class TransactionSerializer(DeserializeInstanceMixin):
 
 
     def update(self, instance, validated_data):
+        # Remove transaction_number from validated_data to prevent it from being updated
+        # This is critical because changing transaction_number would generate a new transaction_id
+        # which could cause Django to try to INSERT instead of UPDATE
+        if 'transaction_number' in validated_data:
+            validated_data.pop('transaction_number')
+            
         if validated_data.get('category'):
             category= SimpleCategorySerializer().create(validated_data.pop('category'))
             # Add the category to the transaction
@@ -284,8 +290,8 @@ class TransactionSerializer(DeserializeInstanceMixin):
             instance.is_advance_shared_account = validated_data.get('is_advance_shared_account')
         if 'is_manually_reviewed' in validated_data:
             instance.is_manually_reviewed = validated_data.get('is_manually_reviewed')
-        saved = instance.save()
-        return saved
+        instance.save()
+        return instance
 
     def create(self, validated_data):
         category_data = validated_data.pop('category', None)
@@ -316,7 +322,7 @@ class TransactionSerializer(DeserializeInstanceMixin):
                         counterparty = serializer.save()
                 validated_data['counterparty'] = counterparty
 
-        transaction = Transaction(**validated_data)
+        transaction = Transaction.objects.create(**validated_data)
         return transaction
 
 class SimplifiedCategorySerializer(DeserializeInstanceMixin):

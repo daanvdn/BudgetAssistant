@@ -9,11 +9,13 @@ from rest_framework.renderers import JSONRenderer
 from rest_framework.utils.serializer_helpers import ReturnDict
 
 from pybackend.commons import TransactionTypeEnum
+from pybackend.dto import SuccessfulOperationResponse
 from pybackend.models import BankAccount, Category, Counterparty, CustomUser, Transaction
 from pybackend.providers import BudgetTreeProvider, CategoryTreeProvider
 from pybackend.serializers import BankAccountSerializer, BudgetTreeSerializer, CategorySerializer, \
     CounterpartySerializer, \
     CustomUserSerializer, SimplifiedCategorySerializer, TransactionSerializer
+from pybackend.services import TransactionsService
 
 
 def to_dict(data: ReturnDict):
@@ -457,6 +459,95 @@ class TransactionSerializerTests(TestCase):
         self.assertEqual(Category.objects.count(), 2)
         self.assertEqual(updated_transaction.bank_account.users.count(), 1)
         self.assertEqual(updated_transaction.counterparty.users.count(), 1)
+
+    def test_update_transaction2(self):
+        transaction_json = {'amount': -13.99, 'bank_account': 'be68bbru0987654321', 'bic': 'ABNANL2A', 'booking_date': '01/04/2025',
+
+         'communications': '1 Maandelijkse streamingdienst',
+         'counterparty': {'account_number': 'DE89DEUT0362547810', 'category': None, 'name': '1 maria janssen',
+                          'street_and_number': 'Kerkstraat 45', 'zip_code_and_city': '1012AB Amsterdam'},
+         'country_code': 'NL', 'currency': 'EUR', 'currency_date': '01/04/2025', 'is_advance_shared_account': False,
+         'is_manually_reviewed': False, 'is_recurring': False, 'manually_assigned_category': False,
+         'statement_number': '100235', 'transaction': '1 Abonnement Netflix',
+         'transaction_id': '86f37128b12b0723018a67b7b9bd43431e473e020b2f0995964bbfed40cd7b7a',
+         'transaction_number': '1', 'upload_timestamp': '2025-07-20T17:24:44.743304Z'}
+
+        user = baker.make(CustomUser, username='testuser', password='password')
+        counterparty = baker.make(Counterparty, **transaction_json['counterparty'])
+        counterparty.users.add(user)
+        category_json = {'id': 1699, 'name': 'auto & vervoer', 'qualified_name': 'auto & vervoer'}
+        category = baker.make(Category, **category_json)
+        bank_account = baker.make(BankAccount, account_number=transaction_json['bank_account'])
+        bank_account.users.add(user)
+        transaction_id = Transaction._create_transaction_id(transaction_json['transaction_number'], bank_account)
+        transaction_json['transaction_id'] = transaction_id
+        transaction_json.pop('counterparty')
+        transaction_json['counterparty_id'] = counterparty.name
+        #insert transaction into db
+        serializer = TransactionSerializer(data=transaction_json)
+        if serializer.is_valid(raise_exception=True):
+            transaction = serializer.save()
+            #make sure transaction is committed to the db
+            self.assertEqual(Transaction.objects.count(), 1)
+
+        self.assertEqual(1, Transaction.objects.count())
+        self.assertEqual(transaction , Transaction.objects.first())
+        self.assertIsNone(Transaction.objects.first().category)
+        update =transaction_json.copy()
+        update['category'] = category_json
+        #update transaction into db
+        serializer = TransactionSerializer(transaction, data=update)
+        if serializer.is_valid(raise_exception=True):
+            updated_transaction = serializer.save()
+            #make sure transaction is committed to the db
+            self.assertEqual(Transaction.objects.count(), 1)
+            self.assertIsNotNone(Transaction.objects.first().category)
+            self.assertEqual(Transaction.objects.first().category, category)
+            self.assertEqual(updated_transaction, Transaction.objects.first())
+
+    def test_update_transaction3(self):
+        transaction_json = {'amount': -13.99, 'bank_account': 'be68bbru0987654321', 'bic': 'ABNANL2A', 'booking_date': '01/04/2025',
+
+         'communications': '1 Maandelijkse streamingdienst',
+         'counterparty': {'account_number': 'DE89DEUT0362547810', 'category': None, 'name': '1 maria janssen',
+                          'street_and_number': 'Kerkstraat 45', 'zip_code_and_city': '1012AB Amsterdam'},
+         'country_code': 'NL', 'currency': 'EUR', 'currency_date': '01/04/2025', 'is_advance_shared_account': False,
+         'is_manually_reviewed': False, 'is_recurring': False, 'manually_assigned_category': False,
+         'statement_number': '100235', 'transaction': '1 Abonnement Netflix',
+         'transaction_id': '86f37128b12b0723018a67b7b9bd43431e473e020b2f0995964bbfed40cd7b7a',
+         'transaction_number': '1', 'upload_timestamp': '2025-07-20T17:24:44.743304Z'}
+
+        user = baker.make(CustomUser, username='testuser', password='password')
+        counterparty = baker.make(Counterparty, **transaction_json['counterparty'])
+        counterparty.users.add(user)
+        category_json = {'id': 1699, 'name': 'auto & vervoer', 'qualified_name': 'auto & vervoer'}
+        category = baker.make(Category, **category_json)
+        bank_account = baker.make(BankAccount, account_number=transaction_json['bank_account'])
+        bank_account.users.add(user)
+        transaction_id = Transaction._create_transaction_id(transaction_json['transaction_number'], bank_account)
+        transaction_json['transaction_id'] = transaction_id
+        transaction_json.pop('counterparty')
+        transaction_json['counterparty_id'] = counterparty.name
+        #insert transaction into db
+        serializer = TransactionSerializer(data=transaction_json)
+        if serializer.is_valid(raise_exception=True):
+            transaction = serializer.save()
+            #make sure transaction is committed to the db
+            self.assertEqual(Transaction.objects.count(), 1)
+
+        self.assertEqual(1, Transaction.objects.count())
+        self.assertEqual(transaction , Transaction.objects.first())
+        self.assertIsNone(Transaction.objects.first().category)
+        update =transaction_json.copy()
+        update['category'] = category_json
+        #update transaction into db
+        response = TransactionsService().save_transaction(update)
+        self.assertIsInstance(response, SuccessfulOperationResponse)
+        self.assertEqual(Transaction.objects.count(), 1)
+        self.assertIsNotNone(Transaction.objects.first().category)
+        self.assertEqual(Transaction.objects.first().category, category)
+
+
 
 
 class SimplifiedCategorySerializerTests(TestCase):
