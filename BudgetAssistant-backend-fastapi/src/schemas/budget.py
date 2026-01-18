@@ -20,6 +20,8 @@ class BudgetTreeNodeRead(BaseModel):
     amount: int
     category_id: int | None = None
     parent_id: int | None = None
+    name: str = ""  # Category name
+    qualified_name: str = ""  # Category qualified name
     children: List["BudgetTreeNodeRead"] = []
 
     model_config = {"from_attributes": True}
@@ -44,6 +46,7 @@ class BudgetTreeRead(BaseModel):
 
     bank_account_id: str
     number_of_descendants: int
+    root_id: int | None = None
     root: Optional[BudgetTreeNodeRead] = None
 
     model_config = {"from_attributes": True}
