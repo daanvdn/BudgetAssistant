@@ -1,11 +1,10 @@
 """Pydantic schemas for analysis API operations."""
 
 from datetime import datetime
-from typing import Dict, List, Optional
-
-from pydantic import BaseModel
+from typing import List
 
 from enums import TransactionTypeEnum
+from pydantic import BaseModel
 
 
 class ExpensesAndRevenueForPeriod(BaseModel):
@@ -110,4 +109,3 @@ class CategoriesForAccountResponse(BaseModel):
 
     categories: List[str] = []
     transaction_type: TransactionTypeEnum
-

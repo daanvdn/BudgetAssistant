@@ -1,10 +1,11 @@
 """Tests for RuleSetWrapper model."""
 
 import pytest
-from sqlalchemy import select
-
-from models import RuleSetWrapper, Category, User
 from enums import TransactionTypeEnum
+from models import Category, RuleSetWrapper, User
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
+from tests.utils import assert_persisted
 
 
 class TestRuleSetWrapper:
@@ -29,7 +30,11 @@ class TestRuleSetWrapper:
                     "field": ["communications"],
                     "field_type": "string",
                     "value": ["test"],
-                    "operator": {"name": "contains", "value": "contains", "type": "string"},
+                    "operator": {
+                        "name": "contains",
+                        "value": "contains",
+                        "type": "string",
+                    },
                     "value_match_type": {"name": "any of", "value": "any of"},
                     "clazz": "Rule",
                     "type": "EXPENSES",
@@ -51,6 +56,22 @@ class TestRuleSetWrapper:
 
         assert rule_set_wrapper.id is not None
         assert rule_set_wrapper.category_id == category.id
+
+        # Re-query from database to verify persistence and category relationship
+        persisted = await assert_persisted(
+            async_session,
+            RuleSetWrapper,
+            "id",
+            rule_set_wrapper.id,
+            {
+                "category_id": category.id,
+            },
+        )
+        # Verify rule_set_json was persisted correctly
+        persisted_dict = persisted.get_rule_set_dict()
+        assert persisted_dict["condition"] == "AND"
+        assert len(persisted_dict["rules"]) == 1
+        assert persisted_dict["clazz"] == "RuleSet"
 
     @pytest.mark.asyncio
     async def test_get_rule_set_dict(self, async_session):
@@ -104,6 +125,7 @@ class TestRuleSetWrapper:
         )
         async_session.add(user)
         await async_session.commit()
+        user_id = user.id
 
         rule_set_wrapper = RuleSetWrapper(
             category_id=category.id,
@@ -113,9 +135,25 @@ class TestRuleSetWrapper:
         async_session.add(rule_set_wrapper)
         await async_session.commit()
         await async_session.refresh(rule_set_wrapper)
+        wrapper_id = rule_set_wrapper.id
 
         assert len(rule_set_wrapper.users) == 1
         assert rule_set_wrapper.users[0].username == "testuser"
+
+        # Re-query from database to verify user relationship persistence
+        result = await async_session.execute(
+            select(RuleSetWrapper)
+            .where(RuleSetWrapper.id == wrapper_id)
+            .options(selectinload(RuleSetWrapper.users))
+            .execution_options(populate_existing=True)
+        )
+        persisted_wrapper = result.scalar_one_or_none()
+
+        assert persisted_wrapper is not None
+        assert persisted_wrapper.category_id == category.id
+        assert len(persisted_wrapper.users) == 1
+        assert persisted_wrapper.users[0].id == user_id
+        assert persisted_wrapper.users[0].username == "testuser"
 
     @pytest.mark.asyncio
     async def test_update_rule_set(self, async_session):

@@ -54,4 +54,3 @@ class BudgetTreeRead(BaseModel):
 
 # Required for recursive type reference
 BudgetTreeNodeRead.model_rebuild()
-

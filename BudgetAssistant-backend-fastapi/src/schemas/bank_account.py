@@ -23,4 +23,3 @@ class BankAccountUpdate(BaseModel):
     """Schema for updating bank account data."""
 
     alias: str | None = None
-

@@ -32,4 +32,3 @@ class CounterpartyUpdate(BaseModel):
     street_and_number: str | None = None
     zip_code_and_city: str | None = None
     category_id: int | None = None
-

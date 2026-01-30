@@ -1,0 +1,522 @@
+{
+  "name": "root",
+  "qualified_name": "root",
+  "type": "EXPENSES",
+  "children": [
+    {
+      "name": "NO CATEGORY",
+      "qualified_name": "NO CATEGORY",
+      "type": "EXPENSES",
+      "children": []
+    },
+    {
+      "name": "DUMMY CATEGORY",
+      "qualified_name": "DUMMY CATEGORY",
+      "type": "EXPENSES",
+      "children": []
+    },
+    {
+      "name": "auto & vervoer",
+      "qualified_name": "auto & vervoer",
+      "type": "EXPENSES",
+      "children": [
+        {
+          "name": "autoverzekering",
+          "qualified_name": "auto & vervoer#autoverzekering",
+          "type": "EXPENSES",
+          "children": []
+        },
+        {
+          "name": "benzine",
+          "qualified_name": "auto & vervoer#benzine",
+          "type": "EXPENSES",
+          "children": []
+        },
+        {
+          "name": "onderhoud & herstelling",
+          "qualified_name": "auto & vervoer#onderhoud & herstelling",
+          "type": "EXPENSES",
+          "children": []
+        },
+        {
+          "name": "parkeren",
+          "qualified_name": "auto & vervoer#parkeren",
+          "type": "EXPENSES",
+          "children": []
+        },
+        {
+          "name": "trein",
+          "qualified_name": "auto & vervoer#trein",
+          "type": "EXPENSES",
+          "children": []
+        }
+      ]
+    },
+    {
+      "name": "bankkosten",
+      "qualified_name": "bankkosten",
+      "type": "EXPENSES",
+      "children": []
+    },
+    {
+      "name": "belastingen",
+      "qualified_name": "belastingen",
+      "type": "EXPENSES",
+      "children": [
+        {
+          "name": "KI",
+          "qualified_name": "belastingen#KI",
+          "type": "EXPENSES",
+          "children": []
+        },
+        {
+          "name": "boekhouder",
+          "qualified_name": "belastingen#boekhouder",
+          "type": "EXPENSES",
+          "children": []
+        },
+        {
+          "name": "gemeentebelasting",
+          "qualified_name": "belastingen#gemeentebelasting",
+          "type": "EXPENSES",
+          "children": []
+        },
+        {
+          "name": "personenbelasting",
+          "qualified_name": "belastingen#personenbelasting",
+          "type": "EXPENSES",
+          "children": []
+        },
+        {
+          "name": "provinciebelasting",
+          "qualified_name": "belastingen#provinciebelasting",
+          "type": "EXPENSES",
+          "children": []
+        },
+        {
+          "name": "verkeersbelasting",
+          "qualified_name": "belastingen#verkeersbelasting",
+          "type": "EXPENSES",
+          "children": []
+        }
+      ]
+    },
+    {
+      "name": "cash geldopname",
+      "qualified_name": "cash geldopname",
+      "type": "EXPENSES",
+      "children": []
+    },
+    {
+      "name": "energie",
+      "qualified_name": "energie",
+      "type": "EXPENSES",
+      "children": [
+        {
+          "name": "gas & elektriciteit",
+          "qualified_name": "energie#gas & elektriciteit",
+          "type": "EXPENSES",
+          "children": []
+        },
+        {
+          "name": "water",
+          "qualified_name": "energie#water",
+          "type": "EXPENSES",
+          "children": []
+        }
+      ]
+    },
+    {
+      "name": "gemeenschappelijke kosten",
+      "qualified_name": "gemeenschappelijke kosten",
+      "type": "EXPENSES",
+      "children": []
+    },
+    {
+      "name": "giften",
+      "qualified_name": "giften",
+      "type": "EXPENSES",
+      "children": [
+        {
+          "name": "cadeau's",
+          "qualified_name": "giften#cadeau's",
+          "type": "EXPENSES",
+          "children": []
+        }
+      ]
+    },
+    {
+      "name": "huishouden",
+      "qualified_name": "huishouden",
+      "type": "EXPENSES",
+      "children": [
+        {
+          "name": "boodschappen",
+          "qualified_name": "huishouden#boodschappen",
+          "type": "EXPENSES",
+          "children": [
+            {
+              "name": "bakker",
+              "qualified_name": "huishouden#boodschappen#bakker",
+              "type": "EXPENSES",
+              "children": []
+            },
+            {
+              "name": "slager",
+              "qualified_name": "huishouden#boodschappen#slager",
+              "type": "EXPENSES",
+              "children": []
+            },
+            {
+              "name": "supermarkt",
+              "qualified_name": "huishouden#boodschappen#supermarkt",
+              "type": "EXPENSES",
+              "children": [
+                {
+                  "name": "colruyt",
+                  "qualified_name": "huishouden#boodschappen#supermarkt#colruyt",
+                  "type": "EXPENSES",
+                  "children": []
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "lunch werk",
+          "qualified_name": "huishouden#lunch werk",
+          "type": "EXPENSES",
+          "children": []
+        }
+      ]
+    },
+    {
+      "name": "kinderen",
+      "qualified_name": "kinderen",
+      "type": "EXPENSES",
+      "children": [
+        {
+          "name": "kinderopvang",
+          "qualified_name": "kinderen#kinderopvang",
+          "type": "EXPENSES",
+          "children": []
+        },
+        {
+          "name": "kleding",
+          "qualified_name": "kinderen#kleding",
+          "type": "EXPENSES",
+          "children": []
+        },
+        {
+          "name": "school",
+          "qualified_name": "kinderen#school",
+          "type": "EXPENSES",
+          "children": [
+            {
+              "name": "boeken/materiaal",
+              "qualified_name": "kinderen#school#boeken/materiaal",
+              "type": "EXPENSES",
+              "children": []
+            },
+            {
+              "name": "middagmaal",
+              "qualified_name": "kinderen#school#middagmaal",
+              "type": "EXPENSES",
+              "children": []
+            },
+            {
+              "name": "schoolreis",
+              "qualified_name": "kinderen#school#schoolreis",
+              "type": "EXPENSES",
+              "children": []
+            }
+          ]
+        },
+        {
+          "name": "speelgoed",
+          "qualified_name": "kinderen#speelgoed",
+          "type": "EXPENSES",
+          "children": []
+        },
+        {
+          "name": "uitrusting",
+          "qualified_name": "kinderen#uitrusting",
+          "type": "EXPENSES",
+          "children": []
+        }
+      ]
+    },
+    {
+      "name": "kledij & verzorging",
+      "qualified_name": "kledij & verzorging",
+      "type": "EXPENSES",
+      "children": [
+        {
+          "name": "accessoires",
+          "qualified_name": "kledij & verzorging#accessoires",
+          "type": "EXPENSES",
+          "children": []
+        },
+        {
+          "name": "kapper",
+          "qualified_name": "kledij & verzorging#kapper",
+          "type": "EXPENSES",
+          "children": []
+        },
+        {
+          "name": "kleren",
+          "qualified_name": "kledij & verzorging#kleren",
+          "type": "EXPENSES",
+          "children": []
+        },
+        {
+          "name": "schoenen",
+          "qualified_name": "kledij & verzorging#schoenen",
+          "type": "EXPENSES",
+          "children": []
+        }
+      ]
+    },
+    {
+      "name": "kredietkaart",
+      "qualified_name": "kredietkaart",
+      "type": "EXPENSES",
+      "children": []
+    },
+    {
+      "name": "leningen",
+      "qualified_name": "leningen",
+      "type": "EXPENSES",
+      "children": [
+        {
+          "name": "woonlening",
+          "qualified_name": "leningen#woonlening",
+          "type": "EXPENSES",
+          "children": []
+        }
+      ]
+    },
+    {
+      "name": "medisch",
+      "qualified_name": "medisch",
+      "type": "EXPENSES",
+      "children": [
+        {
+          "name": "apotheek",
+          "qualified_name": "medisch#apotheek",
+          "type": "EXPENSES",
+          "children": []
+        },
+        {
+          "name": "dierenarts",
+          "qualified_name": "medisch#dierenarts",
+          "type": "EXPENSES",
+          "children": []
+        },
+        {
+          "name": "dokter",
+          "qualified_name": "medisch#dokter",
+          "type": "EXPENSES",
+          "children": []
+        },
+        {
+          "name": "kinesist",
+          "qualified_name": "medisch#kinesist",
+          "type": "EXPENSES",
+          "children": []
+        },
+        {
+          "name": "mutualiteit",
+          "qualified_name": "medisch#mutualiteit",
+          "type": "EXPENSES",
+          "children": []
+        },
+        {
+          "name": "tandarts",
+          "qualified_name": "medisch#tandarts",
+          "type": "EXPENSES",
+          "children": []
+        },
+        {
+          "name": "ziekenhuis",
+          "qualified_name": "medisch#ziekenhuis",
+          "type": "EXPENSES",
+          "children": []
+        }
+      ]
+    },
+    {
+      "name": "sparen",
+      "qualified_name": "sparen",
+      "type": "EXPENSES",
+      "children": [
+        {
+          "name": "algemeen",
+          "qualified_name": "sparen#algemeen",
+          "type": "EXPENSES",
+          "children": []
+        },
+        {
+          "name": "pensioensparen",
+          "qualified_name": "sparen#pensioensparen",
+          "type": "EXPENSES",
+          "children": []
+        }
+      ]
+    },
+    {
+      "name": "telecom",
+      "qualified_name": "telecom",
+      "type": "EXPENSES",
+      "children": [
+        {
+          "name": "internet & tv",
+          "qualified_name": "telecom#internet & tv",
+          "type": "EXPENSES",
+          "children": []
+        },
+        {
+          "name": "telefonie",
+          "qualified_name": "telecom#telefonie",
+          "type": "EXPENSES",
+          "children": []
+        }
+      ]
+    },
+    {
+      "name": "vakbond",
+      "qualified_name": "vakbond",
+      "type": "EXPENSES",
+      "children": []
+    },
+    {
+      "name": "verzekeringen",
+      "qualified_name": "verzekeringen",
+      "type": "EXPENSES",
+      "children": [
+        {
+          "name": "autoverzekering",
+          "qualified_name": "verzekeringen#autoverzekering",
+          "type": "EXPENSES",
+          "children": []
+        },
+        {
+          "name": "brand- en familiale verzekering",
+          "qualified_name": "verzekeringen#brand- en familiale verzekering",
+          "type": "EXPENSES",
+          "children": []
+        },
+        {
+          "name": "hospitalisatieverzekering",
+          "qualified_name": "verzekeringen#hospitalisatieverzekering",
+          "type": "EXPENSES",
+          "children": []
+        },
+        {
+          "name": "schuldsaldo",
+          "qualified_name": "verzekeringen#schuldsaldo",
+          "type": "EXPENSES",
+          "children": []
+        }
+      ]
+    },
+    {
+      "name": "vrije tijd",
+      "qualified_name": "vrije tijd",
+      "type": "EXPENSES",
+      "children": [
+        {
+          "name": "caf\u00e9",
+          "qualified_name": "vrije tijd#caf\u00e9",
+          "type": "EXPENSES",
+          "children": []
+        },
+        {
+          "name": "hobby",
+          "qualified_name": "vrije tijd#hobby",
+          "type": "EXPENSES",
+          "children": []
+        },
+        {
+          "name": "reizen",
+          "qualified_name": "vrije tijd#reizen",
+          "type": "EXPENSES",
+          "children": []
+        },
+        {
+          "name": "restaurant",
+          "qualified_name": "vrije tijd#restaurant",
+          "type": "EXPENSES",
+          "children": []
+        },
+        {
+          "name": "uitgaan",
+          "qualified_name": "vrije tijd#uitgaan",
+          "type": "EXPENSES",
+          "children": []
+        }
+      ]
+    },
+    {
+      "name": "webshops",
+      "qualified_name": "webshops",
+      "type": "EXPENSES",
+      "children": []
+    },
+    {
+      "name": "wonen",
+      "qualified_name": "wonen",
+      "type": "EXPENSES",
+      "children": [
+        {
+          "name": "chauffage",
+          "qualified_name": "wonen#chauffage",
+          "type": "EXPENSES",
+          "children": []
+        },
+        {
+          "name": "electro",
+          "qualified_name": "wonen#electro",
+          "type": "EXPENSES",
+          "children": []
+        },
+        {
+          "name": "keuken",
+          "qualified_name": "wonen#keuken",
+          "type": "EXPENSES",
+          "children": []
+        },
+        {
+          "name": "loodgieter",
+          "qualified_name": "wonen#loodgieter",
+          "type": "EXPENSES",
+          "children": []
+        },
+        {
+          "name": "meubelen & accessoires",
+          "qualified_name": "wonen#meubelen & accessoires",
+          "type": "EXPENSES",
+          "children": []
+        },
+        {
+          "name": "poetsdienst",
+          "qualified_name": "wonen#poetsdienst",
+          "type": "EXPENSES",
+          "children": []
+        },
+        {
+          "name": "renovaties",
+          "qualified_name": "wonen#renovaties",
+          "type": "EXPENSES",
+          "children": []
+        },
+        {
+          "name": "tuin",
+          "qualified_name": "wonen#tuin",
+          "type": "EXPENSES",
+          "children": []
+        }
+      ]
+    }
+  ]
+}

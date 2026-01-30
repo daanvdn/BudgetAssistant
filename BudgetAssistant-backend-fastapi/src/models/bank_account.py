@@ -49,4 +49,3 @@ class BankAccount(SQLModel, table=True):
     def normalize_account_number(account_number: str) -> str:
         """Normalize account number by removing spaces and converting to lowercase."""
         return account_number.replace(" ", "").lower()
-

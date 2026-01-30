@@ -2,9 +2,8 @@
 
 from datetime import date, datetime
 
-from pydantic import BaseModel
-
 from enums import TransactionTypeEnum
+from pydantic import BaseModel
 
 
 class TransactionCreate(BaseModel):
@@ -69,4 +68,3 @@ class TransactionUpdate(BaseModel):
     is_recurring: bool | None = None
     is_advance_shared_account: bool | None = None
     is_manually_reviewed: bool | None = None
-

@@ -48,4 +48,3 @@ class Counterparty(SQLModel, table=True):
     def normalize_counterparty(counterparty_name: str) -> str:
         """Normalize counterparty name by reducing whitespace and converting to lowercase."""
         return re.sub(r"\s{2,}", " ", counterparty_name.strip().lower())
-

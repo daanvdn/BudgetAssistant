@@ -45,5 +45,3 @@ class User(SQLModel, table=True):
 
     def __str__(self) -> str:
         return self.username
-
-

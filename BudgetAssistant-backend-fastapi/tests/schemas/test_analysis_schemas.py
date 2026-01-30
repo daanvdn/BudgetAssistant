@@ -2,19 +2,19 @@
 
 from datetime import datetime
 
+from enums import TransactionTypeEnum
 from schemas.analysis import (
-    ExpensesAndRevenueForPeriod,
-    RevenueAndExpensesPerPeriodResponse,
-    CategoryAmount,
-    PeriodCategoryBreakdown,
-    RevenueAndExpensesPerPeriodAndCategory,
-    CategoryDetailsForPeriodResult,
-    CategoryDetailsForPeriodResponse,
     BudgetEntryResult,
     BudgetTrackerResult,
     CategoriesForAccountResponse,
+    CategoryAmount,
+    CategoryDetailsForPeriodResponse,
+    CategoryDetailsForPeriodResult,
+    ExpensesAndRevenueForPeriod,
+    PeriodCategoryBreakdown,
+    RevenueAndExpensesPerPeriodAndCategory,
+    RevenueAndExpensesPerPeriodResponse,
 )
-from enums import TransactionTypeEnum
 
 
 class TestExpensesAndRevenueForPeriod:
@@ -289,4 +289,3 @@ class TestCategoriesForAccountResponse:
         )
 
         assert len(response.categories) == 0
-

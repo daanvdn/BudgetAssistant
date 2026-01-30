@@ -1,10 +1,10 @@
 """Tests for BankAccount model."""
 
 import pytest
+from models import BankAccount, User
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
-
-from models import BankAccount, User
+from tests.utils import assert_persisted
 
 
 class TestBankAccount:
@@ -20,8 +20,19 @@ class TestBankAccount:
         assert bank_account.account_number == "123456"
         assert bank_account.alias == "Savings"
 
+        # Re-query from database to verify persistence
+        await assert_persisted(
+            async_session,
+            BankAccount,
+            "account_number",
+            "123456",
+            {"account_number": "123456", "alias": "Savings"},
+        )
+
     @pytest.mark.asyncio
-    async def test_create_bank_account_with_duplicate_account_number(self, async_session):
+    async def test_create_bank_account_with_duplicate_account_number(
+        self, async_session
+    ):
         """Test that creating a bank account with duplicate account number raises error."""
         bank_account1 = BankAccount(account_number="123456", alias="Savings")
         async_session.add(bank_account1)
@@ -44,6 +55,18 @@ class TestBankAccount:
 
         assert bank_account_json["account_number"] == "123456"
         assert bank_account_json["alias"] == "Savings"
+
+        # Re-query from database to verify persistence and to_json on persisted data
+        persisted_account = await assert_persisted(
+            async_session,
+            BankAccount,
+            "account_number",
+            "123456",
+            {"account_number": "123456", "alias": "Savings"},
+        )
+        persisted_json = persisted_account.to_json()
+        assert persisted_json["account_number"] == "123456"
+        assert persisted_json["alias"] == "Savings"
 
     def test_normalize_account_number_removes_spaces_and_lowercases(self):
         """Test that normalize_account_number removes spaces and converts to lowercase."""
@@ -93,10 +116,13 @@ class TestBankAccount:
         await async_session.commit()
 
         # Query the users associated with the bank account using link table
-        from sqlalchemy import select
         from models.associations import UserBankAccountLink
+        from sqlalchemy import select
+
         result = await async_session.execute(
-            select(User).join(UserBankAccountLink).where(
+            select(User)
+            .join(UserBankAccountLink)
+            .where(
                 UserBankAccountLink.bank_account_number == bank_account.account_number
             )
         )
@@ -117,6 +143,15 @@ class TestBankAccount:
 
         assert bank_account.alias is None
 
+        # Re-query from database to verify persistence of null alias
+        await assert_persisted(
+            async_session,
+            BankAccount,
+            "account_number",
+            "789012",
+            {"account_number": "789012", "alias": None},
+        )
+
     @pytest.mark.asyncio
     async def test_retrieve_bank_account_by_account_number(self, async_session):
         """Test retrieving a bank account by account number."""
@@ -132,4 +167,3 @@ class TestBankAccount:
         assert retrieved is not None
         assert retrieved.account_number == "654321"
         assert retrieved.alias == "Checking"
-

@@ -1,10 +1,7 @@
 """Budget router for budget management."""
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from db.database import get_session
+from fastapi import APIRouter, Depends, HTTPException, status
 from models import BankAccount, BudgetTree, BudgetTreeNode, Category
 from models.associations import UserBankAccountLink
 from routers.auth import CurrentUser
@@ -15,6 +12,8 @@ from schemas import (
     BudgetTreeRead,
     SuccessResponse,
 )
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/budget", tags=["Budget"])
 
@@ -221,7 +220,9 @@ async def update_budget_entry_amount(
         current_node = node
         while current_node.parent_id:
             parent_result = await session.execute(
-                select(BudgetTreeNode).where(BudgetTreeNode.id == current_node.parent_id)
+                select(BudgetTreeNode).where(
+                    BudgetTreeNode.id == current_node.parent_id
+                )
             )
             current_node = parent_result.scalar_one_or_none()
             if not current_node:
@@ -259,4 +260,3 @@ async def update_budget_entry_amount(
     await session.commit()
 
     return SuccessResponse(message="Budget entry updated successfully")
-

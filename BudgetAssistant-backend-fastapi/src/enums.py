@@ -30,4 +30,3 @@ class RecurrenceType(StrEnum):
     RECURRENT = "RECURRENT"
     NON_RECURRENT = "NON_RECURRENT"
     BOTH = "BOTH"
-

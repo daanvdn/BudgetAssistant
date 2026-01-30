@@ -2,12 +2,9 @@
 
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from db.database import get_session
-from models import BankAccount, User
+from fastapi import APIRouter, Depends, HTTPException, status
+from models import BankAccount
 from models.associations import UserBankAccountLink
 from routers.auth import CurrentUser
 from schemas import (
@@ -17,6 +14,8 @@ from schemas import (
     SaveAliasRequest,
     SuccessResponse,
 )
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/bank-accounts", tags=["Bank Accounts"])
 
@@ -217,4 +216,3 @@ async def remove_bank_account_from_user(
     await session.commit()
 
     return SuccessResponse(message="Bank account removed from user")
-

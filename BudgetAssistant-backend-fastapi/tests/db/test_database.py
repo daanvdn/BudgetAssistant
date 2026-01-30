@@ -3,8 +3,6 @@
 import pytest
 from sqlmodel import SQLModel
 
-from db import create_db_and_tables, get_session
-
 
 class TestDatabaseConfiguration:
     """Test cases for database configuration."""
@@ -61,4 +59,3 @@ class TestDatabaseConfiguration:
 
         # Session should be rolled back
         await async_session.rollback()
-

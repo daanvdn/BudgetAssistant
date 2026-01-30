@@ -1,11 +1,12 @@
 """Tests for BudgetTree and BudgetTreeNode models."""
 
 import pytest
+from enums import TransactionTypeEnum
+from models import BankAccount, BudgetTree, BudgetTreeNode, Category
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
-
-from models import BudgetTree, BudgetTreeNode, BankAccount, Category
-from enums import TransactionTypeEnum
+from sqlalchemy.orm import selectinload
+from tests.utils import assert_persisted
 
 
 class TestBudgetTreeNode:
@@ -35,6 +36,18 @@ class TestBudgetTreeNode:
         assert budget_tree_node.category_id == category.id
         assert budget_tree_node.amount == 100
 
+        # Re-query from database to verify persistence and category relationship
+        await assert_persisted(
+            async_session,
+            BudgetTreeNode,
+            "id",
+            budget_tree_node.id,
+            {
+                "category_id": category.id,
+                "amount": 100,
+            },
+        )
+
     @pytest.mark.asyncio
     async def test_add_child_to_budget_tree_node(self, async_session):
         """Test adding a child node to a budget tree node."""
@@ -57,6 +70,7 @@ class TestBudgetTreeNode:
         async_session.add(parent_node)
         await async_session.commit()
         await async_session.refresh(parent_node)
+        parent_node_id = parent_node.id
 
         child_node = BudgetTreeNode(
             category_id=child_category.id,
@@ -65,6 +79,7 @@ class TestBudgetTreeNode:
         )
         async_session.add(child_node)
         await async_session.commit()
+        child_node_id = child_node.id
 
         # Query children explicitly
         result = await async_session.execute(
@@ -74,6 +89,32 @@ class TestBudgetTreeNode:
 
         assert len(children) == 1
         assert children[0].amount == 50
+
+        # Re-query from database to verify parent-child relationship persistence
+        await assert_persisted(
+            async_session,
+            BudgetTreeNode,
+            "id",
+            child_node_id,
+            {
+                "category_id": child_category.id,
+                "amount": 50,
+                "parent_id": parent_node_id,
+            },
+        )
+
+        # Verify parent's children relationship using selectinload
+        result = await async_session.execute(
+            select(BudgetTreeNode)
+            .where(BudgetTreeNode.id == parent_node_id)
+            .options(selectinload(BudgetTreeNode.children))
+            .execution_options(populate_existing=True)
+        )
+        persisted_parent = result.scalar_one_or_none()
+
+        assert persisted_parent is not None
+        assert len(persisted_parent.children) == 1
+        assert persisted_parent.children[0].id == child_node_id
 
     @pytest.mark.asyncio
     async def test_get_children_returns_correct_children(self, async_session):
@@ -143,7 +184,9 @@ class TestBudgetTreeNode:
         assert root_node.is_root_category() is True
 
     @pytest.mark.asyncio
-    async def test_is_root_category_returns_false_for_non_root_node(self, async_session):
+    async def test_is_root_category_returns_false_for_non_root_node(
+        self, async_session
+    ):
         """Test is_root_category returns False for non-root category node."""
         child_category = Category(
             name="Child Category",
@@ -160,7 +203,9 @@ class TestBudgetTreeNode:
         assert child_node.is_root_category() is False
 
     @pytest.mark.asyncio
-    async def test_parent_node_is_root_returns_true_for_direct_child(self, async_session):
+    async def test_parent_node_is_root_returns_true_for_direct_child(
+        self, async_session
+    ):
         """Test parent_node_is_root returns True for direct child of root."""
         root_category = Category(
             name="root",  # Use literal "root" to match the constant
@@ -247,6 +292,18 @@ class TestBudgetTree:
 
         assert budget_tree.bank_account_id == bank_account.account_number
         assert budget_tree.root_id == root_node.id
+
+        # Re-query from database to verify persistence and relationships
+        await assert_persisted(
+            async_session,
+            BudgetTree,
+            "bank_account_id",
+            budget_tree.bank_account_id,
+            {
+                "bank_account_id": bank_account.account_number,
+                "root_id": root_node.id,
+            },
+        )
 
     @pytest.mark.asyncio
     async def test_create_budget_tree_with_duplicate_bank_account(self, async_session):

@@ -1,12 +1,7 @@
-"""Tests for service classes."""
+from datetime import datetime
 
-import pytest
-from datetime import datetime, date
-from unittest.mock import AsyncMock, MagicMock, patch
-
-from services.bank_account_service import BankAccountService
-from services.period_service import PeriodService
 from schemas import DateRangeShortcut
+from services.period_service import PeriodService
 
 
 class TestPeriodService:
@@ -15,7 +10,9 @@ class TestPeriodService:
     def test_resolve_current_month(self):
         """Test resolving current month shortcut."""
         service = PeriodService()
-        result = service.resolve_start_end_date_shortcut(DateRangeShortcut.CURRENT_MONTH)
+        result = service.resolve_start_end_date_shortcut(
+            DateRangeShortcut.CURRENT_MONTH
+        )
 
         now = datetime.now()
         assert result.start.month == now.month
@@ -26,7 +23,9 @@ class TestPeriodService:
     def test_resolve_previous_month(self):
         """Test resolving previous month shortcut."""
         service = PeriodService()
-        result = service.resolve_start_end_date_shortcut(DateRangeShortcut.PREVIOUS_MONTH)
+        result = service.resolve_start_end_date_shortcut(
+            DateRangeShortcut.PREVIOUS_MONTH
+        )
 
         now = datetime.now()
         if now.month == 1:
@@ -56,7 +55,9 @@ class TestPeriodService:
     def test_resolve_previous_year(self):
         """Test resolving previous year shortcut."""
         service = PeriodService()
-        result = service.resolve_start_end_date_shortcut(DateRangeShortcut.PREVIOUS_YEAR)
+        result = service.resolve_start_end_date_shortcut(
+            DateRangeShortcut.PREVIOUS_YEAR
+        )
 
         now = datetime.now()
         assert result.start.year == now.year - 1
@@ -139,13 +140,3 @@ class TestPeriodService:
         result = service.format_period(test_date, "YEAR")
 
         assert result == "2023"
-
-
-class TestBankAccountServiceUnit:
-    """Unit tests for BankAccountService (no database)."""
-
-    def test_service_instantiation(self):
-        """Test that service can be instantiated."""
-        service = BankAccountService()
-        assert service is not None
-

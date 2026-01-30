@@ -1,11 +1,8 @@
-
 """Analysis router for revenue/expenses analysis."""
-
-from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.database import get_session
 from enums import TransactionTypeEnum
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from routers.auth import CurrentUser
 from schemas import (
     BudgetTrackerResult,
@@ -18,6 +15,7 @@ from schemas import (
     RevenueExpensesQuery,
     RevenueExpensesQueryWithCategory,
 )
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/analysis", tags=["Analysis"])
 
@@ -112,9 +110,7 @@ async def get_category_details_for_period(
 )
 async def get_categories_for_account_and_transaction_type(
     bank_account: str = Query(..., description="Bank account number"),
-    transaction_type: TransactionTypeEnum = Query(
-        ..., description="Transaction type"
-    ),
+    transaction_type: TransactionTypeEnum = Query(..., description="Transaction type"),
     current_user: CurrentUser = None,
     session: AsyncSession = Depends(get_session),
 ) -> CategoriesForAccountResponse:
@@ -192,4 +188,3 @@ async def resolve_start_end_date_shortcut(
         end=end,
         shortcut=shortcut.value,
     )
-

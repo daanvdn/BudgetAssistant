@@ -2,11 +2,10 @@
 
 from typing import List, Optional
 
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from models import BankAccount, BudgetTree, BudgetTreeNode, Category, User
 from models.associations import UserBankAccountLink
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class BudgetService:
@@ -230,4 +229,3 @@ class BudgetService:
 
 # Singleton instance
 budget_service = BudgetService()
-

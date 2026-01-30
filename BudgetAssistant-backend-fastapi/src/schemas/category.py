@@ -2,9 +2,8 @@
 
 from typing import List, Optional
 
-from pydantic import BaseModel
-
 from enums import TransactionTypeEnum
+from pydantic import BaseModel
 
 
 class CategoryRead(BaseModel):
@@ -33,4 +32,3 @@ class CategoryTreeRead(BaseModel):
 
 # Required for recursive type reference
 CategoryRead.model_rebuild()
-

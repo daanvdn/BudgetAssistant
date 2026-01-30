@@ -2,16 +2,15 @@
 
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
-
 from db.database import get_session
 from enums import TransactionTypeEnum
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from models import Category, CategoryTree
 from routers.auth import CurrentUser
 from schemas import CategoryRead, CategoryTreeRead
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 router = APIRouter(prefix="/categories", tags=["Categories"])
 
@@ -88,9 +87,7 @@ async def get_category_tree(
 
     # Build the tree response
     if category_tree.root:
-        root_response = await build_category_tree_response(
-            category_tree.root, session
-        )
+        root_response = await build_category_tree_response(category_tree.root, session)
     else:
         root_response = None
 
@@ -139,9 +136,7 @@ async def get_category(
     session: AsyncSession = Depends(get_session),
 ) -> CategoryRead:
     """Get a specific category by ID."""
-    result = await session.execute(
-        select(Category).where(Category.id == category_id)
-    )
+    result = await session.execute(select(Category).where(Category.id == category_id))
     category = result.scalar_one_or_none()
 
     if not category:
@@ -207,4 +202,3 @@ async def get_category_by_qualified_name(
         parent_id=category.parent_id,
         children=[],
     )
-

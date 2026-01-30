@@ -1,10 +1,11 @@
 """Tests for User model."""
 
 import pytest
+from models import BankAccount, User
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
-
-from models import User, BankAccount
+from sqlalchemy.orm import selectinload
+from tests.utils import assert_persisted
 
 
 class TestUser:
@@ -30,6 +31,21 @@ class TestUser:
         assert user.last_name == "User"
         assert user.email == "test@example.com"
         assert user.is_active is True
+
+        # Re-query from database to verify persistence
+        await assert_persisted(
+            async_session,
+            User,
+            "id",
+            user.id,
+            {
+                "username": "testuser",
+                "first_name": "Test",
+                "last_name": "User",
+                "email": "test@example.com",
+                "is_active": True,
+            },
+        )
 
     @pytest.mark.asyncio
     async def test_create_user_with_duplicate_username(self, async_session):
@@ -107,6 +123,20 @@ class TestUser:
         assert user.first_name == ""
         assert user.last_name == ""
 
+        # Re-query from database to verify default values are persisted
+        await assert_persisted(
+            async_session,
+            User,
+            "id",
+            user.id,
+            {
+                "is_active": True,
+                "is_superuser": False,
+                "first_name": "",
+                "last_name": "",
+            },
+        )
+
     @pytest.mark.asyncio
     async def test_associate_bank_account_with_user(self, async_session):
         """Test associating a bank account with a user."""
@@ -125,9 +155,26 @@ class TestUser:
         async_session.add(user)
         await async_session.commit()
         await async_session.refresh(user)
+        user_id = user.id
 
         assert len(user.bank_accounts) == 1
         assert user.bank_accounts[0].account_number == "123456"
+
+        # Re-query from database to verify user and relationship persistence
+        # Use a fresh query with selectinload to properly load relationships
+        result = await async_session.execute(
+            select(User)
+            .where(User.id == user_id)
+            .options(selectinload(User.bank_accounts))
+            .execution_options(populate_existing=True)
+        )
+        persisted_user = result.scalar_one_or_none()
+
+        assert persisted_user is not None
+        assert persisted_user.username == "testuser"
+        assert len(persisted_user.bank_accounts) == 1
+        assert persisted_user.bank_accounts[0].account_number == "123456"
+        assert persisted_user.bank_accounts[0].alias == "Savings"
 
     @pytest.mark.asyncio
     async def test_retrieve_non_existent_user(self, async_session):

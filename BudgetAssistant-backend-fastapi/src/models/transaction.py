@@ -5,9 +5,8 @@ import json
 from datetime import date, datetime
 from typing import TYPE_CHECKING, Optional
 
-from sqlmodel import Field, Relationship, SQLModel
-
 from enums import TransactionTypeEnum
+from sqlmodel import Field, Relationship, SQLModel
 
 if TYPE_CHECKING:
     from .bank_account import BankAccount
@@ -85,4 +84,3 @@ class Transaction(SQLModel, table=True):
         """Create a unique transaction ID from transaction number and bank account."""
         raw_value = "_".join([transaction_number, str(hash(bank_account_number))])
         return hashlib.sha256(raw_value.encode()).hexdigest()[:64]
-

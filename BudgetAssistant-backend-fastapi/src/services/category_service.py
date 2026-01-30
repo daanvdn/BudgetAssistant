@@ -2,12 +2,11 @@
 
 from typing import List, Optional
 
+from enums import TransactionTypeEnum
+from models import Category, CategoryTree
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-
-from enums import TransactionTypeEnum
-from models import Category, CategoryTree
 
 
 class CategoryService:
@@ -91,8 +90,7 @@ class CategoryService:
     ) -> List[Category]:
         """Get root categories for a transaction type."""
         result = await session.execute(
-            select(Category)
-            .where(
+            select(Category).where(
                 Category.is_root == True,
                 Category.type == transaction_type.value,
             )
@@ -150,4 +148,3 @@ class CategoryService:
 
 # Singleton instance
 category_service = CategoryService()
-

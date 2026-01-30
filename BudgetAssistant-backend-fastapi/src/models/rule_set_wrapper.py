@@ -43,4 +43,3 @@ class RuleSetWrapper(SQLModel, table=True):
     def set_rule_set_dict(self, rule_set: dict) -> None:
         """Set the rule set from a dictionary."""
         self.rule_set_json = json.dumps(rule_set)
-

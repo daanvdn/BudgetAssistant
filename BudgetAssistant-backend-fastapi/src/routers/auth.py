@@ -4,13 +4,10 @@ from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
 import bcrypt
+from db.database import get_session
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from db.database import get_session
 from models import User
 from schemas import (
     ErrorResponse,
@@ -22,6 +19,8 @@ from schemas import (
     TokenResponse,
     UserRead,
 )
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -294,4 +293,3 @@ async def confirm_password_reset(
         status_code=status.HTTP_501_NOT_IMPLEMENTED,
         detail="Password reset confirmation not yet implemented",
     )
-

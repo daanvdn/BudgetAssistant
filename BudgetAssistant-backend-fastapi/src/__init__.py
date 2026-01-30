@@ -1,2 +1,1 @@
 # BudgetAssistant FastAPI Backend
-

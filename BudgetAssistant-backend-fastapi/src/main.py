@@ -2,10 +2,9 @@
 
 from contextlib import asynccontextmanager
 
+from db import init_db
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
-from db import init_db
 from routers import (
     analysis_router,
     auth_router,

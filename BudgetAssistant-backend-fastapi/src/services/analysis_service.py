@@ -3,24 +3,23 @@
 from datetime import datetime
 from typing import List, Optional, Tuple
 
-from sqlalchemy import select, func, and_
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from enums import RecurrenceType, TransactionTypeEnum
 from models import BankAccount, BudgetTree, BudgetTreeNode, Category, Transaction
 from schemas import (
-    RevenueExpensesQuery,
-    ExpensesAndRevenueForPeriod,
-    RevenueAndExpensesPerPeriodResponse,
-    CategoryAmount,
-    PeriodCategoryBreakdown,
-    RevenueAndExpensesPerPeriodAndCategory,
     BudgetEntryResult,
     BudgetTrackerResult,
-    CategoryDetailsForPeriodResult,
+    CategoryAmount,
     CategoryDetailsForPeriodResponse,
+    CategoryDetailsForPeriodResult,
+    ExpensesAndRevenueForPeriod,
     Grouping,
+    PeriodCategoryBreakdown,
+    RevenueAndExpensesPerPeriodAndCategory,
+    RevenueAndExpensesPerPeriodResponse,
+    RevenueExpensesQuery,
 )
+from sqlalchemy import and_, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class AnalysisService:
@@ -393,8 +392,7 @@ class AnalysisService:
 
         # Get transactions
         result = await session.execute(
-            select(Transaction)
-            .where(
+            select(Transaction).where(
                 filter_condition,
                 Transaction.category_id.in_(category_ids),
             )
@@ -427,7 +425,9 @@ class AnalysisService:
         # Calculate percentages
         categories = []
         for data in category_totals.values():
-            percentage = (data["amount"] / total_amount * 100) if total_amount > 0 else 0
+            percentage = (
+                (data["amount"] / total_amount * 100) if total_amount > 0 else 0
+            )
             categories.append(
                 CategoryDetailsForPeriodResult(
                     category_qualified_name=data["qualified_name"],
@@ -472,4 +472,3 @@ from datetime import timedelta
 
 # Singleton instance
 analysis_service = AnalysisService()
-

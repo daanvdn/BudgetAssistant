@@ -10,32 +10,15 @@ sys.path.insert(0, str(src_path))
 import asyncio
 from logging.config import fileConfig
 
+from alembic import context
+
+# Import all models to ensure they're registered with SQLModel metadata
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
-from alembic import context
-
 # Import SQLModel metadata - this imports all models
 from sqlmodel import SQLModel
-
-# Import all models to ensure they're registered with SQLModel metadata
-from models import (
-    User,
-    BankAccount,
-    Transaction,
-    Counterparty,
-    Category,
-    CategoryTree,
-    BudgetTree,
-    BudgetTreeNode,
-    RuleSetWrapper,
-)
-from models.associations import (
-    UserBankAccountLink,
-    UserCounterpartyLink,
-    UserRuleSetLink,
-)
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

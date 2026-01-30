@@ -1,8 +1,6 @@
 """Period service for date range utilities."""
 
 from datetime import datetime, timedelta
-from enum import Enum
-from typing import Optional
 
 from schemas import DateRangeShortcut, ResolvedDateRange
 
@@ -150,4 +148,3 @@ class PeriodService:
 
 # Singleton instance
 period_service = PeriodService()
-

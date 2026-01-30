@@ -40,4 +40,3 @@ class UserRuleSetLink(SQLModel, table=True):
 user_bank_account_link = UserBankAccountLink
 user_counterparty_link = UserCounterpartyLink
 user_ruleset_link = UserRuleSetLink
-

@@ -1,27 +1,27 @@
 """Tests for common schemas."""
 
-import pytest
 from datetime import date, datetime
 
+import pytest
+from enums import RecurrenceType, TransactionTypeEnum
 from schemas.common import (
+    CountResponse,
+    DateRangeShortcut,
+    ErrorResponse,
+    Grouping,
+    PageTransactionsRequest,
     PaginatedResponse,
     PaginationParams,
-    TransactionQuery,
-    PageTransactionsRequest,
-    RevenueExpensesQuery,
-    SuccessResponse,
-    ErrorResponse,
-    CountResponse,
-    UploadTransactionsResponse,
     RegisterUserRequest,
-    TokenResponse,
-    SortOrder,
-    TransactionSortProperty,
-    Grouping,
-    DateRangeShortcut,
     ResolvedDateRange,
+    RevenueExpensesQuery,
+    SortOrder,
+    SuccessResponse,
+    TokenResponse,
+    TransactionQuery,
+    TransactionSortProperty,
+    UploadTransactionsResponse,
 )
-from enums import TransactionTypeEnum, RecurrenceType
 
 
 class TestPaginatedResponse:
@@ -336,4 +336,3 @@ class TestResolvedDateRange:
         assert resolved.start == start
         assert resolved.end == end
         assert resolved.shortcut == "current year"
-

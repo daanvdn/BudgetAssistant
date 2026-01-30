@@ -37,4 +37,3 @@ class RuleSetWrapperUpdate(BaseModel):
 
     rule_set: Dict[str, Any] | None = None
     category_id: int | None = None
-

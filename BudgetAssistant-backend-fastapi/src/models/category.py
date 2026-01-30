@@ -2,10 +2,9 @@
 
 from typing import TYPE_CHECKING, ClassVar, List, Optional
 
+from enums import TransactionTypeEnum
 from sqlalchemy import Column, String
 from sqlmodel import Field, Relationship, SQLModel
-
-from enums import TransactionTypeEnum
 
 if TYPE_CHECKING:
     from .budget import BudgetTreeNode
@@ -124,4 +123,3 @@ class CategoryTree(SQLModel, table=True):
     def __str__(self) -> str:
         root_name = self.root.name if self.root else "None"
         return f"{self.type} - {root_name}"
-

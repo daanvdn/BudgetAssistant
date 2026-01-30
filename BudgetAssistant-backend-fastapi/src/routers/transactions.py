@@ -3,12 +3,9 @@
 from datetime import datetime
 from typing import List
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
-from sqlalchemy import select, func, and_, or_
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from db.database import get_session
 from enums import TransactionTypeEnum
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from models import BankAccount, Category, Counterparty, Transaction
 from models.associations import UserBankAccountLink
 from routers.auth import CurrentUser
@@ -20,11 +17,12 @@ from schemas import (
     PageTransactionsToManuallyReviewRequest,
     PaginatedResponse,
     SuccessResponse,
-    TransactionCreate,
     TransactionRead,
     TransactionUpdate,
     UploadTransactionsResponse,
 )
+from sqlalchemy import and_, func, or_, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/transactions", tags=["Transactions"])
 
@@ -164,9 +162,7 @@ async def page_transactions(
     )
 
 
-@router.post(
-    "/page-in-context", response_model=PaginatedResponse[TransactionRead]
-)
+@router.post("/page-in-context", response_model=PaginatedResponse[TransactionRead])
 async def page_transactions_in_context(
     request: PageTransactionsInContextRequest,
     current_user: CurrentUser,
@@ -341,7 +337,9 @@ async def count_transactions_to_manually_review(
     return CountResponse(count=count)
 
 
-@router.post("/save", response_model=SuccessResponse, responses={400: {"model": ErrorResponse}})
+@router.post(
+    "/save", response_model=SuccessResponse, responses={400: {"model": ErrorResponse}}
+)
 async def save_transaction(
     transaction_update: TransactionUpdate,
     transaction_id: str,
@@ -509,4 +507,3 @@ async def get_distinct_counterparty_accounts(
     )
     accounts = result.scalars().all()
     return [acc for acc in accounts if acc]  # Filter out empty strings
-

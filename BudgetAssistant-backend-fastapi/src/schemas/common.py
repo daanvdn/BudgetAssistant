@@ -4,10 +4,8 @@ from datetime import date, datetime
 from enum import Enum
 from typing import Generic, List, Optional, TypeVar
 
-from pydantic import BaseModel, Field
-
 from enums import RecurrenceType, TransactionTypeEnum
-
+from pydantic import BaseModel, Field
 
 # Generic type for paginated responses
 T = TypeVar("T")
@@ -266,4 +264,3 @@ class ResolvedDateRange(BaseModel):
     start: datetime
     end: datetime
     shortcut: str
-

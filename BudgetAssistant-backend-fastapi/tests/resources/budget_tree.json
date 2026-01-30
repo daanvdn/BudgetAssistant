@@ -1,0 +1,608 @@
+{
+  "root": {
+    "name": "root",
+    "qualified_name": "root",
+    "budget_tree_node_id": 1,
+    "budget_tree_node_amount": -1,
+    "children": [
+      {
+        "name": "NO CATEGORY",
+        "qualified_name": "NO CATEGORY",
+        "budget_tree_node_id": 2,
+        "budget_tree_node_amount": 0,
+        "children": []
+      },
+      {
+        "name": "DUMMY CATEGORY",
+        "qualified_name": "DUMMY CATEGORY",
+        "budget_tree_node_id": 3,
+        "budget_tree_node_amount": 0,
+        "children": []
+      },
+      {
+        "name": "auto & vervoer",
+        "qualified_name": "auto & vervoer",
+        "budget_tree_node_id": 4,
+        "budget_tree_node_amount": 0,
+        "children": [
+          {
+            "name": "autoverzekering",
+            "qualified_name": "auto & vervoer#autoverzekering",
+            "budget_tree_node_id": 5,
+            "budget_tree_node_amount": 0,
+            "children": []
+          },
+          {
+            "name": "benzine",
+            "qualified_name": "auto & vervoer#benzine",
+            "budget_tree_node_id": 6,
+            "budget_tree_node_amount": 0,
+            "children": []
+          },
+          {
+            "name": "onderhoud & herstelling",
+            "qualified_name": "auto & vervoer#onderhoud & herstelling",
+            "budget_tree_node_id": 7,
+            "budget_tree_node_amount": 0,
+            "children": []
+          },
+          {
+            "name": "parkeren",
+            "qualified_name": "auto & vervoer#parkeren",
+            "budget_tree_node_id": 8,
+            "budget_tree_node_amount": 0,
+            "children": []
+          },
+          {
+            "name": "trein",
+            "qualified_name": "auto & vervoer#trein",
+            "budget_tree_node_id": 9,
+            "budget_tree_node_amount": 0,
+            "children": []
+          }
+        ]
+      },
+      {
+        "name": "bankkosten",
+        "qualified_name": "bankkosten",
+        "budget_tree_node_id": 10,
+        "budget_tree_node_amount": 0,
+        "children": []
+      },
+      {
+        "name": "belastingen",
+        "qualified_name": "belastingen",
+        "budget_tree_node_id": 11,
+        "budget_tree_node_amount": 0,
+        "children": [
+          {
+            "name": "KI",
+            "qualified_name": "belastingen#KI",
+            "budget_tree_node_id": 12,
+            "budget_tree_node_amount": 0,
+            "children": []
+          },
+          {
+            "name": "boekhouder",
+            "qualified_name": "belastingen#boekhouder",
+            "budget_tree_node_id": 13,
+            "budget_tree_node_amount": 0,
+            "children": []
+          },
+          {
+            "name": "gemeentebelasting",
+            "qualified_name": "belastingen#gemeentebelasting",
+            "budget_tree_node_id": 14,
+            "budget_tree_node_amount": 0,
+            "children": []
+          },
+          {
+            "name": "personenbelasting",
+            "qualified_name": "belastingen#personenbelasting",
+            "budget_tree_node_id": 15,
+            "budget_tree_node_amount": 0,
+            "children": []
+          },
+          {
+            "name": "provinciebelasting",
+            "qualified_name": "belastingen#provinciebelasting",
+            "budget_tree_node_id": 16,
+            "budget_tree_node_amount": 0,
+            "children": []
+          },
+          {
+            "name": "verkeersbelasting",
+            "qualified_name": "belastingen#verkeersbelasting",
+            "budget_tree_node_id": 17,
+            "budget_tree_node_amount": 0,
+            "children": []
+          }
+        ]
+      },
+      {
+        "name": "cash geldopname",
+        "qualified_name": "cash geldopname",
+        "budget_tree_node_id": 18,
+        "budget_tree_node_amount": 0,
+        "children": []
+      },
+      {
+        "name": "energie",
+        "qualified_name": "energie",
+        "budget_tree_node_id": 19,
+        "budget_tree_node_amount": 0,
+        "children": [
+          {
+            "name": "gas & elektriciteit",
+            "qualified_name": "energie#gas & elektriciteit",
+            "budget_tree_node_id": 20,
+            "budget_tree_node_amount": 0,
+            "children": []
+          },
+          {
+            "name": "water",
+            "qualified_name": "energie#water",
+            "budget_tree_node_id": 21,
+            "budget_tree_node_amount": 0,
+            "children": []
+          }
+        ]
+      },
+      {
+        "name": "gemeenschappelijke kosten",
+        "qualified_name": "gemeenschappelijke kosten",
+        "budget_tree_node_id": 22,
+        "budget_tree_node_amount": 0,
+        "children": []
+      },
+      {
+        "name": "giften",
+        "qualified_name": "giften",
+        "budget_tree_node_id": 23,
+        "budget_tree_node_amount": 0,
+        "children": [
+          {
+            "name": "cadeau's",
+            "qualified_name": "giften#cadeau's",
+            "budget_tree_node_id": 24,
+            "budget_tree_node_amount": 0,
+            "children": []
+          }
+        ]
+      },
+      {
+        "name": "huishouden",
+        "qualified_name": "huishouden",
+        "budget_tree_node_id": 25,
+        "budget_tree_node_amount": 0,
+        "children": [
+          {
+            "name": "boodschappen",
+            "qualified_name": "huishouden#boodschappen",
+            "budget_tree_node_id": 26,
+            "budget_tree_node_amount": 0,
+            "children": [
+              {
+                "name": "bakker",
+                "qualified_name": "huishouden#boodschappen#bakker",
+                "budget_tree_node_id": 27,
+                "budget_tree_node_amount": 0,
+                "children": []
+              },
+              {
+                "name": "slager",
+                "qualified_name": "huishouden#boodschappen#slager",
+                "budget_tree_node_id": 28,
+                "budget_tree_node_amount": 0,
+                "children": []
+              },
+              {
+                "name": "supermarkt",
+                "qualified_name": "huishouden#boodschappen#supermarkt",
+                "budget_tree_node_id": 29,
+                "budget_tree_node_amount": 0,
+                "children": [
+                  {
+                    "name": "colruyt",
+                    "qualified_name": "huishouden#boodschappen#supermarkt#colruyt",
+                    "budget_tree_node_id": 30,
+                    "budget_tree_node_amount": 0,
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "lunch werk",
+            "qualified_name": "huishouden#lunch werk",
+            "budget_tree_node_id": 31,
+            "budget_tree_node_amount": 0,
+            "children": []
+          }
+        ]
+      },
+      {
+        "name": "kinderen",
+        "qualified_name": "kinderen",
+        "budget_tree_node_id": 32,
+        "budget_tree_node_amount": 0,
+        "children": [
+          {
+            "name": "kinderopvang",
+            "qualified_name": "kinderen#kinderopvang",
+            "budget_tree_node_id": 33,
+            "budget_tree_node_amount": 0,
+            "children": []
+          },
+          {
+            "name": "kleding",
+            "qualified_name": "kinderen#kleding",
+            "budget_tree_node_id": 34,
+            "budget_tree_node_amount": 0,
+            "children": []
+          },
+          {
+            "name": "school",
+            "qualified_name": "kinderen#school",
+            "budget_tree_node_id": 35,
+            "budget_tree_node_amount": 0,
+            "children": [
+              {
+                "name": "boeken/materiaal",
+                "qualified_name": "kinderen#school#boeken/materiaal",
+                "budget_tree_node_id": 36,
+                "budget_tree_node_amount": 0,
+                "children": []
+              },
+              {
+                "name": "middagmaal",
+                "qualified_name": "kinderen#school#middagmaal",
+                "budget_tree_node_id": 37,
+                "budget_tree_node_amount": 0,
+                "children": []
+              },
+              {
+                "name": "schoolreis",
+                "qualified_name": "kinderen#school#schoolreis",
+                "budget_tree_node_id": 38,
+                "budget_tree_node_amount": 0,
+                "children": []
+              }
+            ]
+          },
+          {
+            "name": "speelgoed",
+            "qualified_name": "kinderen#speelgoed",
+            "budget_tree_node_id": 39,
+            "budget_tree_node_amount": 0,
+            "children": []
+          },
+          {
+            "name": "uitrusting",
+            "qualified_name": "kinderen#uitrusting",
+            "budget_tree_node_id": 40,
+            "budget_tree_node_amount": 0,
+            "children": []
+          }
+        ]
+      },
+      {
+        "name": "kledij & verzorging",
+        "qualified_name": "kledij & verzorging",
+        "budget_tree_node_id": 41,
+        "budget_tree_node_amount": 0,
+        "children": [
+          {
+            "name": "accessoires",
+            "qualified_name": "kledij & verzorging#accessoires",
+            "budget_tree_node_id": 42,
+            "budget_tree_node_amount": 0,
+            "children": []
+          },
+          {
+            "name": "kapper",
+            "qualified_name": "kledij & verzorging#kapper",
+            "budget_tree_node_id": 43,
+            "budget_tree_node_amount": 0,
+            "children": []
+          },
+          {
+            "name": "kleren",
+            "qualified_name": "kledij & verzorging#kleren",
+            "budget_tree_node_id": 44,
+            "budget_tree_node_amount": 0,
+            "children": []
+          },
+          {
+            "name": "schoenen",
+            "qualified_name": "kledij & verzorging#schoenen",
+            "budget_tree_node_id": 45,
+            "budget_tree_node_amount": 0,
+            "children": []
+          }
+        ]
+      },
+      {
+        "name": "kredietkaart",
+        "qualified_name": "kredietkaart",
+        "budget_tree_node_id": 46,
+        "budget_tree_node_amount": 0,
+        "children": []
+      },
+      {
+        "name": "leningen",
+        "qualified_name": "leningen",
+        "budget_tree_node_id": 47,
+        "budget_tree_node_amount": 0,
+        "children": [
+          {
+            "name": "woonlening",
+            "qualified_name": "leningen#woonlening",
+            "budget_tree_node_id": 48,
+            "budget_tree_node_amount": 0,
+            "children": []
+          }
+        ]
+      },
+      {
+        "name": "medisch",
+        "qualified_name": "medisch",
+        "budget_tree_node_id": 49,
+        "budget_tree_node_amount": 0,
+        "children": [
+          {
+            "name": "apotheek",
+            "qualified_name": "medisch#apotheek",
+            "budget_tree_node_id": 50,
+            "budget_tree_node_amount": 0,
+            "children": []
+          },
+          {
+            "name": "dierenarts",
+            "qualified_name": "medisch#dierenarts",
+            "budget_tree_node_id": 51,
+            "budget_tree_node_amount": 0,
+            "children": []
+          },
+          {
+            "name": "dokter",
+            "qualified_name": "medisch#dokter",
+            "budget_tree_node_id": 52,
+            "budget_tree_node_amount": 0,
+            "children": []
+          },
+          {
+            "name": "kinesist",
+            "qualified_name": "medisch#kinesist",
+            "budget_tree_node_id": 53,
+            "budget_tree_node_amount": 0,
+            "children": []
+          },
+          {
+            "name": "mutualiteit",
+            "qualified_name": "medisch#mutualiteit",
+            "budget_tree_node_id": 54,
+            "budget_tree_node_amount": 0,
+            "children": []
+          },
+          {
+            "name": "tandarts",
+            "qualified_name": "medisch#tandarts",
+            "budget_tree_node_id": 55,
+            "budget_tree_node_amount": 0,
+            "children": []
+          },
+          {
+            "name": "ziekenhuis",
+            "qualified_name": "medisch#ziekenhuis",
+            "budget_tree_node_id": 56,
+            "budget_tree_node_amount": 0,
+            "children": []
+          }
+        ]
+      },
+      {
+        "name": "sparen",
+        "qualified_name": "sparen",
+        "budget_tree_node_id": 57,
+        "budget_tree_node_amount": 0,
+        "children": [
+          {
+            "name": "algemeen",
+            "qualified_name": "sparen#algemeen",
+            "budget_tree_node_id": 58,
+            "budget_tree_node_amount": 0,
+            "children": []
+          },
+          {
+            "name": "pensioensparen",
+            "qualified_name": "sparen#pensioensparen",
+            "budget_tree_node_id": 59,
+            "budget_tree_node_amount": 0,
+            "children": []
+          }
+        ]
+      },
+      {
+        "name": "telecom",
+        "qualified_name": "telecom",
+        "budget_tree_node_id": 60,
+        "budget_tree_node_amount": 0,
+        "children": [
+          {
+            "name": "internet & tv",
+            "qualified_name": "telecom#internet & tv",
+            "budget_tree_node_id": 61,
+            "budget_tree_node_amount": 0,
+            "children": []
+          },
+          {
+            "name": "telefonie",
+            "qualified_name": "telecom#telefonie",
+            "budget_tree_node_id": 62,
+            "budget_tree_node_amount": 0,
+            "children": []
+          }
+        ]
+      },
+      {
+        "name": "vakbond",
+        "qualified_name": "vakbond",
+        "budget_tree_node_id": 63,
+        "budget_tree_node_amount": 0,
+        "children": []
+      },
+      {
+        "name": "verzekeringen",
+        "qualified_name": "verzekeringen",
+        "budget_tree_node_id": 64,
+        "budget_tree_node_amount": 0,
+        "children": [
+          {
+            "name": "autoverzekering",
+            "qualified_name": "verzekeringen#autoverzekering",
+            "budget_tree_node_id": 65,
+            "budget_tree_node_amount": 0,
+            "children": []
+          },
+          {
+            "name": "brand- en familiale verzekering",
+            "qualified_name": "verzekeringen#brand- en familiale verzekering",
+            "budget_tree_node_id": 66,
+            "budget_tree_node_amount": 0,
+            "children": []
+          },
+          {
+            "name": "hospitalisatieverzekering",
+            "qualified_name": "verzekeringen#hospitalisatieverzekering",
+            "budget_tree_node_id": 67,
+            "budget_tree_node_amount": 0,
+            "children": []
+          },
+          {
+            "name": "schuldsaldo",
+            "qualified_name": "verzekeringen#schuldsaldo",
+            "budget_tree_node_id": 68,
+            "budget_tree_node_amount": 0,
+            "children": []
+          }
+        ]
+      },
+      {
+        "name": "vrije tijd",
+        "qualified_name": "vrije tijd",
+        "budget_tree_node_id": 69,
+        "budget_tree_node_amount": 0,
+        "children": [
+          {
+            "name": "caf\u00e9",
+            "qualified_name": "vrije tijd#caf\u00e9",
+            "budget_tree_node_id": 70,
+            "budget_tree_node_amount": 0,
+            "children": []
+          },
+          {
+            "name": "hobby",
+            "qualified_name": "vrije tijd#hobby",
+            "budget_tree_node_id": 71,
+            "budget_tree_node_amount": 0,
+            "children": []
+          },
+          {
+            "name": "reizen",
+            "qualified_name": "vrije tijd#reizen",
+            "budget_tree_node_id": 72,
+            "budget_tree_node_amount": 0,
+            "children": []
+          },
+          {
+            "name": "restaurant",
+            "qualified_name": "vrije tijd#restaurant",
+            "budget_tree_node_id": 73,
+            "budget_tree_node_amount": 0,
+            "children": []
+          },
+          {
+            "name": "uitgaan",
+            "qualified_name": "vrije tijd#uitgaan",
+            "budget_tree_node_id": 74,
+            "budget_tree_node_amount": 0,
+            "children": []
+          }
+        ]
+      },
+      {
+        "name": "webshops",
+        "qualified_name": "webshops",
+        "budget_tree_node_id": 75,
+        "budget_tree_node_amount": 0,
+        "children": []
+      },
+      {
+        "name": "wonen",
+        "qualified_name": "wonen",
+        "budget_tree_node_id": 76,
+        "budget_tree_node_amount": 0,
+        "children": [
+          {
+            "name": "chauffage",
+            "qualified_name": "wonen#chauffage",
+            "budget_tree_node_id": 77,
+            "budget_tree_node_amount": 0,
+            "children": []
+          },
+          {
+            "name": "electro",
+            "qualified_name": "wonen#electro",
+            "budget_tree_node_id": 78,
+            "budget_tree_node_amount": 0,
+            "children": []
+          },
+          {
+            "name": "keuken",
+            "qualified_name": "wonen#keuken",
+            "budget_tree_node_id": 79,
+            "budget_tree_node_amount": 0,
+            "children": []
+          },
+          {
+            "name": "loodgieter",
+            "qualified_name": "wonen#loodgieter",
+            "budget_tree_node_id": 80,
+            "budget_tree_node_amount": 0,
+            "children": []
+          },
+          {
+            "name": "meubelen & accessoires",
+            "qualified_name": "wonen#meubelen & accessoires",
+            "budget_tree_node_id": 81,
+            "budget_tree_node_amount": 0,
+            "children": []
+          },
+          {
+            "name": "poetsdienst",
+            "qualified_name": "wonen#poetsdienst",
+            "budget_tree_node_id": 82,
+            "budget_tree_node_amount": 0,
+            "children": []
+          },
+          {
+            "name": "renovaties",
+            "qualified_name": "wonen#renovaties",
+            "budget_tree_node_id": 83,
+            "budget_tree_node_amount": 0,
+            "children": []
+          },
+          {
+            "name": "tuin",
+            "qualified_name": "wonen#tuin",
+            "budget_tree_node_id": 84,
+            "budget_tree_node_amount": 0,
+            "children": []
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -3,20 +3,16 @@
 from datetime import datetime
 from typing import List, Optional, Tuple
 
-from sqlalchemy import select, func, and_, or_, update
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from enums import TransactionTypeEnum
-from models import BankAccount, Category, Counterparty, Transaction, User
+from models import BankAccount, Counterparty, Transaction, User
 from models.associations import UserBankAccountLink
 from schemas import (
     TransactionCreate,
     TransactionQuery,
     TransactionUpdate,
-    PaginatedResponse,
-    TransactionRead,
-    TransactionInContextQuery,
 )
+from sqlalchemy import and_, func, or_, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class TransactionService:
@@ -246,13 +242,17 @@ class TransactionService:
             transaction.category_id = update_data.category_id
 
         if update_data.manually_assigned_category is not None:
-            transaction.manually_assigned_category = update_data.manually_assigned_category
+            transaction.manually_assigned_category = (
+                update_data.manually_assigned_category
+            )
 
         if update_data.is_recurring is not None:
             transaction.is_recurring = update_data.is_recurring
 
         if update_data.is_advance_shared_account is not None:
-            transaction.is_advance_shared_account = update_data.is_advance_shared_account
+            transaction.is_advance_shared_account = (
+                update_data.is_advance_shared_account
+            )
 
         if update_data.is_manually_reviewed is not None:
             transaction.is_manually_reviewed = update_data.is_manually_reviewed
@@ -354,4 +354,3 @@ class TransactionService:
 
 # Singleton instance
 transaction_service = TransactionService()
-

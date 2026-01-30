@@ -100,4 +100,3 @@ class BudgetTree(SQLModel, table=True):
 
     def __str__(self) -> str:
         return self.bank_account_id
-

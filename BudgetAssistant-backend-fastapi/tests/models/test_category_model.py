@@ -1,11 +1,12 @@
 """Tests for Category and CategoryTree models."""
 
 import pytest
+from enums import TransactionTypeEnum
+from models import Category, CategoryTree
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
-
-from models import Category, CategoryTree
-from enums import TransactionTypeEnum
+from sqlalchemy.orm import selectinload
+from tests.utils import assert_persisted
 
 
 class TestCategory:
@@ -28,6 +29,20 @@ class TestCategory:
         assert category.type == TransactionTypeEnum.EXPENSES
         assert category.is_root is False
 
+        # Re-query from database to verify persistence
+        await assert_persisted(
+            async_session,
+            Category,
+            "id",
+            category.id,
+            {
+                "name": "Test Category",
+                "type": TransactionTypeEnum.EXPENSES,
+                "qualified_name": "Test Category",
+                "is_root": False,
+            },
+        )
+
     @pytest.mark.asyncio
     async def test_category_qualified_name_hierarchy(self, async_session):
         """Test category qualified name reflects hierarchy."""
@@ -40,6 +55,7 @@ class TestCategory:
         async_session.add(root_category)
         await async_session.commit()
         await async_session.refresh(root_category)
+        root_id = root_category.id
 
         child_category = Category(
             name="Child",
@@ -49,8 +65,35 @@ class TestCategory:
         )
         async_session.add(child_category)
         await async_session.commit()
+        await async_session.refresh(child_category)
+        child_id = child_category.id
 
         assert child_category.qualified_name == "root#child"
+
+        # Re-query from database to verify hierarchy is persisted
+        await assert_persisted(
+            async_session,
+            Category,
+            "id",
+            root_id,
+            {
+                "name": "Root",
+                "is_root": True,
+                "qualified_name": "root",
+            },
+        )
+
+        persisted_child = await assert_persisted(
+            async_session,
+            Category,
+            "id",
+            child_id,
+            {
+                "name": "Child",
+                "parent_id": root_id,
+                "qualified_name": "root#child",
+            },
+        )
 
     @pytest.mark.asyncio
     async def test_add_child_category(self, async_session):
@@ -64,6 +107,7 @@ class TestCategory:
         async_session.add(root_category)
         await async_session.commit()
         await async_session.refresh(root_category)
+        root_id = root_category.id
 
         child_category = Category(
             name="Child",
@@ -76,8 +120,36 @@ class TestCategory:
         root_category.add_child(child_category)
         await async_session.commit()
         await async_session.refresh(child_category)
+        child_id = child_category.id
 
         assert child_category.parent_id == root_category.id
+
+        # Re-query from database to verify parent-child relationship
+        await assert_persisted(
+            async_session,
+            Category,
+            "id",
+            child_id,
+            {
+                "name": "Child",
+                "parent_id": root_id,
+                "qualified_name": "root#child",
+            },
+        )
+
+        # Verify parent's children relationship using selectinload
+        result = await async_session.execute(
+            select(Category)
+            .where(Category.id == root_id)
+            .options(selectinload(Category.children))
+            .execution_options(populate_existing=True)
+        )
+        persisted_root = result.scalar_one_or_none()
+
+        assert persisted_root is not None
+        assert len(persisted_root.children) == 1
+        assert persisted_root.children[0].id == child_id
+        assert persisted_root.children[0].name == "Child"
 
     def test_no_category_object(self):
         """Test creating a 'no category' placeholder object."""
@@ -261,4 +333,3 @@ class TestCategoryTree:
 
         assert len(root_category.children) == 1
         assert root_category.children[0].name == "Child"
-

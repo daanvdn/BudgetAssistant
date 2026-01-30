@@ -1,11 +1,8 @@
 """Rules router for rule set management."""
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from db.database import get_session
 from enums import TransactionTypeEnum
+from fastapi import APIRouter, Depends, HTTPException, status
 from models import Category, RuleSetWrapper
 from models.associations import UserRuleSetLink
 from routers.auth import CurrentUser
@@ -17,6 +14,8 @@ from schemas import (
     RuleSetWrapperUpdate,
     SuccessResponse,
 )
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/rules", tags=["Rules"])
 
@@ -229,4 +228,3 @@ async def categorize_transactions(
         with_category_count=0,
         without_category_count=0,
     )
-

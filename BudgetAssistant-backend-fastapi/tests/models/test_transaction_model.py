@@ -1,13 +1,13 @@
 """Tests for Transaction model."""
 
-import pytest
-from datetime import date, datetime
+from datetime import date
 
+import pytest
+from enums import TransactionTypeEnum
+from models import BankAccount, Category, Counterparty, Transaction
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
-
-from models import Transaction, BankAccount, Counterparty, Category
-from enums import TransactionTypeEnum
+from tests.utils import assert_persisted
 
 
 class TestTransaction:
@@ -58,8 +58,34 @@ class TestTransaction:
         assert transaction.counterparty_id == counterparty.name
         assert transaction.category_id == category.id
 
+        # Re-query from database to verify persistence and foreign key relationships
+        await assert_persisted(
+            async_session,
+            Transaction,
+            "transaction_id",
+            transaction_id,
+            {
+                "transaction_id": transaction_id,
+                "bank_account_id": bank_account.account_number,
+                "counterparty_id": counterparty.name,
+                "category_id": category.id,
+                "booking_date": date(2023, 10, 1),
+                "statement_number": "stmt_001",
+                "transaction_number": "txn_num_001",
+                "transaction": "Test Transaction",
+                "currency_date": date(2023, 10, 1),
+                "amount": 100.0,
+                "currency": "USD",
+                "bic": "BIC123",
+                "country_code": "US",
+                "communications": "Test communication",
+            },
+        )
+
     @pytest.mark.asyncio
-    async def test_create_transaction_with_duplicate_transaction_number(self, async_session):
+    async def test_create_transaction_with_duplicate_transaction_number(
+        self, async_session
+    ):
         """Test that duplicate transaction numbers raise an error."""
         bank_account = BankAccount(account_number="123456", alias="Savings")
         counterparty = Counterparty(name="counterparty1", account_number="ACC001")
@@ -103,7 +129,9 @@ class TestTransaction:
             await async_session.commit()
 
     @pytest.mark.asyncio
-    async def test_get_transaction_type_returns_revenue_for_positive_amount(self, async_session):
+    async def test_get_transaction_type_returns_revenue_for_positive_amount(
+        self, async_session
+    ):
         """Test that positive amounts return REVENUE transaction type."""
         bank_account = BankAccount(account_number="123456", alias="Savings")
         counterparty = Counterparty(name="counterparty1", account_number="ACC001")
@@ -128,7 +156,9 @@ class TestTransaction:
         assert transaction.get_transaction_type() == TransactionTypeEnum.REVENUE
 
     @pytest.mark.asyncio
-    async def test_get_transaction_type_returns_expenses_for_negative_amount(self, async_session):
+    async def test_get_transaction_type_returns_expenses_for_negative_amount(
+        self, async_session
+    ):
         """Test that negative amounts return EXPENSES transaction type."""
         bank_account = BankAccount(account_number="123456", alias="Savings")
         counterparty = Counterparty(name="counterparty1", account_number="ACC001")
@@ -159,7 +189,9 @@ class TestTransaction:
         counterparty = Counterparty(name="counterparty1", account_number="ACC001")
         bank_account2 = BankAccount(account_number="123457", alias="Checking")
         counterparty2 = Counterparty(name="counterparty2", account_number="ACC002")
-        async_session.add_all([bank_account, counterparty, bank_account2, counterparty2])
+        async_session.add_all(
+            [bank_account, counterparty, bank_account2, counterparty2]
+        )
         await async_session.commit()
 
         transaction1 = Transaction(
@@ -274,4 +306,3 @@ class TestTransaction:
         assert id1 != id2
         assert id1 != id3
         assert id2 != id3
-

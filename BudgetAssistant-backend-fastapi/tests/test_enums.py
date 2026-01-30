@@ -1,7 +1,7 @@
 """Tests for enums module."""
 
 import pytest
-from enums import TransactionTypeEnum, RecurrenceType
+from enums import RecurrenceType, TransactionTypeEnum
 
 
 class TestTransactionTypeEnum:
@@ -61,4 +61,6 @@ class TestRecurrenceType:
     def test_enum_is_str_enum(self):
         """Test that enum values can be used as strings."""
         assert str(RecurrenceType.RECURRENT) == "RECURRENT"
-        assert f"Recurrence: {RecurrenceType.NON_RECURRENT}" == "Recurrence: NON_RECURRENT"
+        assert (
+            f"Recurrence: {RecurrenceType.NON_RECURRENT}" == "Recurrence: NON_RECURRENT"
+        )

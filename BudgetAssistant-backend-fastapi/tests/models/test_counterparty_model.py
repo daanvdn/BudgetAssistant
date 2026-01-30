@@ -1,10 +1,9 @@
 """Tests for Counterparty model."""
 
 import pytest
-from sqlalchemy import select
-from sqlalchemy.exc import IntegrityError
-
 from models import Counterparty, User
+from sqlalchemy.exc import IntegrityError
+from tests.utils import assert_persisted
 
 
 class TestCounterparty:
@@ -21,6 +20,15 @@ class TestCounterparty:
         await async_session.commit()
 
         assert counterparty.name == "counterparty 1 2"
+
+        # Re-query from database to verify persistence
+        await assert_persisted(
+            async_session,
+            Counterparty,
+            "name",
+            "counterparty 1 2",
+            {"name": "counterparty 1 2", "account_number": "ACC001"},
+        )
 
     @pytest.mark.asyncio
     async def test_create_counterparty_with_duplicate_name(self, async_session):
@@ -83,12 +91,13 @@ class TestCounterparty:
         await async_session.commit()
 
         # Query the users associated with the counterparty
-        from sqlalchemy import select
         from models.associations import UserCounterpartyLink
+        from sqlalchemy import select
+
         result = await async_session.execute(
-            select(User).join(UserCounterpartyLink).where(
-                UserCounterpartyLink.counterparty_name == counterparty.name
-            )
+            select(User)
+            .join(UserCounterpartyLink)
+            .where(UserCounterpartyLink.counterparty_name == counterparty.name)
         )
         users = result.scalars().all()
 
@@ -112,6 +121,20 @@ class TestCounterparty:
         assert counterparty.street_and_number == "123 Main St"
         assert counterparty.zip_code_and_city == "12345 Test City"
 
+        # Re-query from database to verify optional fields are persisted
+        await assert_persisted(
+            async_session,
+            Counterparty,
+            "name",
+            "test counterparty",
+            {
+                "name": "test counterparty",
+                "account_number": "ACC001",
+                "street_and_number": "123 Main St",
+                "zip_code_and_city": "12345 Test City",
+            },
+        )
+
     @pytest.mark.asyncio
     async def test_counterparty_default_optional_fields_are_none(self, async_session):
         """Test that optional fields default to None."""
@@ -126,3 +149,17 @@ class TestCounterparty:
         assert counterparty.zip_code_and_city is None
         assert counterparty.category_id is None
 
+        # Re-query from database to verify default None values are persisted
+        await assert_persisted(
+            async_session,
+            Counterparty,
+            "name",
+            "test counterparty",
+            {
+                "name": "test counterparty",
+                "account_number": "ACC001",
+                "street_and_number": None,
+                "zip_code_and_city": None,
+                "category_id": None,
+            },
+        )

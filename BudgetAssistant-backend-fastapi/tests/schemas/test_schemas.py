@@ -1,27 +1,24 @@
 """Tests for Pydantic schemas."""
 
-import pytest
 from datetime import date, datetime
-from pydantic import ValidationError
 
+import pytest
+from enums import TransactionTypeEnum
+from pydantic import ValidationError
 from schemas import (
+    BankAccountCreate,
+    BankAccountRead,
+    BudgetTreeNodeCreate,
+    BudgetTreeNodeRead,
+    CategoryRead,
+    RuleSetWrapperCreate,
+    RuleSetWrapperRead,
+    TransactionCreate,
+    TransactionRead,
     UserCreate,
     UserRead,
     UserUpdate,
-    BankAccountCreate,
-    BankAccountRead,
-    BankAccountUpdate,
-    CounterpartyCreate,
-    CounterpartyRead,
-    TransactionCreate,
-    TransactionRead,
-    CategoryRead,
-    BudgetTreeNodeCreate,
-    BudgetTreeNodeRead,
-    RuleSetWrapperCreate,
-    RuleSetWrapperRead,
 )
-from enums import TransactionTypeEnum
 
 
 class TestUserSchemas:
@@ -61,6 +58,7 @@ class TestUserSchemas:
 
     def test_user_read_from_attributes(self):
         """Test UserRead with from_attributes config."""
+
         # Simulate ORM-like object
         class MockUser:
             id = 1
@@ -110,6 +108,7 @@ class TestBankAccountSchemas:
 
     def test_bank_account_read_from_attributes(self):
         """Test BankAccountRead with from_attributes config."""
+
         class MockBankAccount:
             account_number = "123456789"
             alias = "Checking"
@@ -308,4 +307,3 @@ class TestRuleSetWrapperSchemas:
         )
         assert wrapper.id == 1
         assert len(wrapper.rule_set["rules"]) == 1
-

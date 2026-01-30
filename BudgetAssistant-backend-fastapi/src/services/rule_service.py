@@ -2,12 +2,11 @@
 
 from typing import Any, Dict, List, Optional
 
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from enums import TransactionTypeEnum
 from models import Category, RuleSetWrapper, User
 from models.associations import UserRuleSetLink
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class RuleService:
@@ -134,8 +133,9 @@ class RuleService:
 
         # Delete user associations first
         await session.execute(
-            select(UserRuleSetLink)
-            .where(UserRuleSetLink.rule_set_wrapper_id == rule_set_id)
+            select(UserRuleSetLink).where(
+                UserRuleSetLink.rule_set_wrapper_id == rule_set_id
+            )
         )
         # Note: This should cascade delete, but let's be explicit
 
@@ -197,4 +197,3 @@ class RuleService:
 
 # Singleton instance
 rule_service = RuleService()
-
