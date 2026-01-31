@@ -1,9 +1,10 @@
 """Tests for BankAccount model."""
 
 import pytest
-from models import BankAccount, User
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
+
+from models import BankAccount, User
 from tests.utils import assert_persisted
 
 
@@ -113,8 +114,9 @@ class TestBankAccount:
         await async_session.commit()
 
         # Query the users associated with the bank account using link table
-        from models.associations import UserBankAccountLink
         from sqlalchemy import select
+
+        from models.associations import UserBankAccountLink
 
         result = await async_session.execute(
             select(User)

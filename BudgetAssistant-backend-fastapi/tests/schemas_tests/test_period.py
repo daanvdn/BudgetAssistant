@@ -24,9 +24,7 @@ class TestPeriod:
         self.start_date = datetime(2023, 1, 1)
         self.end_date = datetime(2023, 1, 31)
         self.grouping = Grouping.MONTH
-        self.period = Period(
-            start=self.start_date, end=self.end_date, grouping=self.grouping
-        )
+        self.period = Period(start=self.start_date, end=self.end_date, grouping=self.grouping)
 
     def test_init(self) -> None:
         """Test Period initialization."""
@@ -38,12 +36,18 @@ class TestPeriod:
     def test_to_json(self) -> None:
         """Test Period JSON serialization."""
         json_str = self.period.to_json()
-        expected_json = '{"start": "2023-01-01T00:00:00", "end": "2023-01-31T23:59:59.999999", "grouping": "MONTH", "value": "01/2023"}'
+        expected_json = (
+            '{"start": "2023-01-01T00:00:00", "end": "2023-01-31T23:59:59.999999", '
+            '"grouping": "MONTH", "value": "01/2023"}'
+        )
         assert json_str == expected_json
 
     def test_from_json(self) -> None:
         """Test Period JSON deserialization."""
-        json_str = '{"start": "2023-01-01T00:00:00", "end": "2023-01-31T23:59:59.999999", "grouping": "MONTH", "value": "01/2023"}'
+        json_str = (
+            '{"start": "2023-01-01T00:00:00", "end": "2023-01-31T23:59:59.999999", '
+            '"grouping": "MONTH", "value": "01/2023"}'
+        )
         period_from_json = Period.from_json(json_str)
         assert period_from_json == self.period
 
@@ -67,9 +71,7 @@ class TestPeriod:
 
     def test_eq(self) -> None:
         """Test Period equality comparison."""
-        same_period = Period(
-            start=self.start_date, end=self.end_date, grouping=self.grouping
-        )
+        same_period = Period(start=self.start_date, end=self.end_date, grouping=self.grouping)
         assert self.period == same_period
 
     def test_hash(self) -> None:
@@ -264,25 +266,19 @@ class TestPeriodValueFormatter:
     def test_month_format(self) -> None:
         """Test month formatting."""
         formatter = PeriodValueFormatter()
-        result = formatter.run(
-            datetime(2023, 3, 15), datetime(2023, 3, 31), Grouping.MONTH
-        )
+        result = formatter.run(datetime(2023, 3, 15), datetime(2023, 3, 31), Grouping.MONTH)
         assert result == "03/2023"
 
     def test_quarter_format(self) -> None:
         """Test quarter formatting."""
         formatter = PeriodValueFormatter()
-        result = formatter.run(
-            datetime(2023, 1, 1), datetime(2023, 3, 31), Grouping.QUARTER
-        )
+        result = formatter.run(datetime(2023, 1, 1), datetime(2023, 3, 31), Grouping.QUARTER)
         assert result == "01/2023 - 03/2023"
 
     def test_year_format(self) -> None:
         """Test year formatting."""
         formatter = PeriodValueFormatter()
-        result = formatter.run(
-            datetime(2023, 1, 1), datetime(2023, 12, 31), Grouping.YEAR
-        )
+        result = formatter.run(datetime(2023, 1, 1), datetime(2023, 12, 31), Grouping.YEAR)
         assert result == "2023 - 2023"
 
     def test_invalid_grouping(self) -> None:
@@ -397,9 +393,7 @@ class TestPeriodWithDateInput:
 
     def test_period_with_date_input(self) -> None:
         """Test Period can be initialized with date objects."""
-        period = Period(
-            start=date(2023, 1, 1), end=date(2023, 1, 31), grouping=Grouping.MONTH
-        )
+        period = Period(start=date(2023, 1, 1), end=date(2023, 1, 31), grouping=Grouping.MONTH)
         assert period.start == datetime(2023, 1, 1, 0, 0)
         assert period.end == datetime(2023, 1, 31, 23, 59, 59, 999999)
 

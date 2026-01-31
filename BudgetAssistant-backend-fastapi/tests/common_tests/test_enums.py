@@ -1,6 +1,7 @@
 """Tests for enums module."""
 
 import pytest
+
 from common.enums import RecurrenceType, TransactionTypeEnum
 
 

@@ -3,6 +3,9 @@
 from datetime import datetime
 from typing import List, Optional, Tuple
 
+from sqlalchemy import and_, func, or_, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from common.enums import TransactionTypeEnum
 from models import BankAccount, Counterparty, Transaction, User
 from models.associations import UserBankAccountLink
@@ -11,8 +14,6 @@ from schemas import (
     TransactionQuery,
     TransactionUpdate,
 )
-from sqlalchemy import and_, func, or_, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class TransactionService:
@@ -44,9 +45,7 @@ class TransactionService:
                 conditions.append(Transaction.amount < 0)
 
         if query.counterparty_name:
-            conditions.append(
-                Transaction.counterparty_id.ilike(f"%{query.counterparty_name}%")
-            )
+            conditions.append(Transaction.counterparty_id.ilike(f"%{query.counterparty_name}%"))
 
         if query.min_amount is not None:
             conditions.append(Transaction.amount >= query.min_amount)
@@ -76,7 +75,7 @@ class TransactionService:
             conditions.append(Transaction.upload_timestamp == query.upload_timestamp)
 
         if query.manually_assigned_category:
-            conditions.append(Transaction.manually_assigned_category == True)
+            conditions.append(Transaction.manually_assigned_category.is_(True))
 
         return and_(*conditions)
 
@@ -113,9 +112,7 @@ class TransactionService:
         """Get paginated transactions with filtering."""
         # Get user's accessible account numbers
         account_result = await session.execute(
-            select(UserBankAccountLink.bank_account_number).where(
-                UserBankAccountLink.user_id == user.id
-            )
+            select(UserBankAccountLink.bank_account_number).where(UserBankAccountLink.user_id == user.id)
         )
         user_accounts = list(account_result.scalars().all())
 
@@ -126,9 +123,7 @@ class TransactionService:
         filter_condition = self._build_query_filter(query, user_accounts)
 
         # Count total
-        count_query = (
-            select(func.count()).select_from(Transaction).where(filter_condition)
-        )
+        count_query = select(func.count()).select_from(Transaction).where(filter_condition)
         total_result = await session.execute(count_query)
         total_elements = total_result.scalar() or 0
 
@@ -136,13 +131,7 @@ class TransactionService:
         sort_column = self._get_sort_column(sort_property, sort_order)
         offset = page * size
 
-        stmt = (
-            select(Transaction)
-            .where(filter_condition)
-            .order_by(sort_column)
-            .offset(offset)
-            .limit(size)
-        )
+        stmt = select(Transaction).where(filter_condition).order_by(sort_column).offset(offset).limit(size)
         result = await session.execute(stmt)
         transactions = list(result.scalars().all())
 
@@ -178,9 +167,7 @@ class TransactionService:
         filter_condition = and_(*conditions)
 
         # Count total
-        count_query = (
-            select(func.count()).select_from(Transaction).where(filter_condition)
-        )
+        count_query = select(func.count()).select_from(Transaction).where(filter_condition)
         total_result = await session.execute(count_query)
         total_elements = total_result.scalar() or 0
 
@@ -188,13 +175,7 @@ class TransactionService:
         sort_column = self._get_sort_column(sort_property, sort_order)
         offset = page * size
 
-        stmt = (
-            select(Transaction)
-            .where(filter_condition)
-            .order_by(sort_column)
-            .offset(offset)
-            .limit(size)
-        )
+        stmt = select(Transaction).where(filter_condition).order_by(sort_column).offset(offset).limit(size)
         result = await session.execute(stmt)
         transactions = list(result.scalars().all())
 
@@ -215,7 +196,7 @@ class TransactionService:
 
         conditions = [
             Transaction.bank_account_id == normalized,
-            Transaction.is_manually_reviewed == False,
+            Transaction.is_manually_reviewed.is_(False),
         ]
 
         if transaction_type == TransactionTypeEnum.REVENUE:
@@ -226,9 +207,7 @@ class TransactionService:
         filter_condition = and_(*conditions)
 
         # Count total
-        count_query = (
-            select(func.count()).select_from(Transaction).where(filter_condition)
-        )
+        count_query = select(func.count()).select_from(Transaction).where(filter_condition)
         total_result = await session.execute(count_query)
         total_elements = total_result.scalar() or 0
 
@@ -236,13 +215,7 @@ class TransactionService:
         sort_column = self._get_sort_column(sort_property, sort_order)
         offset = page * size
 
-        stmt = (
-            select(Transaction)
-            .where(filter_condition)
-            .order_by(sort_column)
-            .offset(offset)
-            .limit(size)
-        )
+        stmt = select(Transaction).where(filter_condition).order_by(sort_column).offset(offset).limit(size)
         result = await session.execute(stmt)
         transactions = list(result.scalars().all())
 
@@ -261,7 +234,7 @@ class TransactionService:
             .select_from(Transaction)
             .where(
                 Transaction.bank_account_id == normalized,
-                Transaction.is_manually_reviewed == False,
+                Transaction.is_manually_reviewed.is_(False),
             )
         )
         result = await session.execute(count_query)
@@ -273,9 +246,7 @@ class TransactionService:
         session: AsyncSession,
     ) -> Optional[Transaction]:
         """Get a transaction by ID."""
-        result = await session.execute(
-            select(Transaction).where(Transaction.transaction_id == transaction_id)
-        )
+        result = await session.execute(select(Transaction).where(Transaction.transaction_id == transaction_id))
         return result.scalar_one_or_none()
 
     async def save_transaction(
@@ -294,17 +265,13 @@ class TransactionService:
             transaction.category_id = update_data.category_id
 
         if update_data.manually_assigned_category is not None:
-            transaction.manually_assigned_category = (
-                update_data.manually_assigned_category
-            )
+            transaction.manually_assigned_category = update_data.manually_assigned_category
 
         if update_data.is_recurring is not None:
             transaction.is_recurring = update_data.is_recurring
 
         if update_data.is_advance_shared_account is not None:
-            transaction.is_advance_shared_account = (
-                update_data.is_advance_shared_account
-            )
+            transaction.is_advance_shared_account = update_data.is_advance_shared_account
 
         if update_data.is_manually_reviewed is not None:
             transaction.is_manually_reviewed = update_data.is_manually_reviewed
@@ -367,9 +334,7 @@ class TransactionService:
         if existing:
             return existing, False
 
-        transaction = await self.create_transaction(
-            transaction_in, upload_timestamp, session
-        )
+        transaction = await self.create_transaction(transaction_in, upload_timestamp, session)
         return transaction, True
 
     async def get_distinct_counterparty_names(
@@ -381,9 +346,7 @@ class TransactionService:
         normalized = BankAccount.normalize_account_number(bank_account)
 
         result = await session.execute(
-            select(Transaction.counterparty_id)
-            .where(Transaction.bank_account_id == normalized)
-            .distinct()
+            select(Transaction.counterparty_id).where(Transaction.bank_account_id == normalized).distinct()
         )
         return [name for name in result.scalars().all() if name]
 

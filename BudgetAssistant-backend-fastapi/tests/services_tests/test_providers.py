@@ -17,11 +17,7 @@ from services.providers import (
 
 def load_expenses_categories_from_file() -> list[str]:
     """Load expected category names from resource file."""
-    with (
-        pkg_resources.files("resources")
-        .joinpath("categories-expenses.txt")
-        .open(encoding="utf-8") as file
-    ):
+    with pkg_resources.files("resources").joinpath("categories-expenses.txt").open(encoding="utf-8") as file:
         lines = file.read().split("\n")
         lines = [line.strip() for line in lines if line.strip()]
         lines.append(Category.NO_CATEGORY_NAME)
@@ -31,11 +27,7 @@ def load_expenses_categories_from_file() -> list[str]:
 
 def load_revenue_categories_from_file() -> list[str]:
     """Load expected category names from revenue resource file."""
-    with (
-        pkg_resources.files("resources")
-        .joinpath("categories-revenue.txt")
-        .open(encoding="utf-8") as file
-    ):
+    with pkg_resources.files("resources").joinpath("categories-revenue.txt").open(encoding="utf-8") as file:
         lines = file.read().split("\n")
         lines = [line.strip() for line in lines if line.strip()]
         lines.append(Category.NO_CATEGORY_NAME)
@@ -47,9 +39,7 @@ class TestCategoryTreeInserter:
     """Tests for CategoryTreeInserter."""
 
     @pytest.mark.asyncio
-    async def test_run_creates_category_tree_with_root(
-        self, async_session: AsyncSession
-    ):
+    async def test_run_creates_category_tree_with_root(self, async_session: AsyncSession):
         """Test that run() creates a category tree with a root node."""
         inserter = CategoryTreeInserter()
         tree = await inserter.run(TransactionTypeEnum.EXPENSES, async_session)
@@ -61,9 +51,7 @@ class TestCategoryTreeInserter:
         assert tree.root.is_root is True
 
     @pytest.mark.asyncio
-    async def test_run_creates_no_category_and_dummy_category(
-        self, async_session: AsyncSession
-    ):
+    async def test_run_creates_no_category_and_dummy_category(self, async_session: AsyncSession):
         """Test that run() creates NO CATEGORY and DUMMY CATEGORY."""
         inserter = CategoryTreeInserter()
         tree = await inserter.run(TransactionTypeEnum.EXPENSES, async_session)
@@ -77,9 +65,7 @@ class TestCategoryTreeInserter:
         assert Category.DUMMY_CATEGORY_NAME in child_names
 
     @pytest.mark.asyncio
-    async def test_run_invalid_type_raises_value_error(
-        self, async_session: AsyncSession
-    ):
+    async def test_run_invalid_type_raises_value_error(self, async_session: AsyncSession):
         """Test that run() raises ValueError for invalid transaction type."""
         inserter = CategoryTreeInserter()
         with pytest.raises(ValueError, match="Invalid category tree type"):
@@ -185,9 +171,7 @@ class TestCategoryTreeInserter:
         all_categories = result.scalars().all()
 
         # Extract qualified names (excluding root)
-        actual_qualified_names = {
-            cat.qualified_name for cat in all_categories if not cat.is_root
-        }
+        actual_qualified_names = {cat.qualified_name for cat in all_categories if not cat.is_root}
 
         assert expected_qualified_names == actual_qualified_names
 
@@ -226,7 +210,7 @@ class TestCategoryTreeProvider:
         result = await async_session.execute(
             select(Category).where(
                 Category.type == TransactionTypeEnum.EXPENSES.value,
-                Category.is_root == False,
+                Category.is_root.is_(False),
             )
         )
         actual_categories = [cat.name for cat in result.scalars().all()]
@@ -262,18 +246,14 @@ class TestCategoryTreeProvider:
             await provider.provide(TransactionTypeEnum.BOTH, async_session)
 
     @pytest.mark.asyncio
-    async def test_provide_creates_no_category_and_dummy(
-        self, async_session: AsyncSession
-    ):
+    async def test_provide_creates_no_category_and_dummy(self, async_session: AsyncSession):
         """Test that provide() creates NO CATEGORY and DUMMY CATEGORY."""
         provider = CategoryTreeProvider()
         tree = await provider.provide(TransactionTypeEnum.EXPENSES, async_session)
         await async_session.commit()
 
         # Find NO CATEGORY and DUMMY CATEGORY
-        no_cat_result = await async_session.execute(
-            select(Category).where(Category.name == Category.NO_CATEGORY_NAME)
-        )
+        no_cat_result = await async_session.execute(select(Category).where(Category.name == Category.NO_CATEGORY_NAME))
         no_category = no_cat_result.scalar_one_or_none()
 
         dummy_result = await async_session.execute(
@@ -315,15 +295,11 @@ class TestBudgetTreeProvider:
         assert budget_tree.root.category.is_root is True
 
     @pytest.mark.asyncio
-    async def test_provide_returns_existing_budget_tree(
-        self, async_session: AsyncSession
-    ):
+    async def test_provide_returns_existing_budget_tree(self, async_session: AsyncSession):
         """Test that provide() returns existing budget tree."""
         # Create category tree
         cat_provider = CategoryTreeProvider()
-        expenses_tree = await cat_provider.provide(
-            TransactionTypeEnum.EXPENSES, async_session
-        )
+        expenses_tree = await cat_provider.provide(TransactionTypeEnum.EXPENSES, async_session)
         await async_session.commit()
 
         # Create bank account
@@ -354,15 +330,11 @@ class TestBudgetTreeProvider:
         assert budget_tree.bank_account_id == existing_tree.bank_account_id
 
     @pytest.mark.asyncio
-    async def test_budget_tree_mirrors_category_structure(
-        self, async_session: AsyncSession
-    ):
+    async def test_budget_tree_mirrors_category_structure(self, async_session: AsyncSession):
         """Test that budget tree mirrors the category tree structure."""
         # Create category tree
         cat_provider = CategoryTreeProvider()
-        _expenses_tree = await cat_provider.provide(
-            TransactionTypeEnum.EXPENSES, async_session
-        )
+        _expenses_tree = await cat_provider.provide(TransactionTypeEnum.EXPENSES, async_session)
         await async_session.commit()
 
         # Create bank account
@@ -399,9 +371,7 @@ class TestBudgetTreeProvider:
         assert set(all_categories.keys()) == set(budget_nodes.keys())
 
     @pytest.mark.asyncio
-    async def test_budget_tree_root_has_negative_amount(
-        self, async_session: AsyncSession
-    ):
+    async def test_budget_tree_root_has_negative_amount(self, async_session: AsyncSession):
         """Test that budget tree root node has amount of -1."""
         # Create category tree
         cat_provider = CategoryTreeProvider()
@@ -421,9 +391,7 @@ class TestBudgetTreeProvider:
         assert budget_tree.root.amount == -1
 
     @pytest.mark.asyncio
-    async def test_budget_tree_children_have_zero_amount(
-        self, async_session: AsyncSession
-    ):
+    async def test_budget_tree_children_have_zero_amount(self, async_session: AsyncSession):
         """Test that budget tree child nodes have amount of 0."""
         # Create category tree
         cat_provider = CategoryTreeProvider()
@@ -431,9 +399,7 @@ class TestBudgetTreeProvider:
         await async_session.commit()
 
         # Create bank account
-        bank_account = BankAccount(
-            account_number="777888999", alias="Child Amount Test"
-        )
+        bank_account = BankAccount(account_number="777888999", alias="Child Amount Test")
         async_session.add(bank_account)
         await async_session.flush()
 

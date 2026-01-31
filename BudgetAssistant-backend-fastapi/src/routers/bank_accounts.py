@@ -2,9 +2,11 @@
 
 from typing import List
 
-from db.database import get_session
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from auth.dependencies import CurrentUser
+from db.database import get_session
 from schemas import (
     BankAccountCreate,
     BankAccountRead,
@@ -13,7 +15,6 @@ from schemas import (
     SuccessResponse,
 )
 from services.bank_account_service import bank_account_service
-from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/bank-accounts", tags=["Bank Accounts"])
 

@@ -1,8 +1,9 @@
 """Tests for Counterparty model."""
 
 import pytest
-from models import Counterparty, User
 from sqlalchemy.exc import IntegrityError
+
+from models import Counterparty, User
 from tests.utils import assert_persisted
 
 
@@ -89,8 +90,9 @@ class TestCounterparty:
         await async_session.commit()
 
         # Query the users associated with the counterparty
-        from models.associations import UserCounterpartyLink
         from sqlalchemy import select
+
+        from models.associations import UserCounterpartyLink
 
         result = await async_session.execute(
             select(User)

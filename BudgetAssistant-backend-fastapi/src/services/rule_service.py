@@ -4,14 +4,14 @@ from collections import defaultdict
 from typing import Any, Dict, List, Optional
 
 import networkx as nx
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from common.enums import TransactionTypeEnum
 from models import Category, RuleSetWrapper, User
 from models.associations import UserRuleSetLink
 from models.category import CategoryTree
 from models.transaction import Transaction
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class RuleService:

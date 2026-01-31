@@ -2,13 +2,14 @@
 
 from typing import List
 
-from db.database import get_session
-from common.enums import TransactionTypeEnum
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from auth.dependencies import CurrentUser
+from common.enums import TransactionTypeEnum
+from db.database import get_session
 from schemas import CategoryRead, CategoryTreeRead
 from services.category_service import category_service
-from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/categories", tags=["Categories"])
 

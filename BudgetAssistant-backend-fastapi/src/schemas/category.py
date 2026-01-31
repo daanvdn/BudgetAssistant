@@ -2,8 +2,9 @@
 
 from typing import List, Optional
 
-from common.enums import TransactionTypeEnum
 from pydantic import BaseModel
+
+from common.enums import TransactionTypeEnum
 
 
 class CategoryRead(BaseModel):

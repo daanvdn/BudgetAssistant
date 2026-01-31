@@ -3,10 +3,11 @@
 from datetime import date
 
 import pytest
-from common.enums import TransactionTypeEnum
-from models import BankAccount, Category, Counterparty, Transaction
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
+
+from common.enums import TransactionTypeEnum
+from models import BankAccount, Category, Counterparty, Transaction
 from tests.utils import assert_persisted
 
 

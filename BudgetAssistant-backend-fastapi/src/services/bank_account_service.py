@@ -2,11 +2,12 @@
 
 from typing import List, Optional
 
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from models import BankAccount, User
 from models.associations import UserBankAccountLink
 from schemas import BankAccountCreate
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class BankAccountService:

@@ -8,8 +8,9 @@ from abc import ABC, abstractmethod
 from typing import List, Tuple, Union
 
 import pytest
-from common.enums import TransactionTypeEnum
 from faker import Faker
+
+from common.enums import TransactionTypeEnum
 from models import RuleSetWrapper
 from models.rules import (
     ALL_OF,

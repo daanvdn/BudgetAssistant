@@ -1,11 +1,12 @@
 """Tests for Category and CategoryTree models."""
 
 import pytest
-from common.enums import TransactionTypeEnum
-from models import Category, CategoryTree
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import selectinload
+
+from common.enums import TransactionTypeEnum
+from models import Category, CategoryTree
 from tests.utils import assert_persisted
 
 
@@ -83,7 +84,7 @@ class TestCategory:
             },
         )
 
-        persisted_child = await assert_persisted(
+        await assert_persisted(
             async_session,
             Category,
             "id",

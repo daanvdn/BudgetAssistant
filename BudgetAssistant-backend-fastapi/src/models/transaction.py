@@ -5,8 +5,9 @@ import json
 from datetime import date, datetime
 from typing import TYPE_CHECKING, Optional
 
-from common.enums import TransactionTypeEnum
 from sqlmodel import Field, Relationship, SQLModel
+
+from common.enums import TransactionTypeEnum
 
 if TYPE_CHECKING:
     from .bank_account import BankAccount

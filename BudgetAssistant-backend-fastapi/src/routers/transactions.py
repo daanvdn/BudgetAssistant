@@ -3,10 +3,13 @@
 from datetime import datetime
 from typing import List
 
-from db.database import get_session
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
-from models import Category
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from auth.dependencies import CurrentUser
+from db.database import get_session
+from models import Category
 from schemas import (
     CountResponse,
     ErrorResponse,
@@ -21,8 +24,6 @@ from schemas import (
 )
 from services.bank_account_service import bank_account_service
 from services.transaction_service import transaction_service
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/transactions", tags=["Transactions"])
 

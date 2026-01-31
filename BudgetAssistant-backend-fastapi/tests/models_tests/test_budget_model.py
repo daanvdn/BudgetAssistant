@@ -1,11 +1,12 @@
 """Tests for BudgetTree and BudgetTreeNode models."""
 
 import pytest
-from common.enums import TransactionTypeEnum
-from models import BankAccount, BudgetTree, BudgetTreeNode, Category
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import selectinload
+
+from common.enums import TransactionTypeEnum
+from models import BankAccount, BudgetTree, BudgetTreeNode, Category
 from tests.utils import assert_persisted
 
 

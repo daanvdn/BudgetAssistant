@@ -233,7 +233,7 @@ async def seed_categories(authenticated_client) -> None:
 
     # The categories are typically seeded via init_db, so this might not be needed
     # But we ensure we can at least get categories
-    response = await client.get("/api/categories", headers=headers)
+    await client.get("/api/categories", headers=headers)
     # Categories should exist from database initialization
 
 
@@ -246,7 +246,7 @@ async def seed_bank_account(authenticated_client) -> str:
     test_account_number = "BE68539007547034"
 
     # Create a bank account
-    response = await client.post(
+    await client.post(
         "/api/bank-accounts",
         json={
             "account_number": test_account_number,

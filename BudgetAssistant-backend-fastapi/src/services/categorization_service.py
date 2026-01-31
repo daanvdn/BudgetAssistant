@@ -6,14 +6,15 @@ for proper post-order traversal of category trees when categorizing transactions
 
 from typing import List, Optional, Tuple
 
+from sqlalchemy import and_, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+
 from common.enums import TransactionTypeEnum
 from models import BankAccount, Category, RuleSetWrapper, Transaction, User
 from models.associations import UserBankAccountLink, UserRuleSetLink
 from models.category import CategoryTree
 from services.rule_service import RuleSetWrappersPostOrderTraverser
-from sqlalchemy import and_, select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 
 class CategorizationService:

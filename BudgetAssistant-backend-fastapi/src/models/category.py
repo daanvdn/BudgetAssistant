@@ -2,9 +2,10 @@
 
 from typing import TYPE_CHECKING, ClassVar, List, Optional
 
-from common.enums import TransactionTypeEnum
 from sqlalchemy import Column, String
 from sqlmodel import Field, Relationship, SQLModel
+
+from common.enums import TransactionTypeEnum
 
 if TYPE_CHECKING:
     from .budget import BudgetTreeNode

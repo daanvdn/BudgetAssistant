@@ -100,7 +100,9 @@ class TestBelfiusTransactionParserAsync:
 
         # Create empty file content (just 12 skip lines + header)
         lines = [""] * 12 + [
-            "Rekening;Boekingsdatum;Rekeninguittrekselnummer;Transactienummer;Rekening tegenpartij;Naam tegenpartij bevat;Straat en nummer;Postcode en plaats;Transactie;Valutadatum;Bedrag;Devies;BIC;Landcode;Mededelingen"
+            "Rekening;Boekingsdatum;Rekeninguittrekselnummer;Transactienummer;"
+            "Rekening tegenpartij;Naam tegenpartij bevat;Straat en nummer;"
+            "Postcode en plaats;Transactie;Valutadatum;Bedrag;Devies;BIC;Landcode;Mededelingen"
         ]
 
         result = await parser.parse(lines, user, async_session)
@@ -123,8 +125,15 @@ class TestBelfiusTransactionParserAsync:
         parser = BelfiusTransactionParser()
 
         # Create file content with one transaction
-        header = "Rekening;Boekingsdatum;Rekeninguittrekselnummer;Transactienummer;Rekening tegenpartij;Naam tegenpartij bevat;Straat en nummer;Postcode en plaats;Transactie;Valutadatum;Bedrag;Devies;BIC;Landcode;Mededelingen"
-        transaction = "BE68539007547034;15/03/2023;001;TXN001;BE12345678901234;Test Counterparty;Street 1;1000 Brussels;Test Transaction;15/03/2023;-50,00;EUR;GKCCBEBB;BE;Test communication"
+        header = (
+            "Rekening;Boekingsdatum;Rekeninguittrekselnummer;Transactienummer;"
+            "Rekening tegenpartij;Naam tegenpartij bevat;Straat en nummer;"
+            "Postcode en plaats;Transactie;Valutadatum;Bedrag;Devies;BIC;Landcode;Mededelingen"
+        )
+        transaction = (
+            "BE68539007547034;15/03/2023;001;TXN001;BE12345678901234;Test Counterparty;"
+            "Street 1;1000 Brussels;Test Transaction;15/03/2023;-50,00;EUR;GKCCBEBB;BE;Test communication"
+        )
 
         lines = [""] * 12 + [header, transaction]
 

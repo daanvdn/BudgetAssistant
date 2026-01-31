@@ -656,7 +656,7 @@ class TestTransactionService:
             transaction_number="EXPENSE_1",
         )
         # Create revenue transaction
-        revenue_txn = await create_transaction(
+        await create_transaction(
             async_session,
             bank_account,
             counterparty,
@@ -706,7 +706,7 @@ class TestTransactionService:
         await async_session.flush()
 
         # Create expense transaction
-        expense_txn = await create_transaction(
+        await create_transaction(
             async_session,
             bank_account,
             counterparty,
@@ -764,7 +764,7 @@ class TestTransactionService:
         await async_session.flush()
 
         # Create transactions with different amounts
-        txn1 = await create_transaction(
+        await create_transaction(
             async_session,
             bank_account,
             counterparty,
@@ -778,7 +778,7 @@ class TestTransactionService:
             amount=-50.0,
             transaction_number="TXN_50",
         )
-        txn3 = await create_transaction(
+        await create_transaction(
             async_session,
             bank_account,
             counterparty,
@@ -831,7 +831,7 @@ class TestTransactionService:
 
         # Create transactions
         txn1 = await create_transaction(async_session, bank_account, counterparty1, transaction_number="TXN_ABC")
-        txn2 = await create_transaction(async_session, bank_account, counterparty2, transaction_number="TXN_XYZ")
+        await create_transaction(async_session, bank_account, counterparty2, transaction_number="TXN_XYZ")
         await async_session.commit()
 
         # Query by counterparty name (partial match)
@@ -875,21 +875,21 @@ class TestTransactionService:
         await async_session.flush()
 
         # Create transactions with different amounts
-        txn1 = await create_transaction(
+        await create_transaction(
             async_session,
             bank_account,
             counterparty,
             amount=-100.0,
             transaction_number="TXN_100",
         )
-        txn2 = await create_transaction(
+        await create_transaction(
             async_session,
             bank_account,
             counterparty,
             amount=-10.0,
             transaction_number="TXN_10",
         )
-        txn3 = await create_transaction(
+        await create_transaction(
             async_session,
             bank_account,
             counterparty,
@@ -940,21 +940,21 @@ class TestTransactionService:
         await async_session.flush()
 
         # Create transactions with different amounts
-        txn1 = await create_transaction(
+        await create_transaction(
             async_session,
             bank_account,
             counterparty,
             amount=-100.0,
             transaction_number="TXN_100",
         )
-        txn2 = await create_transaction(
+        await create_transaction(
             async_session,
             bank_account,
             counterparty,
             amount=-10.0,
             transaction_number="TXN_10",
         )
-        txn3 = await create_transaction(
+        await create_transaction(
             async_session,
             bank_account,
             counterparty,
@@ -1048,7 +1048,7 @@ class TestTransactionService:
         await async_session.flush()
 
         # Create expense and revenue transactions
-        expense_txn = await create_transaction(
+        await create_transaction(
             async_session,
             bank_account,
             counterparty,
@@ -1096,7 +1096,7 @@ class TestTransactionService:
         await async_session.flush()
 
         # Create transactions - one reviewed, one not reviewed
-        reviewed_txn = await create_transaction(
+        await create_transaction(
             async_session,
             bank_account,
             counterparty,
@@ -1253,7 +1253,7 @@ class TestTransactionService:
             category_id=category.id,
             transaction_number="TXN_CAT",
         )
-        txn_without_category = await create_transaction(
+        await create_transaction(
             async_session,
             bank_account,
             counterparty,

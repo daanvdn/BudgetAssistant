@@ -2,11 +2,12 @@
 
 from typing import List, Optional
 
-from common.enums import TransactionTypeEnum
-from models import Category, CategoryTree
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+
+from common.enums import TransactionTypeEnum
+from models import Category, CategoryTree
 
 
 class CategoryService:
@@ -31,9 +32,7 @@ class CategoryService:
         session: AsyncSession,
     ) -> Optional[Category]:
         """Get a category by ID."""
-        result = await session.execute(
-            select(Category).where(Category.id == category_id)
-        )
+        result = await session.execute(select(Category).where(Category.id == category_id))
         return result.scalar_one_or_none()
 
     async def get_category_by_qualified_name(
@@ -42,9 +41,7 @@ class CategoryService:
         session: AsyncSession,
     ) -> Optional[Category]:
         """Get a category by qualified name."""
-        result = await session.execute(
-            select(Category).where(Category.qualified_name == qualified_name)
-        )
+        result = await session.execute(select(Category).where(Category.qualified_name == qualified_name))
         return result.scalar_one_or_none()
 
     async def get_categories_by_type(
@@ -54,9 +51,7 @@ class CategoryService:
     ) -> List[Category]:
         """Get all categories of a specific type."""
         result = await session.execute(
-            select(Category)
-            .where(Category.type == transaction_type.value)
-            .order_by(Category.qualified_name)
+            select(Category).where(Category.type == transaction_type.value).order_by(Category.qualified_name)
         )
         return list(result.scalars().all())
 
@@ -65,9 +60,7 @@ class CategoryService:
         session: AsyncSession,
     ) -> List[Category]:
         """Get all categories."""
-        result = await session.execute(
-            select(Category).order_by(Category.qualified_name)
-        )
+        result = await session.execute(select(Category).order_by(Category.qualified_name))
         return list(result.scalars().all())
 
     async def get_category_children(
@@ -77,9 +70,7 @@ class CategoryService:
     ) -> List[Category]:
         """Get children of a category."""
         result = await session.execute(
-            select(Category)
-            .where(Category.parent_id == category_id)
-            .order_by(Category.name)
+            select(Category).where(Category.parent_id == category_id).order_by(Category.name)
         )
         return list(result.scalars().all())
 
@@ -91,7 +82,7 @@ class CategoryService:
         """Get root categories for a transaction type."""
         result = await session.execute(
             select(Category).where(
-                Category.is_root == True,
+                Category.is_root.is_(True),
                 Category.type == transaction_type.value,
             )
         )

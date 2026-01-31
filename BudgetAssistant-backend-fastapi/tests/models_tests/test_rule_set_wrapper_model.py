@@ -1,10 +1,11 @@
 """Tests for RuleSetWrapper model."""
 
 import pytest
-from common.enums import TransactionTypeEnum
-from models import Category, RuleSetWrapper, User
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
+
+from common.enums import TransactionTypeEnum
+from models import Category, RuleSetWrapper, User
 from tests.utils import assert_persisted
 
 

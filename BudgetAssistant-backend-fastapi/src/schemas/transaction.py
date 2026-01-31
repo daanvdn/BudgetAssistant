@@ -2,8 +2,9 @@
 
 from datetime import date, datetime
 
-from common.enums import TransactionTypeEnum
 from pydantic import BaseModel
+
+from common.enums import TransactionTypeEnum
 
 
 class TransactionCreate(BaseModel):

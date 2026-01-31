@@ -239,7 +239,6 @@ async def create_test_transactions(
         List of created transactions.
     """
     transactions = []
-    base_date = date(2024, 1, 15)
 
     tx_data = [
         ("groceries", -150, 1),
@@ -291,16 +290,12 @@ async def budget_test_data(
         Tuple of (bank_account, categories, budget_tree, budget_nodes, transactions).
     """
     # Create bank account (lowercase for normalization)
-    bank_account = BankAccount(
-        account_number="budget_test_123", alias="Budget Test Account"
-    )
+    bank_account = BankAccount(account_number="budget_test_123", alias="Budget Test Account")
     async_session.add(bank_account)
     await async_session.flush()
 
     # Create counterparty
-    counterparty = Counterparty(
-        name="budget_test_counterparty", account_number="CP_BUDGET"
-    )
+    counterparty = Counterparty(name="budget_test_counterparty", account_number="CP_BUDGET")
     async_session.add(counterparty)
     await async_session.flush()
 
@@ -308,14 +303,10 @@ async def budget_test_data(
     categories = await create_category_hierarchy(async_session)
 
     # Create budget tree
-    budget_tree, budget_nodes = await create_budget_tree(
-        async_session, bank_account, categories
-    )
+    budget_tree, budget_nodes = await create_budget_tree(async_session, bank_account, categories)
 
     # Create transactions
-    transactions = await create_test_transactions(
-        async_session, bank_account, counterparty, categories
-    )
+    transactions = await create_test_transactions(async_session, bank_account, counterparty, categories)
 
     return bank_account, categories, budget_tree, budget_nodes, transactions
 
@@ -336,9 +327,7 @@ class TestTrackBudget:
         ],
     ):
         """Test that track_budget returns correct budget vs actual totals."""
-        bank_account, categories, budget_tree, budget_nodes, transactions = (
-            budget_test_data
-        )
+        bank_account, categories, budget_tree, budget_nodes, transactions = budget_test_data
 
         query = RevenueExpensesQuery(
             account_number=bank_account.account_number,
@@ -379,9 +368,7 @@ class TestTrackBudget:
         ],
     ):
         """Test that track_budget returns entries for each budgeted category."""
-        bank_account, categories, budget_tree, budget_nodes, transactions = (
-            budget_test_data
-        )
+        bank_account, categories, budget_tree, budget_nodes, transactions = budget_test_data
 
         query = RevenueExpensesQuery(
             account_number=bank_account.account_number,
@@ -421,9 +408,7 @@ class TestTrackBudget:
         ],
     ):
         """Test that groceries budget entry has correct details."""
-        bank_account, categories, budget_tree, budget_nodes, transactions = (
-            budget_test_data
-        )
+        bank_account, categories, budget_tree, budget_nodes, transactions = budget_test_data
 
         query = RevenueExpensesQuery(
             account_number=bank_account.account_number,
@@ -436,9 +421,7 @@ class TestTrackBudget:
         service = AnalysisService()
         result = await service.track_budget(query, async_session)
 
-        groceries_entry = next(
-            (e for e in result.entries if e.category_name == "groceries"), None
-        )
+        groceries_entry = next((e for e in result.entries if e.category_name == "groceries"), None)
 
         assert groceries_entry is not None
         assert groceries_entry.budgeted_amount == 300
@@ -453,9 +436,7 @@ class TestTrackBudget:
     ):
         """Test that track_budget raises error when no budget tree exists."""
         # Create bank account without budget tree
-        bank_account = BankAccount(
-            account_number="no_budget_account", alias="No Budget"
-        )
+        bank_account = BankAccount(account_number="no_budget_account", alias="No Budget")
         async_session.add(bank_account)
         await async_session.commit()
 
@@ -553,9 +534,7 @@ class TestGetCategoryDetailsForPeriod:
         ],
     ):
         """Test that category details returns correct breakdown."""
-        bank_account, categories, budget_tree, budget_nodes, transactions = (
-            budget_test_data
-        )
+        bank_account, categories, budget_tree, budget_nodes, transactions = budget_test_data
 
         query = RevenueExpensesQuery(
             account_number=bank_account.account_number,
@@ -566,9 +545,7 @@ class TestGetCategoryDetailsForPeriod:
         )
 
         service = AnalysisService()
-        result = await service.get_category_details_for_period(
-            query, "root#food", async_session
-        )
+        result = await service.get_category_details_for_period(query, "root#food", async_session)
 
         assert result is not None
         assert result.period is not None
@@ -590,9 +567,7 @@ class TestGetCategoryDetailsForPeriod:
         ],
     ):
         """Test that category details includes child category transactions."""
-        bank_account, categories, budget_tree, budget_nodes, transactions = (
-            budget_test_data
-        )
+        bank_account, categories, budget_tree, budget_nodes, transactions = budget_test_data
 
         query = RevenueExpensesQuery(
             account_number=bank_account.account_number,
@@ -603,9 +578,7 @@ class TestGetCategoryDetailsForPeriod:
         )
 
         service = AnalysisService()
-        result = await service.get_category_details_for_period(
-            query, "root#food", async_session
-        )
+        result = await service.get_category_details_for_period(query, "root#food", async_session)
 
         # Should have entries for both groceries and restaurants
         category_names = {c.category_name for c in result.categories}
@@ -624,9 +597,7 @@ class TestGetCategoryDetailsForPeriod:
         ],
     ):
         """Test that category details calculates correct percentages."""
-        bank_account, categories, budget_tree, budget_nodes, transactions = (
-            budget_test_data
-        )
+        bank_account, categories, budget_tree, budget_nodes, transactions = budget_test_data
 
         query = RevenueExpensesQuery(
             account_number=bank_account.account_number,
@@ -637,18 +608,12 @@ class TestGetCategoryDetailsForPeriod:
         )
 
         service = AnalysisService()
-        result = await service.get_category_details_for_period(
-            query, "root#food", async_session
-        )
+        result = await service.get_category_details_for_period(query, "root#food", async_session)
 
         # Groceries: 250 / 375 * 100 ≈ 66.67%
         # Restaurants: 125 / 375 * 100 ≈ 33.33%
-        groceries_detail = next(
-            (c for c in result.categories if c.category_name == "groceries"), None
-        )
-        restaurants_detail = next(
-            (c for c in result.categories if c.category_name == "restaurants"), None
-        )
+        groceries_detail = next((c for c in result.categories if c.category_name == "groceries"), None)
+        restaurants_detail = next((c for c in result.categories if c.category_name == "restaurants"), None)
 
         assert groceries_detail is not None
         assert abs(groceries_detail.percentage - 66.67) < 0.1
@@ -668,9 +633,7 @@ class TestGetCategoryDetailsForPeriod:
         ],
     ):
         """Test that category details includes transaction count."""
-        bank_account, categories, budget_tree, budget_nodes, transactions = (
-            budget_test_data
-        )
+        bank_account, categories, budget_tree, budget_nodes, transactions = budget_test_data
 
         query = RevenueExpensesQuery(
             account_number=bank_account.account_number,
@@ -681,13 +644,9 @@ class TestGetCategoryDetailsForPeriod:
         )
 
         service = AnalysisService()
-        result = await service.get_category_details_for_period(
-            query, "root#food", async_session
-        )
+        result = await service.get_category_details_for_period(query, "root#food", async_session)
 
-        groceries_detail = next(
-            (c for c in result.categories if c.category_name == "groceries"), None
-        )
+        groceries_detail = next((c for c in result.categories if c.category_name == "groceries"), None)
 
         assert groceries_detail is not None
         assert groceries_detail.transaction_count == 2  # Two groceries transactions
@@ -704,9 +663,7 @@ class TestGetCategoryDetailsForPeriod:
         ],
     ):
         """Test that invalid category raises error."""
-        bank_account, categories, budget_tree, budget_nodes, transactions = (
-            budget_test_data
-        )
+        bank_account, categories, budget_tree, budget_nodes, transactions = budget_test_data
 
         query = RevenueExpensesQuery(
             account_number=bank_account.account_number,
@@ -719,9 +676,7 @@ class TestGetCategoryDetailsForPeriod:
         service = AnalysisService()
 
         with pytest.raises(ValueError, match="Category.*not found"):
-            await service.get_category_details_for_period(
-                query, "nonexistent#category", async_session
-            )
+            await service.get_category_details_for_period(query, "nonexistent#category", async_session)
 
     async def test_get_category_details_sorted_by_amount(
         self,
@@ -735,9 +690,7 @@ class TestGetCategoryDetailsForPeriod:
         ],
     ):
         """Test that categories are sorted by amount descending."""
-        bank_account, categories, budget_tree, budget_nodes, transactions = (
-            budget_test_data
-        )
+        bank_account, categories, budget_tree, budget_nodes, transactions = budget_test_data
 
         query = RevenueExpensesQuery(
             account_number=bank_account.account_number,
@@ -748,9 +701,7 @@ class TestGetCategoryDetailsForPeriod:
         )
 
         service = AnalysisService()
-        result = await service.get_category_details_for_period(
-            query, "root#food", async_session
-        )
+        result = await service.get_category_details_for_period(query, "root#food", async_session)
 
         # Categories should be sorted by amount descending
         amounts = [c.amount for c in result.categories]
@@ -768,9 +719,7 @@ class TestGetCategoryDetailsForPeriod:
         ],
     ):
         """Test category details for transport category."""
-        bank_account, categories, budget_tree, budget_nodes, transactions = (
-            budget_test_data
-        )
+        bank_account, categories, budget_tree, budget_nodes, transactions = budget_test_data
 
         query = RevenueExpensesQuery(
             account_number=bank_account.account_number,
@@ -781,9 +730,7 @@ class TestGetCategoryDetailsForPeriod:
         )
 
         service = AnalysisService()
-        result = await service.get_category_details_for_period(
-            query, "root#transport", async_session
-        )
+        result = await service.get_category_details_for_period(query, "root#transport", async_session)
 
         assert result is not None
         # Transport total: fuel (140) + public_transport (30) = 170
@@ -805,9 +752,7 @@ class TestGetCategoryDetailsForPeriod:
         ],
     ):
         """Test category details for a leaf category (no children)."""
-        bank_account, categories, budget_tree, budget_nodes, transactions = (
-            budget_test_data
-        )
+        bank_account, categories, budget_tree, budget_nodes, transactions = budget_test_data
 
         query = RevenueExpensesQuery(
             account_number=bank_account.account_number,
@@ -818,9 +763,7 @@ class TestGetCategoryDetailsForPeriod:
         )
 
         service = AnalysisService()
-        result = await service.get_category_details_for_period(
-            query, "root#food#groceries", async_session
-        )
+        result = await service.get_category_details_for_period(query, "root#food#groceries", async_session)
 
         assert result is not None
         assert result.total_amount == 250  # Only groceries transactions

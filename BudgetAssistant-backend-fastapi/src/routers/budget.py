@@ -1,9 +1,11 @@
 """Budget router for budget management."""
 
-from db.database import get_session
 from fastapi import APIRouter, Depends, HTTPException, status
-from models import BankAccount
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from auth.dependencies import CurrentUser
+from db.database import get_session
+from models import BankAccount
 from schemas import (
     BudgetTreeCreate,
     BudgetTreeNodeRead,
@@ -14,7 +16,6 @@ from schemas import (
 from services.bank_account_service import bank_account_service
 from services.budget_service import budget_service
 from services.providers import BudgetTreeProvider
-from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/budget", tags=["Budget"])
 

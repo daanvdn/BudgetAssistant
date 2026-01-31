@@ -2,6 +2,7 @@
 
 import pytest
 from sqlmodel import SQLModel
+
 from models import User
 
 

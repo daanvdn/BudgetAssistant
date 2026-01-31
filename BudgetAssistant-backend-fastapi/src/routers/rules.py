@@ -1,9 +1,11 @@
 """Rules router for rule set management."""
 
-from db.database import get_session
-from common.enums import TransactionTypeEnum
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from auth.dependencies import CurrentUser
+from common.enums import TransactionTypeEnum
+from db.database import get_session
 from schemas import (
     CategorizeTransactionsResponse,
     GetOrCreateRuleSetWrapperRequest,
@@ -14,7 +16,6 @@ from schemas import (
 )
 from services.category_service import category_service
 from services.rule_service import rule_service
-from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/rules", tags=["Rules"])
 

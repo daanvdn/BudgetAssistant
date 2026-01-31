@@ -3,6 +3,9 @@
 from datetime import datetime
 from typing import List, Optional, Tuple
 
+from sqlalchemy import and_, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from common.enums import RecurrenceType, TransactionTypeEnum
 from models import BankAccount, BudgetTree, BudgetTreeNode, Category, Transaction
 from schemas import (
@@ -19,8 +22,6 @@ from schemas import (
     RevenueExpensesQuery,
 )
 from schemas.period import Month, Period, Quarter, Year
-from sqlalchemy import and_, func, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class AnalysisService:
@@ -48,23 +49,15 @@ class AnalysisService:
         # Recurrence filters
         if query.revenue_recurrence:
             if query.revenue_recurrence == RecurrenceType.RECURRENT:
-                conditions.append(
-                    and_(Transaction.amount >= 0, Transaction.is_recurring == True)
-                )
+                conditions.append(and_(Transaction.amount >= 0, Transaction.is_recurring))
             elif query.revenue_recurrence == RecurrenceType.NON_RECURRENT:
-                conditions.append(
-                    and_(Transaction.amount >= 0, Transaction.is_recurring == False)
-                )
+                conditions.append(and_(Transaction.amount >= 0, not Transaction.is_recurring))
 
         if query.expenses_recurrence:
             if query.expenses_recurrence == RecurrenceType.RECURRENT:
-                conditions.append(
-                    and_(Transaction.amount < 0, Transaction.is_recurring == True)
-                )
+                conditions.append(and_(Transaction.amount < 0, Transaction.is_recurring.is_(True)))
             elif query.expenses_recurrence == RecurrenceType.NON_RECURRENT:
-                conditions.append(
-                    and_(Transaction.amount < 0, Transaction.is_recurring == False)
-                )
+                conditions.append(and_(Transaction.amount < 0, Transaction.is_recurring.is_(False)))
 
         return and_(*conditions)
 
@@ -117,19 +110,13 @@ class AnalysisService:
         filter_condition = self._build_transaction_filter(query)
 
         # Get all transactions for the period
-        result = await session.execute(
-            select(Transaction)
-            .where(filter_condition)
-            .order_by(Transaction.booking_date)
-        )
+        result = await session.execute(select(Transaction).where(filter_condition).order_by(Transaction.booking_date))
         transactions = result.scalars().all()
 
         # Group by period
         periods_data = {}
         for txn in transactions:
-            period_key, start, end = self._get_period_key(
-                txn.booking_date, query.grouping
-            )
+            period_key, start, end = self._get_period_key(txn.booking_date, query.grouping)
 
             if period_key not in periods_data:
                 periods_data[period_key] = {
@@ -176,11 +163,7 @@ class AnalysisService:
         filter_condition = self._build_transaction_filter(query)
 
         # Get all transactions with categories
-        result = await session.execute(
-            select(Transaction)
-            .where(filter_condition)
-            .order_by(Transaction.booking_date)
-        )
+        result = await session.execute(select(Transaction).where(filter_condition).order_by(Transaction.booking_date))
         transactions = result.scalars().all()
 
         # Group by period and category
@@ -188,9 +171,7 @@ class AnalysisService:
         all_categories = set()
 
         for txn in transactions:
-            period_key, start, end = self._get_period_key(
-                txn.booking_date, query.grouping
-            )
+            period_key, start, end = self._get_period_key(txn.booking_date, query.grouping)
 
             if period_key not in periods_data:
                 periods_data[period_key] = {
@@ -203,9 +184,7 @@ class AnalysisService:
 
             # Get category info
             if txn.category_id:
-                cat_result = await session.execute(
-                    select(Category).where(Category.id == txn.category_id)
-                )
+                cat_result = await session.execute(select(Category).where(Category.id == txn.category_id))
                 category = cat_result.scalar_one_or_none()
                 cat_name = category.qualified_name if category else "Uncategorized"
                 cat_display = category.name if category else "Uncategorized"
@@ -266,15 +245,11 @@ class AnalysisService:
         normalized = BankAccount.normalize_account_number(query.account_number)
 
         # Get budget tree
-        tree_result = await session.execute(
-            select(BudgetTree).where(BudgetTree.bank_account_id == normalized)
-        )
+        tree_result = await session.execute(select(BudgetTree).where(BudgetTree.bank_account_id == normalized))
         budget_tree = tree_result.scalar_one_or_none()
 
         if not budget_tree:
-            raise ValueError(
-                f"Budget tree for bank account {query.account_number} does not exist"
-            )
+            raise ValueError(f"Budget tree for bank account {query.account_number} does not exist")
 
         # Get actual spending per category
         filter_condition = self._build_transaction_filter(query)
@@ -324,17 +299,13 @@ class AnalysisService:
         session: AsyncSession,
     ) -> None:
         """Recursively collect budget entries from tree nodes."""
-        node_result = await session.execute(
-            select(BudgetTreeNode).where(BudgetTreeNode.id == node_id)
-        )
+        node_result = await session.execute(select(BudgetTreeNode).where(BudgetTreeNode.id == node_id))
         node = node_result.scalar_one_or_none()
         if not node:
             return
 
         # Get category
-        cat_result = await session.execute(
-            select(Category).where(Category.id == node.category_id)
-        )
+        cat_result = await session.execute(select(Category).where(Category.id == node.category_id))
         category = cat_result.scalar_one_or_none()
 
         if category and node.amount > 0:
@@ -355,15 +326,11 @@ class AnalysisService:
             )
 
         # Process children
-        children_result = await session.execute(
-            select(BudgetTreeNode).where(BudgetTreeNode.parent_id == node_id)
-        )
+        children_result = await session.execute(select(BudgetTreeNode).where(BudgetTreeNode.parent_id == node_id))
         children = children_result.scalars().all()
 
         for child in children:
-            await self._collect_budget_entries(
-                child.id, actual_by_category, entries, session
-            )
+            await self._collect_budget_entries(child.id, actual_by_category, entries, session)
 
     async def get_category_details_for_period(
         self,
@@ -375,9 +342,7 @@ class AnalysisService:
         filter_condition = self._build_transaction_filter(query)
 
         # Get category
-        cat_result = await session.execute(
-            select(Category).where(Category.qualified_name == category_qualified_name)
-        )
+        cat_result = await session.execute(select(Category).where(Category.qualified_name == category_qualified_name))
         category = cat_result.scalar_one_or_none()
 
         if not category:
@@ -404,9 +369,7 @@ class AnalysisService:
         for txn in transactions:
             if txn.category_id not in category_totals:
                 # Get category name
-                cat = await session.execute(
-                    select(Category).where(Category.id == txn.category_id)
-                )
+                cat = await session.execute(select(Category).where(Category.id == txn.category_id))
                 cat_obj = cat.scalar_one_or_none()
                 category_totals[txn.category_id] = {
                     "qualified_name": cat_obj.qualified_name if cat_obj else "",
@@ -423,9 +386,7 @@ class AnalysisService:
         # Calculate percentages
         categories = []
         for data in category_totals.values():
-            percentage = (
-                (data["amount"] / total_amount * 100) if total_amount > 0 else 0
-            )
+            percentage = (data["amount"] / total_amount * 100) if total_amount > 0 else 0
             categories.append(
                 CategoryDetailsForPeriodResult(
                     category_qualified_name=data["qualified_name"],
@@ -452,9 +413,7 @@ class AnalysisService:
         session: AsyncSession,
     ) -> List[int]:
         """Recursively get all child category IDs."""
-        result = await session.execute(
-            select(Category.id).where(Category.parent_id == category_id)
-        )
+        result = await session.execute(select(Category.id).where(Category.parent_id == category_id))
         child_ids = list(result.scalars().all())
 
         all_ids = list(child_ids)
@@ -495,9 +454,7 @@ class AnalysisService:
         # Get category names
         categories = []
         if category_ids:
-            cat_result = await session.execute(
-                select(Category).where(Category.id.in_(category_ids))
-            )
+            cat_result = await session.execute(select(Category).where(Category.id.in_(category_ids)))
             for cat in cat_result.scalars().all():
                 categories.append(cat.qualified_name)
 

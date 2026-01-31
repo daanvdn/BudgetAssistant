@@ -2,9 +2,11 @@
 
 from contextlib import asynccontextmanager
 
-from db import init_db
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+from auth.router import router as auth_router
+from db import init_db
 from routers import (
     analysis_router,
     bank_accounts_router,
@@ -13,7 +15,6 @@ from routers import (
     rules_router,
     transactions_router,
 )
-from auth.router import router as auth_router
 
 
 @asynccontextmanager

@@ -2,10 +2,11 @@
 
 from typing import List, Optional
 
-from models import BankAccount, BudgetTree, BudgetTreeNode, Category, User
-from models.associations import UserBankAccountLink
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from models import BankAccount, BudgetTree, BudgetTreeNode, Category, User
+from models.associations import UserBankAccountLink
 
 
 class BudgetService:
@@ -19,9 +20,7 @@ class BudgetService:
         """Get the budget tree for a bank account."""
         normalized = BankAccount.normalize_account_number(bank_account)
 
-        result = await session.execute(
-            select(BudgetTree).where(BudgetTree.bank_account_id == normalized)
-        )
+        result = await session.execute(select(BudgetTree).where(BudgetTree.bank_account_id == normalized))
         return result.scalar_one_or_none()
 
     async def get_budget_tree_node(
@@ -30,9 +29,7 @@ class BudgetService:
         session: AsyncSession,
     ) -> Optional[BudgetTreeNode]:
         """Get a budget tree node by ID."""
-        result = await session.execute(
-            select(BudgetTreeNode).where(BudgetTreeNode.id == node_id)
-        )
+        result = await session.execute(select(BudgetTreeNode).where(BudgetTreeNode.id == node_id))
         return result.scalar_one_or_none()
 
     async def get_node_children(
@@ -41,9 +38,7 @@ class BudgetService:
         session: AsyncSession,
     ) -> List[BudgetTreeNode]:
         """Get children of a budget tree node."""
-        result = await session.execute(
-            select(BudgetTreeNode).where(BudgetTreeNode.parent_id == node_id)
-        )
+        result = await session.execute(select(BudgetTreeNode).where(BudgetTreeNode.parent_id == node_id))
         return list(result.scalars().all())
 
     async def find_or_create_budget(
@@ -63,15 +58,13 @@ class BudgetService:
         root_cat_result = await session.execute(
             select(Category).where(
                 Category.name == "root",
-                Category.is_root == True,
+                Category.is_root.is_(True),
             )
         )
         root_category = root_cat_result.scalar_one_or_none()
 
         if not root_category:
-            raise ValueError(
-                "Root category not found. Please initialize categories first."
-            )
+            raise ValueError("Root category not found. Please initialize categories first.")
 
         # Create root node
         root_node = BudgetTreeNode(
@@ -149,17 +142,13 @@ class BudgetService:
         # Traverse up to find root
         current = node
         while current.parent_id:
-            parent_result = await session.execute(
-                select(BudgetTreeNode).where(BudgetTreeNode.id == current.parent_id)
-            )
+            parent_result = await session.execute(select(BudgetTreeNode).where(BudgetTreeNode.id == current.parent_id))
             current = parent_result.scalar_one_or_none()
             if not current:
                 break
 
         # Update budget tree with root
-        tree_result = await session.execute(
-            select(BudgetTree).where(BudgetTree.root_id == current.id)
-        )
+        tree_result = await session.execute(select(BudgetTree).where(BudgetTree.root_id == current.id))
         budget_tree = tree_result.scalar_one_or_none()
 
         if budget_tree:
@@ -187,9 +176,7 @@ class BudgetService:
     ) -> dict:
         """Recursively build a budget tree dictionary."""
         # Get category info
-        category_result = await session.execute(
-            select(Category).where(Category.id == node.category_id)
-        )
+        category_result = await session.execute(select(Category).where(Category.id == node.category_id))
         category = category_result.scalar_one_or_none()
 
         children = await self.get_node_children(node.id, session)
@@ -237,9 +224,7 @@ class BudgetService:
             return None
 
         # Check if this node is the root
-        tree_result = await session.execute(
-            select(BudgetTree).where(BudgetTree.root_id == node_id)
-        )
+        tree_result = await session.execute(select(BudgetTree).where(BudgetTree.root_id == node_id))
         budget_tree = tree_result.scalar_one_or_none()
         if budget_tree:
             return budget_tree
@@ -247,17 +232,13 @@ class BudgetService:
         # Traverse up to find root
         current = node
         while current.parent_id:
-            parent_result = await session.execute(
-                select(BudgetTreeNode).where(BudgetTreeNode.id == current.parent_id)
-            )
+            parent_result = await session.execute(select(BudgetTreeNode).where(BudgetTreeNode.id == current.parent_id))
             current = parent_result.scalar_one_or_none()
             if not current:
                 break
 
         if current:
-            tree_result = await session.execute(
-                select(BudgetTree).where(BudgetTree.root_id == current.id)
-            )
+            tree_result = await session.execute(select(BudgetTree).where(BudgetTree.root_id == current.id))
             return tree_result.scalar_one_or_none()
 
         return None

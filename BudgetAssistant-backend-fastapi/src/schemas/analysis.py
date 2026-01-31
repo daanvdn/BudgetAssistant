@@ -3,8 +3,9 @@
 from datetime import datetime
 from typing import List
 
-from common.enums import TransactionTypeEnum
 from pydantic import BaseModel
+
+from common.enums import TransactionTypeEnum
 
 
 class ExpensesAndRevenueForPeriod(BaseModel):
