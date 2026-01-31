@@ -2,7 +2,7 @@
 
 from typing import List, Optional
 
-from enums import TransactionTypeEnum
+from common.enums import TransactionTypeEnum
 from pydantic import BaseModel
 
 

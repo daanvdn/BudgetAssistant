@@ -4,8 +4,9 @@ from datetime import date, datetime
 from enum import Enum
 from typing import Generic, List, Optional, TypeVar
 
-from enums import RecurrenceType, TransactionTypeEnum
 from pydantic import BaseModel, Field
+
+from common.enums import RecurrenceType, TransactionTypeEnum
 
 # Generic type for paginated responses
 T = TypeVar("T")
@@ -21,9 +22,7 @@ class PaginatedResponse(BaseModel, Generic[T]):
     total_pages: int = Field(ge=0, description="Total number of pages")
 
     @classmethod
-    def create(
-        cls, content: List[T], page: int, size: int, total_elements: int
-    ) -> "PaginatedResponse[T]":
+    def create(cls, content: List[T], page: int, size: int, total_elements: int) -> "PaginatedResponse[T]":
         """Create a paginated response from content and pagination info."""
         total_pages = (total_elements + size - 1) // size if size > 0 else 0
         return cls(
@@ -178,7 +177,6 @@ class UploadTransactionsResponse(BaseModel):
 class RegisterUserRequest(BaseModel):
     """Request schema for user registration."""
 
-    username: str = Field(min_length=3, max_length=150)
     password: str = Field(min_length=8)
     email: str
 
@@ -186,7 +184,7 @@ class RegisterUserRequest(BaseModel):
 class TokenRequest(BaseModel):
     """Request schema for token authentication."""
 
-    username: str
+    email: str
     password: str
 
 

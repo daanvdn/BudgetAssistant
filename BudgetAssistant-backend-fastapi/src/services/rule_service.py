@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional
 
 import networkx as nx
 
-from enums import TransactionTypeEnum
+from common.enums import TransactionTypeEnum
 from models import Category, RuleSetWrapper, User
 from models.associations import UserRuleSetLink
 from models.category import CategoryTree

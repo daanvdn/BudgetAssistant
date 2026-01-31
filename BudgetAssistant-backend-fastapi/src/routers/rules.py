@@ -1,9 +1,9 @@
 """Rules router for rule set management."""
 
 from db.database import get_session
-from enums import TransactionTypeEnum
+from common.enums import TransactionTypeEnum
 from fastapi import APIRouter, Depends, HTTPException, status
-from routers.auth import CurrentUser
+from auth.dependencies import CurrentUser
 from schemas import (
     CategorizeTransactionsResponse,
     GetOrCreateRuleSetWrapperRequest,

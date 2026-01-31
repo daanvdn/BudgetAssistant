@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import List, Optional, Tuple
 
-from enums import RecurrenceType, TransactionTypeEnum
+from common.enums import RecurrenceType, TransactionTypeEnum
 from models import BankAccount, BudgetTree, BudgetTreeNode, Category, Transaction
 from schemas import (
     BudgetEntryResult,

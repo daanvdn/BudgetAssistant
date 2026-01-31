@@ -3,9 +3,9 @@
 from typing import List
 
 from db.database import get_session
-from enums import TransactionTypeEnum
+from common.enums import TransactionTypeEnum
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from routers.auth import CurrentUser
+from auth.dependencies import CurrentUser
 from schemas import CategoryRead, CategoryTreeRead
 from services.category_service import category_service
 from sqlalchemy.ext.asyncio import AsyncSession

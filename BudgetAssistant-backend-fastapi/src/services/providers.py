@@ -8,7 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from enums import TransactionTypeEnum
+from common.enums import TransactionTypeEnum
 from models import BankAccount, BudgetTree, BudgetTreeNode, Category, CategoryTree
 
 

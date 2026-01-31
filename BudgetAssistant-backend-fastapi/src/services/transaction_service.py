@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import List, Optional, Tuple
 
-from enums import TransactionTypeEnum
+from common.enums import TransactionTypeEnum
 from models import BankAccount, Counterparty, Transaction, User
 from models.associations import UserBankAccountLink
 from schemas import (

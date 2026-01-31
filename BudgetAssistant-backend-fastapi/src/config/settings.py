@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     """Application settings"""
 
     # Database
-    DATABASE_URL: str = "sqlite:///./budget_tracker.db"
+    DATABASE_URL: str = "sqlite+aiosqlite:///./budgetassistant.db"
     api_prefix: str = "/api"
 
     # File storage
@@ -46,18 +46,11 @@ class Settings(BaseSettings):
         super().model_post_init(context)
 
         # Warn if using default SECRET_KEY (should only happen in local dev)
-        if (
-            self.SECRET_KEY
-            == "your-secret-key-change-in-production-use-openssl-rand-hex-32"
-        ):
-            print(
-                "WARNING: Using default SECRET_KEY. Set SECRET_KEY env var in production!"
-            )
+        if self.SECRET_KEY == "your-secret-key-change-in-production-use-openssl-rand-hex-32":
+            print("WARNING: Using default SECRET_KEY. Set SECRET_KEY env var in production!")
 
         if self.DEV_AUTH_BYPASS:
-            print(
-                "WARNING: DEV_AUTH_BYPASS is ENABLED. This should only be used in local development environments."
-            )
+            print("WARNING: DEV_AUTH_BYPASS is ENABLED. This should only be used in local development environments.")
         # print absolute paths to upload dir and database file
         print(f"Upload directory: {self.upload_dir.resolve()}")
         if self.DATABASE_URL.startswith("sqlite+aiosqlite:///"):

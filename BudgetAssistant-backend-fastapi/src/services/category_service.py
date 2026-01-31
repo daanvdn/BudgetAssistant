@@ -2,7 +2,7 @@
 
 from typing import List, Optional
 
-from enums import TransactionTypeEnum
+from common.enums import TransactionTypeEnum
 from models import Category, CategoryTree
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession

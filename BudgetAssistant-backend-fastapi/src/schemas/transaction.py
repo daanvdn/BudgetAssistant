@@ -2,7 +2,7 @@
 
 from datetime import date, datetime
 
-from enums import TransactionTypeEnum
+from common.enums import TransactionTypeEnum
 from pydantic import BaseModel
 
 

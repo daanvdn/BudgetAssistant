@@ -2,7 +2,7 @@
 
 from typing import TYPE_CHECKING, ClassVar, List, Optional
 
-from enums import TransactionTypeEnum
+from common.enums import TransactionTypeEnum
 from sqlalchemy import Column, String
 from sqlmodel import Field, Relationship, SQLModel
 

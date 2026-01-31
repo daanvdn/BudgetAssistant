@@ -7,13 +7,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routers import (
     analysis_router,
-    auth_router,
     bank_accounts_router,
     budget_router,
     categories_router,
     rules_router,
     transactions_router,
 )
+from auth.router import router as auth_router
 
 
 @asynccontextmanager
@@ -42,7 +42,7 @@ app.add_middleware(
 )
 
 # Include routers
-app.include_router(auth_router, prefix="/api")
+app.include_router(auth_router, prefix="/api")  # auth router already has /api/auth prefix
 app.include_router(bank_accounts_router, prefix="/api")
 app.include_router(transactions_router, prefix="/api")
 app.include_router(categories_router, prefix="/api")

@@ -1,11 +1,12 @@
 """Analysis router for revenue/expenses analysis."""
 
-import logging
-
-from db.database import get_session
-from enums import TransactionTypeEnum
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from routers.auth import CurrentUser
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from auth.dependencies import CurrentUser
+from common.enums import TransactionTypeEnum
+from common.logging_utils import LoggerFactory
+from db.database import get_session
 from schemas import (
     BudgetTrackerResult,
     CategoriesForAccountResponse,
@@ -19,10 +20,8 @@ from schemas import (
 )
 from services.analysis_service import analysis_service
 from services.period_service import period_service
-from sqlalchemy.ext.asyncio import AsyncSession
 
-logger = logging.getLogger(__name__)
-
+logger = LoggerFactory.for_caller()
 router = APIRouter(prefix="/analysis", tags=["Analysis"])
 
 
@@ -60,9 +59,7 @@ async def get_revenue_and_expenses_per_period_and_category(
     if query.is_empty():
         return RevenueAndExpensesPerPeriodAndCategory.empty_instance()
 
-    return await analysis_service.get_revenue_and_expenses_per_period_and_category(
-        query, session
-    )
+    return await analysis_service.get_revenue_and_expenses_per_period_and_category(query, session)
 
 
 @router.post(
@@ -76,9 +73,7 @@ async def get_category_details_for_period(
 ) -> CategoryDetailsForPeriodResponse:
     """Get detailed category breakdown for a specific period."""
     try:
-        return await analysis_service.get_category_details_for_period(
-            query, query.category_qualified_name, session
-        )
+        return await analysis_service.get_category_details_for_period(query, query.category_qualified_name, session)
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

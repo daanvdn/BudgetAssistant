@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, List, Literal, Union
 
 from pydantic import BaseModel, field_validator, model_validator
 
-from enums import TransactionTypeEnum
+from common.enums import TransactionTypeEnum
 
 if TYPE_CHECKING:
     from models.transaction import Transaction

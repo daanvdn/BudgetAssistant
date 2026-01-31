@@ -3,7 +3,7 @@
 from db.database import get_session
 from fastapi import APIRouter, Depends, HTTPException, status
 from models import BankAccount
-from routers.auth import CurrentUser
+from auth.dependencies import CurrentUser
 from schemas import (
     BudgetTreeCreate,
     BudgetTreeNodeRead,

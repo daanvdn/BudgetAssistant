@@ -6,7 +6,7 @@ for proper post-order traversal of category trees when categorizing transactions
 
 from typing import List, Optional, Tuple
 
-from enums import TransactionTypeEnum
+from common.enums import TransactionTypeEnum
 from models import BankAccount, Category, RuleSetWrapper, Transaction, User
 from models.associations import UserBankAccountLink, UserRuleSetLink
 from models.category import CategoryTree

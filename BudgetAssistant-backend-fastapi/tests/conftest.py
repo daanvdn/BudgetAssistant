@@ -3,27 +3,49 @@
 import asyncio
 from typing import AsyncGenerator
 
+import pytest
 import pytest_asyncio
-from db.database import get_session
 from httpx import ASGITransport, AsyncClient
-from main import app
 
-# Import all models to ensure they're registered
+# Import all models to ensure they're registered with SQLModel metadata
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlmodel import SQLModel
+
+from db.database import engine as production_engine
+from db.database import get_session
+from main import app
+
+# Import all models to ensure foreign keys can be resolved
+from models import (  # noqa: F401
+    BankAccount,
+    Category,
+    CategoryTree,
+    Counterparty,
+    Transaction,
+    User,
+)
+from models.password_reset_token import PasswordResetToken  # noqa: F401
+from models.token_blocklist import TokenBlocklist  # noqa: F401
 
 # Use in-memory SQLite for tests
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
 
-def pytest_sessionfinish(session, exitstatus):
-    """Clean up after all tests complete."""
-    # Dispose the global engine from db.database to prevent hanging
-    from db.database import engine
+@pytest.fixture(scope="session", autouse=True)
+def cleanup_production_engine():
+    """Cleanup production engine after all tests complete"""
+    yield
+    # Dispose the production engine to prevent hanging
 
-    asyncio.get_event_loop_policy().new_event_loop().run_until_complete(
-        engine.dispose()
-    )
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            loop.create_task(production_engine.dispose())
+        else:
+            loop.run_until_complete(production_engine.dispose())
+    except RuntimeError:
+        # If no event loop, create one for cleanup
+        asyncio.run(production_engine.dispose())
 
 
 @pytest_asyncio.fixture(scope="function")
@@ -63,17 +85,47 @@ async def async_session(async_engine) -> AsyncGenerator[AsyncSession, None]:
 
 
 # Test user credentials
-TEST_USER_USERNAME = "testuser"
-TEST_USER_PASSWORD = "testpassword123"
+TEST_USER_PASSWORD = "TestPassword123"  # Must have uppercase for password validation
 TEST_USER_EMAIL = "testuser@example.com"
 
 
 @pytest_asyncio.fixture(scope="function")
-async def client() -> AsyncGenerator[AsyncClient, None]:
-    """Create an async HTTP client for testing without authentication."""
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
-        yield client
+async def client(async_engine) -> AsyncGenerator[AsyncClient, None]:
+    """Create an async HTTP client for testing without authentication.
+
+    This fixture overrides the get_session dependency to use the test database
+    so that the FastAPI app uses the same database as the test session.
+    """
+    # Create a session maker for the test database
+    test_session_maker = async_sessionmaker(
+        async_engine,
+        class_=AsyncSession,
+        expire_on_commit=False,
+        autoflush=False,
+        autocommit=False,
+    )
+
+    # Override the get_session dependency to use the test database
+    async def get_test_session() -> AsyncGenerator[AsyncSession, None]:
+        async with test_session_maker() as session:
+            try:
+                yield session
+                await session.commit()
+            except Exception:
+                await session.rollback()
+                raise
+            finally:
+                await session.close()
+
+    app.dependency_overrides[get_session] = get_test_session
+
+    try:
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            yield client
+    finally:
+        # Clean up the dependency override
+        app.dependency_overrides.pop(get_session, None)
 
 
 @pytest_asyncio.fixture(scope="function")
@@ -115,18 +167,19 @@ async def authenticated_client(
             register_response = await client.post(
                 "/api/auth/register",
                 json={
-                    "username": TEST_USER_USERNAME,
                     "password": TEST_USER_PASSWORD,
                     "email": TEST_USER_EMAIL,
                 },
             )
-            # It's okay if registration fails (user might already exist in same session)
+            # Log registration result for debugging
+            if register_response.status_code != 201:
+                print(f"Registration response: {register_response.status_code} - {register_response.text}")
 
-            # Login to get token
+            # Login to get token - use /login endpoint with JSON body
             login_response = await client.post(
-                "/api/auth/token",
-                data={
-                    "username": TEST_USER_USERNAME,
+                "/api/auth/login",
+                json={
+                    "email": TEST_USER_EMAIL,
                     "password": TEST_USER_PASSWORD,
                 },
             )
@@ -136,6 +189,8 @@ async def authenticated_client(
                 access_token = token_data["access_token"]
                 yield client, access_token
             else:
+                # Log login failure for debugging
+                print(f"Login response: {login_response.status_code} - {login_response.text}")
                 # If login fails, yield without auth (tests will fail appropriately)
                 yield client, ""
     finally:
@@ -156,7 +211,7 @@ async def seed_category_trees(async_session: AsyncSession) -> dict:
 
     Returns a dict with 'expenses' and 'revenue' CategoryTree objects.
     """
-    from enums import TransactionTypeEnum
+    from common.enums import TransactionTypeEnum
     from services.providers import CategoryTreeProvider
 
     provider = CategoryTreeProvider()

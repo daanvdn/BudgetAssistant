@@ -1,18 +1,19 @@
 """Transaction parsing service for CSV file uploads."""
 
 import csv
-import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import date, datetime
 from typing import List, Optional, Tuple
 
-from models import BankAccount, Counterparty, Transaction, User
-from models.associations import UserBankAccountLink, UserCounterpartyLink
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-logger = logging.getLogger(__name__)
+from common.logging_utils import LoggerFactory
+from models import BankAccount, Counterparty, Transaction, User
+from models.associations import UserBankAccountLink, UserCounterpartyLink
+
+logger = LoggerFactory.for_caller()
 
 
 @dataclass
@@ -28,9 +29,7 @@ class AbstractTransactionParser(ABC):
     """Abstract base class for transaction parsers."""
 
     @abstractmethod
-    async def parse(
-        self, lines: List[str], user: User, session: AsyncSession
-    ) -> ParseResult:
+    async def parse(self, lines: List[str], user: User, session: AsyncSession) -> ParseResult:
         """Parse transaction lines and return ParseResult."""
         ...
 
@@ -73,9 +72,7 @@ class BelfiusTransactionParser(AbstractTransactionParser):
         normalized = BankAccount.normalize_account_number(account_number)
 
         # Check if bank account exists
-        result = await session.execute(
-            select(BankAccount).where(BankAccount.account_number == normalized)
-        )
+        result = await session.execute(select(BankAccount).where(BankAccount.account_number == normalized))
         bank_account = result.scalar_one_or_none()
 
         if not bank_account:
@@ -110,9 +107,7 @@ class BelfiusTransactionParser(AbstractTransactionParser):
         name = name.strip() if name else "Unknown"
 
         # Check if counterparty exists
-        result = await session.execute(
-            select(Counterparty).where(Counterparty.name == name)
-        )
+        result = await session.execute(select(Counterparty).where(Counterparty.name == name))
         counterparty = result.scalar_one_or_none()
 
         if not counterparty:
@@ -178,9 +173,7 @@ class BelfiusTransactionParser(AbstractTransactionParser):
         session: AsyncSession,
     ) -> Tuple[Transaction, bool]:
         """Get or create a transaction. Returns (transaction, created)."""
-        result = await session.execute(
-            select(Transaction).where(Transaction.transaction_id == transaction_id)
-        )
+        result = await session.execute(select(Transaction).where(Transaction.transaction_id == transaction_id))
         existing = result.scalar_one_or_none()
 
         if existing:
@@ -219,9 +212,7 @@ class BelfiusTransactionParser(AbstractTransactionParser):
         # Validate headers
         actual_headers = reader.fieldnames
         if actual_headers and set(actual_headers) != set(self.HEADERS):
-            logger.warning(
-                f"Headers mismatch. Expected: {self.HEADERS}, Got: {actual_headers}"
-            )
+            logger.warning(f"Headers mismatch. Expected: {self.HEADERS}, Got: {actual_headers}")
             # Continue anyway if we have enough columns
 
         transactions = []
@@ -232,9 +223,7 @@ class BelfiusTransactionParser(AbstractTransactionParser):
             try:
                 # Extract data from row
                 bank_account_str = row.get("Rekening", "")
-                bank_account = await self._get_or_create_bank_account(
-                    bank_account_str, user, session
-                )
+                bank_account = await self._get_or_create_bank_account(bank_account_str, user, session)
 
                 counterparty_name = row.get("Naam tegenpartij bevat", "Unknown")
                 counterparty_account = row.get("Rekening tegenpartij", "")
@@ -262,9 +251,7 @@ class BelfiusTransactionParser(AbstractTransactionParser):
                 communications = row.get("Mededelingen")
 
                 # Create transaction ID
-                transaction_id = Transaction.create_transaction_id(
-                    transaction_number, bank_account.account_number
-                )
+                transaction_id = Transaction.create_transaction_id(transaction_number, bank_account.account_number)
 
                 data = {
                     "bank_account_id": bank_account.account_number,

@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import List
 
-from enums import TransactionTypeEnum
+from common.enums import TransactionTypeEnum
 from pydantic import BaseModel
 
 

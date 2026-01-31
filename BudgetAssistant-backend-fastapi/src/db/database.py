@@ -5,13 +5,21 @@ from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlmodel import SQLModel
 
+from config.settings import settings
+
 # SQLite async connection string
-DATABASE_URL = "sqlite+aiosqlite:///./budgetassistant.db"
+DATABASE_URL = settings.DATABASE_URL
+async_database_url = (
+    DATABASE_URL.replace("sqlite://", "sqlite+aiosqlite://", 1)
+    if DATABASE_URL.startswith("sqlite://")
+    else DATABASE_URL
+)
 
 # Create async engine
 engine = create_async_engine(
-    DATABASE_URL,
+    async_database_url,
     echo=False,
+    future=True,
     connect_args={"check_same_thread": False},
 )
 
@@ -51,7 +59,7 @@ async def init_db() -> None:
     await create_db_and_tables()
 
     # Initialize category trees
-    from enums import TransactionTypeEnum
+    from common.enums import TransactionTypeEnum
     from services.providers import CategoryTreeProvider
 
     async with AsyncSessionLocal() as session:

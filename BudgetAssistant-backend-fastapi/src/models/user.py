@@ -2,6 +2,7 @@
 
 from typing import TYPE_CHECKING, List
 
+from pydantic import EmailStr
 from sqlmodel import Field, Relationship, SQLModel
 
 from .associations import UserBankAccountLink, UserCounterpartyLink, UserRuleSetLink
@@ -18,9 +19,8 @@ class User(SQLModel, table=True):
     __tablename__ = "user"
 
     id: int | None = Field(default=None, primary_key=True)
-    username: str = Field(index=True, unique=True, max_length=150)
-    email: str = Field(max_length=255)
-    password_hash: str = Field(max_length=255)
+    email: EmailStr = Field(index=True, unique=True, max_length=255)
+    password_hash: str = Field(max_length=255, nullable=True)
     first_name: str = Field(default="", max_length=150)
     last_name: str = Field(default="", max_length=150)
     is_active: bool = Field(default=True)
@@ -44,4 +44,4 @@ class User(SQLModel, table=True):
     )
 
     def __str__(self) -> str:
-        return self.username
+        return self.email
