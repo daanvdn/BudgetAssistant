@@ -2,6 +2,7 @@
 
 import pytest
 from sqlmodel import SQLModel
+from models import User
 
 
 class TestDatabaseConfiguration:
@@ -34,7 +35,7 @@ class TestDatabaseConfiguration:
     @pytest.mark.asyncio
     async def test_session_rollback_on_error(self, async_session):
         """Test that session rolls back on error."""
-        from models import User
+
         from sqlalchemy.exc import IntegrityError
 
         # Add a user

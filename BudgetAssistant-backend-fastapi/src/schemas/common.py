@@ -238,6 +238,12 @@ class PasswordUpdateRequest(BaseModel):
     email: Optional[str] = None
 
 
+class ValidateResetTokenResponse(BaseModel):
+    """Response for reset token validation."""
+
+    valid: bool
+
+
 class CategorizeTransactionsResponse(BaseModel):
     """Response for categorize transactions operation."""
 

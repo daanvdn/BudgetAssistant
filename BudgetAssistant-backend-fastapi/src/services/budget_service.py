@@ -226,6 +226,42 @@ class BudgetService:
         )
         return result.scalar_one_or_none() is not None
 
+    async def find_budget_tree_for_node(
+        self,
+        node_id: int,
+        session: AsyncSession,
+    ) -> Optional[BudgetTree]:
+        """Find the budget tree that contains a given node."""
+        node = await self.get_budget_tree_node(node_id, session)
+        if not node:
+            return None
+
+        # Check if this node is the root
+        tree_result = await session.execute(
+            select(BudgetTree).where(BudgetTree.root_id == node_id)
+        )
+        budget_tree = tree_result.scalar_one_or_none()
+        if budget_tree:
+            return budget_tree
+
+        # Traverse up to find root
+        current = node
+        while current.parent_id:
+            parent_result = await session.execute(
+                select(BudgetTreeNode).where(BudgetTreeNode.id == current.parent_id)
+            )
+            current = parent_result.scalar_one_or_none()
+            if not current:
+                break
+
+        if current:
+            tree_result = await session.execute(
+                select(BudgetTree).where(BudgetTree.root_id == current.id)
+            )
+            return tree_result.scalar_one_or_none()
+
+        return None
+
 
 # Singleton instance
 budget_service = BudgetService()

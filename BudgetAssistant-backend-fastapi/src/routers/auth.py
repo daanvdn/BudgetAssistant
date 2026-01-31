@@ -62,6 +62,29 @@ def create_refresh_token(data: dict) -> str:
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
+def create_password_reset_token(user_id: int, password_hash: str) -> str:
+    """Create a password reset token.
+
+    Token format: timestamp-hash
+    The hash includes user_id, password_hash (invalidates token on password change),
+    timestamp, and secret key.
+    """
+    from hashlib import sha256
+
+    timestamp = int(datetime.now(timezone.utc).timestamp())
+    token_hash = sha256(
+        f"{user_id}{password_hash}{timestamp}{SECRET_KEY}".encode()
+    ).hexdigest()[:20]
+    return f"{timestamp}-{token_hash}"
+
+
+def create_password_reset_uidb64(user_id: int) -> str:
+    """Create base64-encoded user ID for password reset URL."""
+    from base64 import urlsafe_b64encode
+
+    return urlsafe_b64encode(str(user_id).encode()).decode()
+
+
 async def get_current_user(
     token: Annotated[str, Depends(oauth2_scheme)],
     session: AsyncSession = Depends(get_session),
@@ -277,6 +300,67 @@ async def request_password_reset(
     return SuccessResponse(
         message="If the email exists, a password reset link will be sent"
     )
+
+
+@router.get("/password-reset-validate/{uidb64}/{token}", response_model=dict)
+async def validate_reset_token(
+    uidb64: str,
+    token: str,
+    session: AsyncSession = Depends(get_session),
+) -> dict:
+    """Validate the UID and Token sent in the reset email.
+
+    This endpoint checks if the password reset token is valid for the user
+    identified by the uidb64 parameter.
+    """
+    from base64 import urlsafe_b64decode
+    from hashlib import sha256
+    from datetime import timezone
+
+    try:
+        # Decode the user ID from base64
+        uid = urlsafe_b64decode(uidb64).decode()
+        user_id = int(uid)
+
+        # Find the user
+        result = await session.execute(select(User).where(User.id == user_id))
+        user = result.scalar_one_or_none()
+
+        if not user:
+            return {"valid": False}
+
+        # Validate the token
+        # Token format: timestamp-hash
+        # For security, we use a simple token validation scheme
+        # In production, consider using itsdangerous or similar
+        try:
+            parts = token.split("-")
+            if len(parts) != 2:
+                return {"valid": False}
+
+            timestamp_str, token_hash = parts
+            timestamp = int(timestamp_str)
+
+            # Check if token is expired (24 hours)
+            current_timestamp = int(datetime.now(timezone.utc).timestamp())
+            if current_timestamp - timestamp > 86400:  # 24 hours
+                return {"valid": False}
+
+            # Verify the hash
+            expected_hash = sha256(
+                f"{user.id}{user.password_hash}{timestamp}{SECRET_KEY}".encode()
+            ).hexdigest()[:20]
+
+            if token_hash == expected_hash:
+                return {"valid": True}
+            else:
+                return {"valid": False}
+
+        except (ValueError, IndexError):
+            return {"valid": False}
+
+    except Exception:
+        return {"valid": False}
 
 
 @router.post("/password-reset-confirm", response_model=SuccessResponse)

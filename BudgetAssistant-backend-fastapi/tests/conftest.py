@@ -3,7 +3,6 @@
 import asyncio
 from typing import AsyncGenerator
 
-import pytest
 import pytest_asyncio
 from db.database import get_session
 from httpx import ASGITransport, AsyncClient
@@ -17,12 +16,14 @@ from sqlmodel import SQLModel
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
 
-@pytest.fixture(scope="session")
-def event_loop():
-    """Create an event loop for the test session."""
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
+def pytest_sessionfinish(session, exitstatus):
+    """Clean up after all tests complete."""
+    # Dispose the global engine from db.database to prevent hanging
+    from db.database import engine
+
+    asyncio.get_event_loop_policy().new_event_loop().run_until_complete(
+        engine.dispose()
+    )
 
 
 @pytest_asyncio.fixture(scope="function")
@@ -147,6 +148,26 @@ async def auth_headers(authenticated_client) -> dict[str, str]:
     """Return headers dict with authorization bearer token."""
     client, access_token = authenticated_client
     return {"Authorization": f"Bearer {access_token}"}
+
+
+@pytest_asyncio.fixture(scope="function")
+async def seed_category_trees(async_session: AsyncSession) -> dict:
+    """Seed category trees for testing.
+
+    Returns a dict with 'expenses' and 'revenue' CategoryTree objects.
+    """
+    from enums import TransactionTypeEnum
+    from services.providers import CategoryTreeProvider
+
+    provider = CategoryTreeProvider()
+    expenses_tree = await provider.provide(TransactionTypeEnum.EXPENSES, async_session)
+    revenue_tree = await provider.provide(TransactionTypeEnum.REVENUE, async_session)
+    await async_session.commit()
+
+    return {
+        "expenses": expenses_tree,
+        "revenue": revenue_tree,
+    }
 
 
 @pytest_asyncio.fixture(scope="function")

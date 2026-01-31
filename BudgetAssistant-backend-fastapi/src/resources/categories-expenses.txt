@@ -1,0 +1,81 @@
+belastingen
+	KI
+	verkeersbelasting
+	boekhouder
+	personenbelasting
+	provinciebelasting
+	gemeentebelasting
+energie
+	gas & elektriciteit
+	water
+bankkosten
+leningen
+	woonlening
+verzekeringen
+	brand- en familiale verzekering
+	schuldsaldo
+	autoverzekering
+	hospitalisatieverzekering
+auto & vervoer
+	autoverzekering
+	benzine
+	parkeren
+	onderhoud & herstelling
+	trein
+kinderen
+	kinderopvang
+	school
+		boeken/materiaal
+		schoolreis
+		middagmaal
+	kleding
+	uitrusting
+	speelgoed
+kledij & verzorging
+	accessoires
+	kapper
+	schoenen
+	kleren
+wonen
+	meubelen & accessoires
+	poetsdienst
+	tuin
+	renovaties
+	loodgieter
+	chauffage
+	keuken
+	electro
+huishouden
+	boodschappen
+		bakker
+		slager
+		supermarkt
+			colruyt
+	lunch werk
+medisch
+	dokter
+	kinesist
+	apotheek
+	mutualiteit
+	ziekenhuis
+	dierenarts
+	tandarts
+telecom
+	internet & tv
+	telefonie
+vrije tijd
+	restaurant
+	café
+	uitgaan
+	hobby
+	reizen
+giften
+	cadeau's
+vakbond
+sparen
+	pensioensparen
+	algemeen
+cash geldopname
+kredietkaart
+gemeenschappelijke kosten
+webshops

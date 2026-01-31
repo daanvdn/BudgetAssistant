@@ -43,8 +43,26 @@ async def drop_db_and_tables() -> None:
 
 
 async def init_db() -> None:
-    """Initialize the database."""
+    """Initialize the database.
+
+    Creates all database tables and initializes category trees for both
+    EXPENSES and REVENUE transaction types if they don't already exist.
+    """
     await create_db_and_tables()
+
+    # Initialize category trees
+    from enums import TransactionTypeEnum
+    from services.providers import CategoryTreeProvider
+
+    async with AsyncSessionLocal() as session:
+        try:
+            provider = CategoryTreeProvider()
+            await provider.provide(TransactionTypeEnum.EXPENSES, session)
+            await provider.provide(TransactionTypeEnum.REVENUE, session)
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
 
 
 async def get_session() -> AsyncGenerator[AsyncSession, None]:

@@ -5,54 +5,24 @@ from typing import List
 from db.database import get_session
 from enums import TransactionTypeEnum
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from models import Category, CategoryTree
 from routers.auth import CurrentUser
 from schemas import CategoryRead, CategoryTreeRead
-from sqlalchemy import select
+from services.category_service import category_service
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 router = APIRouter(prefix="/categories", tags=["Categories"])
 
 
-async def build_category_tree_response(
-    root_category: Category, session: AsyncSession
-) -> CategoryRead:
-    """Recursively build category tree response."""
-
-    async def build_children(category: Category) -> List[CategoryRead]:
-        """Build children recursively."""
-        result = await session.execute(
-            select(Category)
-            .where(Category.parent_id == category.id)
-            .order_by(Category.name)
-        )
-        children = result.scalars().all()
-
-        child_reads = []
-        for child in children:
-            grandchildren = await build_children(child)
-            child_read = CategoryRead(
-                id=child.id,
-                name=child.name,
-                qualified_name=child.qualified_name,
-                is_root=child.is_root,
-                type=child.type,
-                parent_id=child.parent_id,
-                children=grandchildren,
-            )
-            child_reads.append(child_read)
-        return child_reads
-
-    children = await build_children(root_category)
+def _dict_to_category_read(tree_dict: dict) -> CategoryRead:
+    """Convert a category tree dictionary to CategoryRead schema."""
     return CategoryRead(
-        id=root_category.id,
-        name=root_category.name,
-        qualified_name=root_category.qualified_name,
-        is_root=root_category.is_root,
-        type=root_category.type,
-        parent_id=root_category.parent_id,
-        children=children,
+        id=tree_dict["id"],
+        name=tree_dict["name"],
+        qualified_name=tree_dict["qualified_name"],
+        is_root=tree_dict["is_root"],
+        type=tree_dict["type"],
+        parent_id=tree_dict["parent_id"],
+        children=[_dict_to_category_read(child) for child in tree_dict["children"]],
     )
 
 
@@ -71,29 +41,24 @@ async def get_category_tree(
             detail="transaction_type must be EXPENSES or REVENUE, not BOTH",
         )
 
-    # Get the category tree
-    result = await session.execute(
-        select(CategoryTree)
-        .options(selectinload(CategoryTree.root))
-        .where(CategoryTree.type == transaction_type.value)
-    )
-    category_tree = result.scalar_one_or_none()
+    # Get the category tree via service
+    tree = await category_service.get_category_tree(transaction_type, session)
 
-    if not category_tree:
+    if not tree:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Category tree for {transaction_type.value} not found",
         )
 
-    # Build the tree response
-    if category_tree.root:
-        root_response = await build_category_tree_response(category_tree.root, session)
-    else:
-        root_response = None
+    # Build the tree response using service
+    root_response = None
+    if tree.root:
+        root_dict = await category_service.build_category_tree(tree.root, session)
+        root_response = _dict_to_category_read(root_dict)
 
     return CategoryTreeRead(
-        id=category_tree.id,
-        type=category_tree.type,
+        id=tree.id,
+        type=tree.type,
         root=root_response,
     )
 
@@ -107,13 +72,12 @@ async def list_categories(
     session: AsyncSession = Depends(get_session),
 ) -> List[CategoryRead]:
     """List all categories, optionally filtered by type."""
-    query = select(Category).order_by(Category.qualified_name)
-
     if transaction_type:
-        query = query.where(Category.type == transaction_type.value)
-
-    result = await session.execute(query)
-    categories = result.scalars().all()
+        categories = await category_service.get_categories_by_type(
+            transaction_type, session
+        )
+    else:
+        categories = await category_service.get_all_categories(session)
 
     return [
         CategoryRead(
@@ -136,8 +100,7 @@ async def get_category(
     session: AsyncSession = Depends(get_session),
 ) -> CategoryRead:
     """Get a specific category by ID."""
-    result = await session.execute(select(Category).where(Category.id == category_id))
-    category = result.scalar_one_or_none()
+    category = await category_service.get_category_by_id(category_id, session)
 
     if not category:
         raise HTTPException(
@@ -145,13 +108,8 @@ async def get_category(
             detail="Category not found",
         )
 
-    # Get children
-    children_result = await session.execute(
-        select(Category)
-        .where(Category.parent_id == category_id)
-        .order_by(Category.name)
-    )
-    children = children_result.scalars().all()
+    # Get children via service
+    children = await category_service.get_category_children(category_id, session)
 
     return CategoryRead(
         id=category.id,
@@ -182,10 +140,9 @@ async def get_category_by_qualified_name(
     session: AsyncSession = Depends(get_session),
 ) -> CategoryRead:
     """Get a category by its qualified name."""
-    result = await session.execute(
-        select(Category).where(Category.qualified_name == qualified_name)
+    category = await category_service.get_category_by_qualified_name(
+        qualified_name, session
     )
-    category = result.scalar_one_or_none()
 
     if not category:
         raise HTTPException(

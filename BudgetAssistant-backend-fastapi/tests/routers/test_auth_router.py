@@ -225,6 +225,79 @@ class TestPasswordReset:
             assert response.status_code == 501
 
 
+class TestValidateResetToken:
+    """Tests for validate_reset_token endpoint."""
+
+    @pytest.mark.asyncio
+    async def test_validate_reset_token_invalid_uidb64(self):
+        """Test validation with invalid base64 user ID."""
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            response = await client.get(
+                "/api/auth/password-reset-validate/invalid-base64/some-token",
+            )
+
+            assert response.status_code == 200
+            data = response.json()
+            assert data["valid"] is False
+
+    @pytest.mark.asyncio
+    async def test_validate_reset_token_nonexistent_user(self):
+        """Test validation with non-existent user ID."""
+        from base64 import urlsafe_b64encode
+
+        # Encode a non-existent user ID
+        uidb64 = urlsafe_b64encode(b"999999").decode()
+
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            response = await client.get(
+                f"/api/auth/password-reset-validate/{uidb64}/some-token",
+            )
+
+            assert response.status_code == 200
+            data = response.json()
+            assert data["valid"] is False
+
+    @pytest.mark.asyncio
+    async def test_validate_reset_token_invalid_token_format(self):
+        """Test validation with invalid token format."""
+        from base64 import urlsafe_b64encode
+
+        uidb64 = urlsafe_b64encode(b"1").decode()
+
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            response = await client.get(
+                f"/api/auth/password-reset-validate/{uidb64}/invalid-token-no-dash",
+            )
+
+            # Token format is invalid (missing dash separator)
+            assert response.status_code == 200
+            data = response.json()
+            # Should return valid=False for invalid format
+            assert data["valid"] is False
+
+    @pytest.mark.asyncio
+    async def test_validate_reset_token_expired_token(self):
+        """Test validation with expired token (timestamp too old)."""
+        from base64 import urlsafe_b64encode
+
+        uidb64 = urlsafe_b64encode(b"1").decode()
+        # Use a very old timestamp (1 second since epoch)
+        old_token = "1-somehash"
+
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            response = await client.get(
+                f"/api/auth/password-reset-validate/{uidb64}/{old_token}",
+            )
+
+            assert response.status_code == 200
+            data = response.json()
+            assert data["valid"] is False
+
+
 class TestAuthEndpointsAuthenticated:
     """Tests for auth endpoints with authentication."""
 

@@ -17,6 +17,7 @@ class BankAccountService:
         account_number: str,
         user: User,
         session: AsyncSession,
+        alias: Optional[str] = None,
     ) -> BankAccount:
         """Get or create a bank account and associate it with the user."""
         normalized = BankAccount.normalize_account_number(account_number)
@@ -29,7 +30,7 @@ class BankAccountService:
 
         if not bank_account:
             # Create new bank account
-            bank_account = BankAccount(account_number=normalized)
+            bank_account = BankAccount(account_number=normalized, alias=alias)
             session.add(bank_account)
             await session.flush()
 
@@ -107,6 +108,7 @@ class BankAccountService:
             bank_account_in.account_number,
             user,
             session,
+            alias=bank_account_in.alias,
         )
 
     async def user_has_access(
@@ -137,6 +139,32 @@ class BankAccountService:
             )
         )
         return list(result.scalars().all())
+
+    async def remove_user_access(
+        self,
+        user: User,
+        account_number: str,
+        session: AsyncSession,
+    ) -> bool:
+        """Remove a user's access to a bank account.
+
+        Returns True if the association was removed, False if it didn't exist.
+        """
+        normalized = BankAccount.normalize_account_number(account_number)
+        result = await session.execute(
+            select(UserBankAccountLink).where(
+                UserBankAccountLink.user_id == user.id,
+                UserBankAccountLink.bank_account_number == normalized,
+            )
+        )
+        link = result.scalar_one_or_none()
+
+        if not link:
+            return False
+
+        await session.delete(link)
+        await session.commit()
+        return True
 
 
 # Singleton instance

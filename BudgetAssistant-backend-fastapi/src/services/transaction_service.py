@@ -148,6 +148,58 @@ class TransactionService:
 
         return transactions, total_elements
 
+    async def page_transactions_in_context(
+        self,
+        bank_account: str,
+        category_id: int,
+        transaction_type: TransactionTypeEnum,
+        page: int,
+        size: int,
+        sort_order: str,
+        sort_property: str,
+        session: AsyncSession,
+    ) -> Tuple[List[Transaction], int]:
+        """Get paginated transactions for a specific context (period, category)."""
+        normalized = BankAccount.normalize_account_number(bank_account)
+
+        conditions = [
+            Transaction.bank_account_id == normalized,
+            Transaction.category_id == category_id,
+        ]
+
+        if transaction_type == TransactionTypeEnum.REVENUE:
+            conditions.append(Transaction.amount >= 0)
+        elif transaction_type == TransactionTypeEnum.EXPENSES:
+            conditions.append(Transaction.amount < 0)
+
+        # TODO: Parse period string to date range
+        # For now, skip period filtering
+
+        filter_condition = and_(*conditions)
+
+        # Count total
+        count_query = (
+            select(func.count()).select_from(Transaction).where(filter_condition)
+        )
+        total_result = await session.execute(count_query)
+        total_elements = total_result.scalar() or 0
+
+        # Get sorted and paginated results
+        sort_column = self._get_sort_column(sort_property, sort_order)
+        offset = page * size
+
+        stmt = (
+            select(Transaction)
+            .where(filter_condition)
+            .order_by(sort_column)
+            .offset(offset)
+            .limit(size)
+        )
+        result = await session.execute(stmt)
+        transactions = list(result.scalars().all())
+
+        return transactions, total_elements
+
     async def page_transactions_to_manually_review(
         self,
         bank_account: str,

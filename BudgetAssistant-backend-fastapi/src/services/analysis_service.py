@@ -18,6 +18,7 @@ from schemas import (
     RevenueAndExpensesPerPeriodResponse,
     RevenueExpensesQuery,
 )
+from schemas.period import Month, Period, Quarter, Year
 from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -67,40 +68,37 @@ class AnalysisService:
 
         return and_(*conditions)
 
+    def _get_period_for_date(
+        self,
+        booking_date: datetime,
+        grouping: Grouping,
+    ) -> Period:
+        """Get a Period instance for a booking date based on grouping.
+
+        Uses the ported Period classes (Month, Quarter, Year) for consistent
+        period handling across the application.
+        """
+        if grouping == Grouping.MONTH:
+            return Month.from_month_and_year(booking_date.month, booking_date.year)
+        elif grouping == Grouping.QUARTER:
+            return Quarter.from_date(booking_date)
+        elif grouping == Grouping.YEAR:
+            return Year.from_year(booking_date.year)
+        else:
+            # Default to month
+            return Month.from_month_and_year(booking_date.month, booking_date.year)
+
     def _get_period_key(
         self,
         booking_date: datetime,
         grouping: Grouping,
     ) -> Tuple[str, datetime, datetime]:
-        """Get period key, start, and end dates for a booking date."""
-        if grouping == Grouping.MONTH:
-            start = booking_date.replace(day=1)
-            # Get last day of month
-            if start.month == 12:
-                end = start.replace(year=start.year + 1, month=1, day=1)
-            else:
-                end = start.replace(month=start.month + 1, day=1)
-            end = end.replace(day=1) - timedelta(days=1)
-            key = f"{booking_date.year}-{booking_date.month:02d}"
-        elif grouping == Grouping.QUARTER:
-            quarter = (booking_date.month - 1) // 3 + 1
-            start_month = (quarter - 1) * 3 + 1
-            start = booking_date.replace(month=start_month, day=1)
-            end_month = start_month + 2
-            if end_month > 12:
-                end = datetime(booking_date.year + 1, 1, 1) - timedelta(days=1)
-            else:
-                end = datetime(booking_date.year, end_month + 1, 1) - timedelta(days=1)
-            key = f"{booking_date.year}-Q{quarter}"
-        elif grouping == Grouping.YEAR:
-            start = booking_date.replace(month=1, day=1)
-            end = booking_date.replace(month=12, day=31)
-            key = str(booking_date.year)
-        else:
-            # Default to month
-            return self._get_period_key(booking_date, Grouping.MONTH)
+        """Get period key, start, and end dates for a booking date.
 
-        return key, start, end
+        Uses Period classes for consistent period calculation.
+        """
+        period = self._get_period_for_date(booking_date, grouping)
+        return period.value, period.start, period.end
 
     async def get_revenue_and_expenses_per_period(
         self,
@@ -466,9 +464,45 @@ class AnalysisService:
 
         return all_ids
 
+    async def get_categories_for_account(
+        self,
+        bank_account: str,
+        transaction_type: TransactionTypeEnum,
+        session: AsyncSession,
+    ) -> List[str]:
+        """Get categories used in transactions for a bank account and transaction type.
 
-# Import timedelta at top level
-from datetime import timedelta
+        Returns a sorted list of category qualified names.
+        """
+        normalized = BankAccount.normalize_account_number(bank_account)
+
+        # Build filter for transaction type
+        conditions = [Transaction.bank_account_id == normalized]
+        if transaction_type == TransactionTypeEnum.REVENUE:
+            conditions.append(Transaction.amount >= 0)
+        elif transaction_type == TransactionTypeEnum.EXPENSES:
+            conditions.append(Transaction.amount < 0)
+
+        # Query distinct category IDs
+        result = await session.execute(
+            select(Transaction.category_id)
+            .where(and_(*conditions))
+            .where(Transaction.category_id.isnot(None))
+            .distinct()
+        )
+        category_ids = result.scalars().all()
+
+        # Get category names
+        categories = []
+        if category_ids:
+            cat_result = await session.execute(
+                select(Category).where(Category.id.in_(category_ids))
+            )
+            for cat in cat_result.scalars().all():
+                categories.append(cat.qualified_name)
+
+        return sorted(categories)
+
 
 # Singleton instance
 analysis_service = AnalysisService()

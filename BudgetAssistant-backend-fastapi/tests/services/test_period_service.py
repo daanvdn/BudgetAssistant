@@ -111,32 +111,53 @@ class TestPeriodService:
         assert end.day == 31
 
     def test_format_period_month(self):
-        """Test formatting period for month grouping."""
+        """Test formatting period for month grouping.
+
+        Uses Period class format: MM/YYYY (matching Django backend).
+        """
         service = PeriodService()
         test_date = datetime(2023, 5, 15)
 
         result = service.format_period(test_date, "MONTH")
 
-        assert result == "2023-05"
+        assert result == "05/2023"
 
     def test_format_period_quarter(self):
-        """Test formatting period for quarter grouping."""
+        """Test formatting period for quarter grouping.
+
+        Uses Period class format: MM/YYYY - MM/YYYY (matching Django backend).
+        """
         service = PeriodService()
 
         # Q1
-        assert service.format_period(datetime(2023, 2, 15), "QUARTER") == "2023-Q1"
+        assert (
+            service.format_period(datetime(2023, 2, 15), "QUARTER")
+            == "01/2023 - 03/2023"
+        )
         # Q2
-        assert service.format_period(datetime(2023, 5, 15), "QUARTER") == "2023-Q2"
+        assert (
+            service.format_period(datetime(2023, 5, 15), "QUARTER")
+            == "04/2023 - 06/2023"
+        )
         # Q3
-        assert service.format_period(datetime(2023, 8, 15), "QUARTER") == "2023-Q3"
+        assert (
+            service.format_period(datetime(2023, 8, 15), "QUARTER")
+            == "07/2023 - 09/2023"
+        )
         # Q4
-        assert service.format_period(datetime(2023, 11, 15), "QUARTER") == "2023-Q4"
+        assert (
+            service.format_period(datetime(2023, 11, 15), "QUARTER")
+            == "10/2023 - 12/2023"
+        )
 
     def test_format_period_year(self):
-        """Test formatting period for year grouping."""
+        """Test formatting period for year grouping.
+
+        Uses Period class format: YYYY - YYYY (matching Django backend).
+        """
         service = PeriodService()
         test_date = datetime(2023, 5, 15)
 
         result = service.format_period(test_date, "YEAR")
 
-        assert result == "2023"
+        assert result == "2023 - 2023"

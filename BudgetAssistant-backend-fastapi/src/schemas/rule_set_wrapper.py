@@ -28,7 +28,7 @@ class RuleSetWrapperRead(BaseModel):
         return cls(
             id=obj.id,
             category_id=obj.category_id,
-            rule_set=obj.get_rule_set_dict(),
+            rule_set=obj.get_rule_set_as_dict(),
         )
 
 

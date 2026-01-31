@@ -4,8 +4,6 @@ from typing import List
 
 from db.database import get_session
 from fastapi import APIRouter, Depends, HTTPException, status
-from models import BankAccount
-from models.associations import UserBankAccountLink
 from routers.auth import CurrentUser
 from schemas import (
     BankAccountCreate,
@@ -14,7 +12,7 @@ from schemas import (
     SaveAliasRequest,
     SuccessResponse,
 )
-from sqlalchemy import select
+from services.bank_account_service import bank_account_service
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/bank-accounts", tags=["Bank Accounts"])
@@ -26,13 +24,7 @@ async def get_bank_accounts_for_user(
     session: AsyncSession = Depends(get_session),
 ) -> List[BankAccountRead]:
     """Get all bank accounts for the current user."""
-    # Query bank accounts through the link table
-    result = await session.execute(
-        select(BankAccount)
-        .join(UserBankAccountLink)
-        .where(UserBankAccountLink.user_id == current_user.id)
-    )
-    bank_accounts = result.scalars().all()
+    bank_accounts = await bank_account_service.find_by_user(current_user, session)
     return [BankAccountRead.model_validate(ba) for ba in bank_accounts]
 
 
@@ -43,48 +35,9 @@ async def create_bank_account(
     session: AsyncSession = Depends(get_session),
 ) -> BankAccountRead:
     """Create a new bank account and associate it with the current user."""
-    # Normalize account number
-    normalized_account = BankAccount.normalize_account_number(
-        bank_account.account_number
+    db_bank_account = await bank_account_service.create_bank_account(
+        bank_account, current_user, session
     )
-
-    # Check if account already exists
-    result = await session.execute(
-        select(BankAccount).where(BankAccount.account_number == normalized_account)
-    )
-    existing = result.scalar_one_or_none()
-
-    if existing:
-        # If it exists, just associate with user if not already
-        link_result = await session.execute(
-            select(UserBankAccountLink).where(
-                UserBankAccountLink.user_id == current_user.id,
-                UserBankAccountLink.bank_account_number == normalized_account,
-            )
-        )
-        if not link_result.scalar_one_or_none():
-            link = UserBankAccountLink(
-                user_id=current_user.id, bank_account_number=normalized_account
-            )
-            session.add(link)
-            await session.commit()
-        return BankAccountRead.model_validate(existing)
-
-    # Create new bank account
-    db_bank_account = BankAccount(
-        account_number=normalized_account,
-        alias=bank_account.alias,
-    )
-    session.add(db_bank_account)
-    await session.flush()
-
-    # Create association with user
-    link = UserBankAccountLink(
-        user_id=current_user.id, bank_account_number=normalized_account
-    )
-    session.add(link)
-    await session.commit()
-    await session.refresh(db_bank_account)
 
     return BankAccountRead.model_validate(db_bank_account)
 
@@ -96,19 +49,16 @@ async def get_bank_account(
     session: AsyncSession = Depends(get_session),
 ) -> BankAccountRead:
     """Get a specific bank account by account number."""
-    normalized = BankAccount.normalize_account_number(account_number)
-
     # Check user has access to this account
-    result = await session.execute(
-        select(BankAccount)
-        .join(UserBankAccountLink)
-        .where(
-            UserBankAccountLink.user_id == current_user.id,
-            BankAccount.account_number == normalized,
+    if not await bank_account_service.user_has_access(
+        current_user, account_number, session
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Bank account not found",
         )
-    )
-    bank_account = result.scalar_one_or_none()
 
+    bank_account = await bank_account_service.get_bank_account(account_number, session)
     if not bank_account:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -126,30 +76,34 @@ async def update_bank_account(
     session: AsyncSession = Depends(get_session),
 ) -> BankAccountRead:
     """Update a bank account's alias."""
-    normalized = BankAccount.normalize_account_number(account_number)
-
     # Check user has access to this account
-    result = await session.execute(
-        select(BankAccount)
-        .join(UserBankAccountLink)
-        .where(
-            UserBankAccountLink.user_id == current_user.id,
-            BankAccount.account_number == normalized,
-        )
-    )
-    bank_account = result.scalar_one_or_none()
-
-    if not bank_account:
+    if not await bank_account_service.user_has_access(
+        current_user, account_number, session
+    ):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Bank account not found",
         )
 
     if updates.alias is not None:
-        bank_account.alias = updates.alias
-
-    await session.commit()
-    await session.refresh(bank_account)
+        try:
+            bank_account = await bank_account_service.save_alias(
+                account_number, updates.alias, session
+            )
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Bank account not found",
+            )
+    else:
+        bank_account = await bank_account_service.get_bank_account(
+            account_number, session
+        )
+        if not bank_account:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Bank account not found",
+            )
 
     return BankAccountRead.model_validate(bank_account)
 
@@ -161,27 +115,24 @@ async def save_alias(
     session: AsyncSession = Depends(get_session),
 ) -> SuccessResponse:
     """Save an alias for a bank account."""
-    normalized = BankAccount.normalize_account_number(request.bank_account)
-
     # Check user has access to this account
-    result = await session.execute(
-        select(BankAccount)
-        .join(UserBankAccountLink)
-        .where(
-            UserBankAccountLink.user_id == current_user.id,
-            BankAccount.account_number == normalized,
-        )
-    )
-    bank_account = result.scalar_one_or_none()
-
-    if not bank_account:
+    if not await bank_account_service.user_has_access(
+        current_user, request.bank_account, session
+    ):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Bank account not found",
         )
 
-    bank_account.alias = request.alias
-    await session.commit()
+    try:
+        await bank_account_service.save_alias(
+            request.bank_account, request.alias, session
+        )
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Bank account not found",
+        )
 
     return SuccessResponse(message="Alias saved successfully")
 
@@ -196,23 +147,14 @@ async def remove_bank_account_from_user(
 
     Note: This doesn't delete the bank account, just removes the user's access.
     """
-    normalized = BankAccount.normalize_account_number(account_number)
-
-    result = await session.execute(
-        select(UserBankAccountLink).where(
-            UserBankAccountLink.user_id == current_user.id,
-            UserBankAccountLink.bank_account_number == normalized,
-        )
+    removed = await bank_account_service.remove_user_access(
+        current_user, account_number, session
     )
-    link = result.scalar_one_or_none()
 
-    if not link:
+    if not removed:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Bank account association not found",
         )
-
-    await session.delete(link)
-    await session.commit()
 
     return SuccessResponse(message="Bank account removed from user")

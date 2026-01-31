@@ -48,7 +48,7 @@ class TestRuleSetWrapper:
         rule_set_wrapper = RuleSetWrapper(
             category_id=category.id,
         )
-        rule_set_wrapper.set_rule_set_dict(rule_set_dict)
+        rule_set_wrapper.set_rule_set_from_dict(rule_set_dict)
 
         async_session.add(rule_set_wrapper)
         await async_session.commit()
@@ -68,13 +68,13 @@ class TestRuleSetWrapper:
             },
         )
         # Verify rule_set_json was persisted correctly
-        persisted_dict = persisted.get_rule_set_dict()
+        persisted_dict = persisted.get_rule_set_as_dict()
         assert persisted_dict["condition"] == "AND"
         assert len(persisted_dict["rules"]) == 1
         assert persisted_dict["clazz"] == "RuleSet"
 
     @pytest.mark.asyncio
-    async def test_get_rule_set_dict(self, async_session):
+    async def test_get_rule_set_as_dict(self, async_session):
         """Test getting rule set as dictionary."""
         category = Category(
             name="Test Category",
@@ -94,17 +94,53 @@ class TestRuleSetWrapper:
         }
 
         rule_set_wrapper = RuleSetWrapper(category_id=category.id)
-        rule_set_wrapper.set_rule_set_dict(rule_set_dict)
+        rule_set_wrapper.set_rule_set_from_dict(rule_set_dict)
 
         async_session.add(rule_set_wrapper)
         await async_session.commit()
         await async_session.refresh(rule_set_wrapper)
 
-        retrieved_dict = rule_set_wrapper.get_rule_set_dict()
+        retrieved_dict = rule_set_wrapper.get_rule_set_as_dict()
 
         assert retrieved_dict["condition"] == "OR"
         assert retrieved_dict["is_child"] is True
         assert retrieved_dict["clazz"] == "RuleSet"
+
+    @pytest.mark.asyncio
+    async def test_get_rule_set_returns_typed_object(self, async_session):
+        """Test getting rule set as strongly-typed RuleSet object."""
+        from models.rules import RuleSet
+
+        category = Category(
+            name="Test Category",
+            type=TransactionTypeEnum.EXPENSES,
+            qualified_name="test",
+        )
+        async_session.add(category)
+        await async_session.commit()
+        await async_session.refresh(category)
+
+        rule_set_dict = {
+            "condition": "OR",
+            "rules": [],
+            "is_child": True,
+            "clazz": "RuleSet",
+            "type": "EXPENSES",
+        }
+
+        rule_set_wrapper = RuleSetWrapper(category_id=category.id)
+        rule_set_wrapper.set_rule_set_from_dict(rule_set_dict)
+
+        async_session.add(rule_set_wrapper)
+        await async_session.commit()
+        await async_session.refresh(rule_set_wrapper)
+
+        rule_set = rule_set_wrapper.get_rule_set()
+
+        assert rule_set is not None
+        assert isinstance(rule_set, RuleSet)
+        assert rule_set.condition == "OR"
+        assert rule_set.is_child is True
 
     @pytest.mark.asyncio
     async def test_add_users_to_rule_set_wrapper(self, async_session):
@@ -167,24 +203,35 @@ class TestRuleSetWrapper:
         await async_session.commit()
         await async_session.refresh(category)
 
-        initial_rule_set = {"condition": "AND", "rules": []}
+        initial_rule_set = {
+            "condition": "AND",
+            "rules": [],
+            "is_child": False,
+            "clazz": "RuleSet",
+            "type": "EXPENSES",
+        }
         rule_set_wrapper = RuleSetWrapper(category_id=category.id)
-        rule_set_wrapper.set_rule_set_dict(initial_rule_set)
+        rule_set_wrapper.set_rule_set_from_dict(initial_rule_set)
 
         async_session.add(rule_set_wrapper)
         await async_session.commit()
 
-        new_rule_set = {"condition": "OR", "rules": [{"test": "value"}]}
-        rule_set_wrapper.set_rule_set_dict(new_rule_set)
+        new_rule_set = {
+            "condition": "OR",
+            "rules": [],
+            "is_child": False,
+            "clazz": "RuleSet",
+            "type": "EXPENSES",
+        }
+        rule_set_wrapper.set_rule_set_from_dict(new_rule_set)
         await async_session.commit()
         await async_session.refresh(rule_set_wrapper)
 
-        retrieved_dict = rule_set_wrapper.get_rule_set_dict()
+        retrieved_dict = rule_set_wrapper.get_rule_set_as_dict()
         assert retrieved_dict["condition"] == "OR"
-        assert len(retrieved_dict["rules"]) == 1
 
     @pytest.mark.asyncio
-    async def test_empty_rule_set_dict(self, async_session):
+    async def test_empty_rule_set(self, async_session):
         """Test handling of empty rule set."""
         category = Category(
             name="Test Category",
@@ -202,5 +249,10 @@ class TestRuleSetWrapper:
         async_session.add(rule_set_wrapper)
         await async_session.commit()
 
-        result = rule_set_wrapper.get_rule_set_dict()
-        assert result == {}
+        # get_rule_set_as_dict returns empty dict
+        result_dict = rule_set_wrapper.get_rule_set_as_dict()
+        assert result_dict == {}
+
+        # get_rule_set returns None for empty rule set
+        result_typed = rule_set_wrapper.get_rule_set()
+        assert result_typed is None

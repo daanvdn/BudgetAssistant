@@ -1,7 +1,7 @@
 """RuleSetWrapper SQLModel database model."""
 
 import json
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from sqlmodel import Field, Relationship, SQLModel
 
@@ -9,6 +9,7 @@ from .associations import UserRuleSetLink
 
 if TYPE_CHECKING:
     from .category import Category
+    from .rules import RuleSet
     from .user import User
 
 
@@ -36,10 +37,50 @@ class RuleSetWrapper(SQLModel, table=True):
         sa_relationship_kwargs={"lazy": "selectin"},
     )
 
-    def get_rule_set_dict(self) -> dict:
-        """Get the rule set as a dictionary."""
-        return json.loads(self.rule_set_json) if self.rule_set_json else {}
+    def get_rule_set(self) -> Optional["RuleSet"]:
+        """Get the rule set as a strongly-typed RuleSet object.
 
-    def set_rule_set_dict(self, rule_set: dict) -> None:
-        """Set the rule set from a dictionary."""
-        self.rule_set_json = json.dumps(rule_set)
+        Returns:
+            A RuleSet object if the JSON is valid and non-empty, None otherwise.
+        """
+        from .rules import RuleSet
+
+        if not self.rule_set_json or self.rule_set_json == "{}":
+            return None
+
+        try:
+            rule_set_dict = json.loads(self.rule_set_json)
+            if not rule_set_dict:
+                return None
+            return RuleSet.model_validate(rule_set_dict)
+        except (json.JSONDecodeError, ValueError):
+            return None
+
+    def set_rule_set(self, rule_set: "RuleSet") -> None:
+        """Set the rule set from a RuleSet object.
+
+        Args:
+            rule_set: The RuleSet object to store.
+        """
+        self.rule_set_json = json.dumps(rule_set.model_dump())
+
+    def set_rule_set_from_dict(self, rule_set_dict: Dict[str, Any]) -> None:
+        """Set the rule set from a dictionary (for API compatibility).
+
+        Args:
+            rule_set_dict: The rule set as a dictionary.
+        """
+        self.rule_set_json = json.dumps(rule_set_dict)
+
+    def get_rule_set_as_dict(self) -> Dict[str, Any]:
+        """Get the rule set as a dictionary (for API responses).
+
+        Returns:
+            The rule set as a dictionary, or empty dict if not set.
+        """
+        if not self.rule_set_json:
+            return {}
+        try:
+            return json.loads(self.rule_set_json)
+        except json.JSONDecodeError:
+            return {}

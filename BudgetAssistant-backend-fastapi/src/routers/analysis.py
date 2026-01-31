@@ -1,5 +1,7 @@
 """Analysis router for revenue/expenses analysis."""
 
+import logging
+
 from db.database import get_session
 from enums import TransactionTypeEnum
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -15,7 +17,11 @@ from schemas import (
     RevenueExpensesQuery,
     RevenueExpensesQueryWithCategory,
 )
+from services.analysis_service import analysis_service
+from services.period_service import period_service
 from sqlalchemy.ext.asyncio import AsyncSession
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/analysis", tags=["Analysis"])
 
@@ -29,11 +35,7 @@ async def get_revenue_and_expenses_per_period(
     current_user: CurrentUser,
     session: AsyncSession = Depends(get_session),
 ) -> RevenueAndExpensesPerPeriodResponse:
-    """Get revenue and expenses aggregated per period.
-
-    Note: This is a placeholder. The actual implementation would use
-    the AnalysisService to compute aggregations.
-    """
+    """Get revenue and expenses aggregated per period."""
     if query.is_empty():
         return RevenueAndExpensesPerPeriodResponse(
             content=[],
@@ -42,15 +44,7 @@ async def get_revenue_and_expenses_per_period(
             size=0,
         )
 
-    # TODO: Implement actual analysis using AnalysisService
-    # This would aggregate transactions by period based on the grouping
-
-    return RevenueAndExpensesPerPeriodResponse(
-        content=[],
-        page=0,
-        total_elements=0,
-        size=0,
-    )
+    return await analysis_service.get_revenue_and_expenses_per_period(query, session)
 
 
 @router.post(
@@ -62,20 +56,12 @@ async def get_revenue_and_expenses_per_period_and_category(
     current_user: CurrentUser,
     session: AsyncSession = Depends(get_session),
 ) -> RevenueAndExpensesPerPeriodAndCategory:
-    """Get revenue and expenses aggregated per period and category.
-
-    Note: This is a placeholder. The actual implementation would use
-    the AnalysisService to compute aggregations with category breakdown.
-    """
+    """Get revenue and expenses aggregated per period and category."""
     if query.is_empty():
         return RevenueAndExpensesPerPeriodAndCategory.empty_instance()
 
-    # TODO: Implement actual analysis using AnalysisService
-
-    return RevenueAndExpensesPerPeriodAndCategory(
-        periods=[],
-        all_categories=[],
-        transaction_type=query.transaction_type,
+    return await analysis_service.get_revenue_and_expenses_per_period_and_category(
+        query, session
     )
 
 
@@ -88,20 +74,16 @@ async def get_category_details_for_period(
     current_user: CurrentUser,
     session: AsyncSession = Depends(get_session),
 ) -> CategoryDetailsForPeriodResponse:
-    """Get detailed category breakdown for a specific period.
-
-    Note: This is a placeholder. The actual implementation would use
-    the AnalysisService.
-    """
-    # TODO: Implement actual analysis
-
-    return CategoryDetailsForPeriodResponse(
-        period="",
-        start_date=query.start,
-        end_date=query.end,
-        categories=[],
-        total_amount=0.0,
-    )
+    """Get detailed category breakdown for a specific period."""
+    try:
+        return await analysis_service.get_category_details_for_period(
+            query, query.category_qualified_name, session
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e),
+        )
 
 
 @router.get(
@@ -114,15 +96,15 @@ async def get_categories_for_account_and_transaction_type(
     current_user: CurrentUser = None,
     session: AsyncSession = Depends(get_session),
 ) -> CategoriesForAccountResponse:
-    """Get categories used in transactions for a bank account.
-
-    Note: This is a placeholder. The actual implementation would query
-    distinct categories from transactions.
-    """
-    # TODO: Implement actual query
+    """Get categories used in transactions for a bank account."""
+    categories = await analysis_service.get_categories_for_account(
+        bank_account=bank_account,
+        transaction_type=transaction_type,
+        session=session,
+    )
 
     return CategoriesForAccountResponse(
-        categories=[],
+        categories=categories,
         transaction_type=transaction_type,
     )
 
@@ -133,28 +115,26 @@ async def track_budget(
     current_user: CurrentUser,
     session: AsyncSession = Depends(get_session),
 ) -> BudgetTrackerResult:
-    """Track budget vs actual spending for a period.
-
-    Note: This is a placeholder. The actual implementation would use
-    the AnalysisService and BudgetTreeService.
-    """
+    """Track budget vs actual spending for a period."""
     if query.is_empty():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Query cannot be empty",
         )
 
-    # TODO: Implement actual budget tracking
-
-    return BudgetTrackerResult(
-        period="",
-        start_date=query.start,
-        end_date=query.end,
-        entries=[],
-        total_budgeted=0.0,
-        total_actual=0.0,
-        total_difference=0.0,
-    )
+    try:
+        result = await analysis_service.track_budget(query, session)
+        if result is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Could not track budget - query may be invalid",
+            )
+        return result
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e),
+        )
 
 
 @router.get("/resolve-date-shortcut", response_model=ResolvedDateRange)
@@ -163,28 +143,5 @@ async def resolve_start_end_date_shortcut(
     current_user: CurrentUser = None,
     session: AsyncSession = Depends(get_session),
 ) -> ResolvedDateRange:
-    """Resolve a date range shortcut to actual start and end dates.
-
-    Note: This is a placeholder. The actual implementation would use
-    the PeriodService.
-    """
-    from datetime import datetime
-
-    # TODO: Implement actual date resolution using PeriodService
-    now = datetime.now()
-    start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-
-    # Simple placeholder implementation
-    if shortcut == DateRangeShortcut.CURRENT_MONTH:
-        start = start_of_month
-        end = now
-    else:
-        # Default to current month for now
-        start = start_of_month
-        end = now
-
-    return ResolvedDateRange(
-        start=start,
-        end=end,
-        shortcut=shortcut.value,
-    )
+    """Resolve a date range shortcut to actual start and end dates."""
+    return period_service.resolve_start_end_date_shortcut(shortcut)

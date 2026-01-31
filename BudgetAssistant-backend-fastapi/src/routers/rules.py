@@ -3,8 +3,6 @@
 from db.database import get_session
 from enums import TransactionTypeEnum
 from fastapi import APIRouter, Depends, HTTPException, status
-from models import Category, RuleSetWrapper
-from models.associations import UserRuleSetLink
 from routers.auth import CurrentUser
 from schemas import (
     CategorizeTransactionsResponse,
@@ -14,7 +12,8 @@ from schemas import (
     RuleSetWrapperUpdate,
     SuccessResponse,
 )
-from sqlalchemy import select
+from services.category_service import category_service
+from services.rule_service import rule_service
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/rules", tags=["Rules"])
@@ -27,78 +26,37 @@ async def get_or_create_rule_set_wrapper(
     session: AsyncSession = Depends(get_session),
 ) -> RuleSetWrapperRead:
     """Get or create a rule set wrapper for a category."""
-    # Find the category by qualified name
-    category_result = await session.execute(
-        select(Category).where(
-            Category.qualified_name == request.category_qualified_name
+    try:
+        rule_set_wrapper = await rule_service.get_or_create_rule_set_wrapper(
+            category_qualified_name=request.category_qualified_name,
+            transaction_type=request.type,
+            user=current_user,
+            session=session,
         )
-    )
-    category = category_result.scalar_one_or_none()
-
-    if not category:
+    except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Category '{request.category_qualified_name}' not found",
+            detail=str(e),
         )
-
-    # Check if rule set wrapper exists for this category
-    result = await session.execute(
-        select(RuleSetWrapper).where(RuleSetWrapper.category_id == category.id)
-    )
-    rule_set_wrapper = result.scalar_one_or_none()
-
-    if not rule_set_wrapper:
-        # Create new rule set wrapper
-        rule_set_wrapper = RuleSetWrapper(
-            category_id=category.id,
-            rule_set_json="{}",
-        )
-        session.add(rule_set_wrapper)
-        await session.flush()
-
-        # Associate with user
-        link = UserRuleSetLink(
-            user_id=current_user.id,
-            rule_set_wrapper_id=rule_set_wrapper.id,
-        )
-        session.add(link)
-        await session.commit()
-        await session.refresh(rule_set_wrapper)
-    else:
-        # Check if user is already associated
-        link_result = await session.execute(
-            select(UserRuleSetLink).where(
-                UserRuleSetLink.user_id == current_user.id,
-                UserRuleSetLink.rule_set_wrapper_id == rule_set_wrapper.id,
-            )
-        )
-        if not link_result.scalar_one_or_none():
-            link = UserRuleSetLink(
-                user_id=current_user.id,
-                rule_set_wrapper_id=rule_set_wrapper.id,
-            )
-            session.add(link)
-            await session.commit()
 
     return RuleSetWrapperRead(
         id=rule_set_wrapper.id,
         category_id=rule_set_wrapper.category_id,
-        rule_set=rule_set_wrapper.get_rule_set_dict(),
+        rule_set=rule_set_wrapper.get_rule_set_as_dict(),
     )
 
 
 @router.post("/save", response_model=SuccessResponse)
 async def save_rule_set_wrapper(
-    rule_set_wrapper: RuleSetWrapperCreate,
+    rule_set_wrapper_in: RuleSetWrapperCreate,
     current_user: CurrentUser,
     session: AsyncSession = Depends(get_session),
 ) -> SuccessResponse:
     """Save a rule set wrapper."""
-    # Check category exists
-    category_result = await session.execute(
-        select(Category).where(Category.id == rule_set_wrapper.category_id)
+    # Check category exists via service
+    category = await category_service.get_category_by_id(
+        rule_set_wrapper_in.category_id, session
     )
-    category = category_result.scalar_one_or_none()
 
     if not category:
         raise HTTPException(
@@ -106,32 +64,26 @@ async def save_rule_set_wrapper(
             detail="Category not found",
         )
 
-    # Check if rule set wrapper exists
-    result = await session.execute(
-        select(RuleSetWrapper).where(
-            RuleSetWrapper.category_id == rule_set_wrapper.category_id
-        )
+    # Check if rule set wrapper exists for this category
+    existing = await rule_service.get_rule_set_wrapper_by_category(
+        rule_set_wrapper_in.category_id, session
     )
-    existing = result.scalar_one_or_none()
 
     if existing:
-        # Update existing
-        existing.set_rule_set_dict(rule_set_wrapper.rule_set)
-        await session.commit()
-    else:
-        # Create new
-        new_wrapper = RuleSetWrapper(category_id=rule_set_wrapper.category_id)
-        new_wrapper.set_rule_set_dict(rule_set_wrapper.rule_set)
-        session.add(new_wrapper)
-        await session.flush()
-
-        # Associate with user
-        link = UserRuleSetLink(
-            user_id=current_user.id,
-            rule_set_wrapper_id=new_wrapper.id,
+        # Update existing via service
+        await rule_service.update_rule_set(
+            rule_set_id=existing.id,
+            rule_set=rule_set_wrapper_in.rule_set,
+            session=session,
         )
-        session.add(link)
-        await session.commit()
+    else:
+        # Create new via service
+        await rule_service.create_rule_set_wrapper(
+            category_id=rule_set_wrapper_in.category_id,
+            rule_set=rule_set_wrapper_in.rule_set,
+            user=current_user,
+            session=session,
+        )
 
     return SuccessResponse(message="Rule set saved successfully")
 
@@ -145,10 +97,7 @@ async def update_rule_set_wrapper(
 ) -> RuleSetWrapperRead:
     """Update a rule set wrapper."""
     # Get the rule set wrapper
-    result = await session.execute(
-        select(RuleSetWrapper).where(RuleSetWrapper.id == rule_set_id)
-    )
-    rule_set_wrapper = result.scalar_one_or_none()
+    rule_set_wrapper = await rule_service.get_rule_set_wrapper(rule_set_id, session)
 
     if not rule_set_wrapper:
         raise HTTPException(
@@ -157,29 +106,24 @@ async def update_rule_set_wrapper(
         )
 
     # Check user has access
-    link_result = await session.execute(
-        select(UserRuleSetLink).where(
-            UserRuleSetLink.user_id == current_user.id,
-            UserRuleSetLink.rule_set_wrapper_id == rule_set_id,
-        )
-    )
-    if not link_result.scalar_one_or_none():
+    if not await rule_service.user_has_access(current_user, rule_set_id, session):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access denied to this rule set",
         )
 
-    # Update
+    # Update via service
     if update.rule_set is not None:
-        rule_set_wrapper.set_rule_set_dict(update.rule_set)
-
-    await session.commit()
-    await session.refresh(rule_set_wrapper)
+        rule_set_wrapper = await rule_service.update_rule_set(
+            rule_set_id=rule_set_id,
+            rule_set=update.rule_set,
+            session=session,
+        )
 
     return RuleSetWrapperRead(
         id=rule_set_wrapper.id,
         category_id=rule_set_wrapper.category_id,
-        rule_set=rule_set_wrapper.get_rule_set_dict(),
+        rule_set=rule_set_wrapper.get_rule_set_as_dict(),
     )
 
 
@@ -190,11 +134,8 @@ async def get_rule_set_wrapper(
     session: AsyncSession = Depends(get_session),
 ) -> RuleSetWrapperRead:
     """Get a rule set wrapper by ID."""
-    # Get the rule set wrapper
-    result = await session.execute(
-        select(RuleSetWrapper).where(RuleSetWrapper.id == rule_set_id)
-    )
-    rule_set_wrapper = result.scalar_one_or_none()
+    # Get the rule set wrapper via service
+    rule_set_wrapper = await rule_service.get_rule_set_wrapper(rule_set_id, session)
 
     if not rule_set_wrapper:
         raise HTTPException(
@@ -205,26 +146,36 @@ async def get_rule_set_wrapper(
     return RuleSetWrapperRead(
         id=rule_set_wrapper.id,
         category_id=rule_set_wrapper.category_id,
-        rule_set=rule_set_wrapper.get_rule_set_dict(),
+        rule_set=rule_set_wrapper.get_rule_set_as_dict(),
     )
 
 
 @router.post("/categorize-transactions", response_model=CategorizeTransactionsResponse)
 async def categorize_transactions(
-    bank_account: str,
-    transaction_type: TransactionTypeEnum,
     current_user: CurrentUser,
     session: AsyncSession = Depends(get_session),
+    bank_account: str | None = None,
+    transaction_type: TransactionTypeEnum | None = None,
 ) -> CategorizeTransactionsResponse:
     """Apply rules to categorize transactions.
 
-    Note: This is a placeholder. The actual implementation would use
-    the RuleBasedCategorizer service.
+    Categorizes all transactions for the user that don't have a manually
+    assigned category, using the configured rule sets.
     """
-    # TODO: Implement actual categorization using RuleBasedCategorizer
+    from services.categorization_service import categorization_service
+
+    (
+        with_category,
+        without_category,
+    ) = await categorization_service.categorize_transactions(
+        user=current_user,
+        bank_account_id=bank_account,
+        transaction_type=transaction_type,
+        session=session,
+    )
 
     return CategorizeTransactionsResponse(
-        message="Categorization complete",
-        with_category_count=0,
-        without_category_count=0,
+        message=f"Categorized {with_category} transactions; {without_category} transactions have no category",
+        with_category_count=with_category,
+        without_category_count=without_category,
     )
