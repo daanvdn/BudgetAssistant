@@ -1,87 +1,71 @@
 import { Injectable } from '@angular/core';
 import { HttpRequest, HttpHandler, HttpEvent, HttpInterceptor } from '@angular/common/http';
-import {firstValueFrom, from, Observable, switchMap} from 'rxjs';
-import {JwtHelperService} from "@auth0/angular-jwt";
-import {Configuration, TokenObtainPair, ApiBudgetAssistantBackendClientService, TokenRefresh} from "@daanvdn/budget-assistant-client";
-import {AuthService} from "./auth/auth.service";
+import { Observable } from 'rxjs';
+import { JwtHelperService } from "@auth0/angular-jwt";
+import { Configuration } from "@daanvdn/budget-assistant-client";
+import { Router } from '@angular/router';
+import { environment } from "../environments/environment";
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
   private readonly excludedUrls: string[] = [
-    '/api/register/',
-    '/api/token/'
-
+    '/api/auth/register',
+    '/api/auth/login',
+    '/api/auth/forgot-password',
+    '/api/auth/reset-password'
   ];
 
   private jwtHelper = new JwtHelperService();
 
   constructor(
-      private budgetAssistantBackendClientService: ApiBudgetAssistantBackendClientService,
       private config: Configuration,
-      private authService: AuthService  // Inject AppService for credentials
+      private router: Router
   ) {}
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    // DEV_AUTH_BYPASS: Add bypass header in development mode
+    if (!environment.production && environment.devBypassHeader) {
+      req = req.clone({
+        setHeaders: { [environment.devBypassHeader]: '1' }
+      });
+      // Continue with the modified request - bypass header is added alongside any auth token
+    }
+
+    // Skip auth header for excluded URLs (public endpoints)
     if (this.excludedUrls.some(url => req.url.includes(url))) {
-      return next.handle(req); // Skip adding the Authorization header
+      return next.handle(req);
     }
-    return from(this.getValidToken()).pipe(
-        switchMap(token => {
-          if (token) {
-            req = req.clone({
-              setHeaders: { Authorization: `Bearer ${token}` }
-            });
-          }
-          return next.handle(req);
-        })
-    );
-  }
 
-  private async getValidToken(): Promise<string | null> {
-    let token = this.config.lookupCredential('jwtAuth') || sessionStorage.getItem('jwtToken');
+    // Get token from config or sessionStorage
+    const token = this.config.lookupCredential('jwtAuth') || sessionStorage.getItem('jwtToken');
 
+    // If no token or token is expired, clear storage and redirect to login
     if (!token || this.jwtHelper.isTokenExpired(token)) {
-      const refreshedToken = await this.refreshToken(token);
-      return refreshedToken ? refreshedToken : this.retrieveNewToken();
+      this.clearTokenAndRedirectToLogin();
+      return next.handle(req);
     }
-    return token;
+
+    // Add Authorization header with valid token
+    const authReq = req.clone({
+      setHeaders: { Authorization: `Bearer ${token}` }
+    });
+
+    return next.handle(authReq);
   }
 
-  private async refreshToken(token: string | null): Promise<string | null> {
-    if (!token) return null;
-
-    try {
-      const refreshPayload: TokenRefresh = { refresh: token, access: '' };
-      let source = this.budgetAssistantBackendClientService.apiTokenRefreshCreate(refreshPayload);
-      const response: TokenRefresh = await firstValueFrom(source);
-
-      this.config.credentials['jwtAuth'] = response.access;
-      sessionStorage.setItem('jwtToken', response.access);  // Store in localStorage
-      return response.access;
-    } catch (error) {
-      return null;
+  /**
+   * Clear the expired/invalid token and redirect user to login page.
+   * The FastAPI backend does not support token refresh, so users must re-authenticate.
+   */
+  private clearTokenAndRedirectToLogin(): void {
+    sessionStorage.removeItem('jwtToken');
+    if (this.config.credentials) {
+      delete this.config.credentials['jwtAuth'];
     }
-  }
-
-  private async retrieveNewToken(): Promise<string | null> {
-    try {
-      const user = await firstValueFrom(this.authService.getUserObservable());
-      if (!user) return null;
-
-      const loginPayload: TokenObtainPair = {
-        username: user.userName as string,
-        password: user.password as string,
-        access: '',
-        refresh: ''
-      };
-
-      const response: TokenObtainPair = await firstValueFrom(this.budgetAssistantBackendClientService.apiTokenCreate(loginPayload));
-
-      this.config.credentials['jwtAuth'] = response.access;
-      sessionStorage.setItem('jwtToken', response.access);  // Store in localStorage
-      return response.access;
-    } catch (error) {
-      return null;
+    // Only redirect if not already on a public page
+    const currentUrl = this.router.url;
+    if (!currentUrl.includes('/login') && !currentUrl.includes('/register')) {
+      this.router.navigate(['/login']);
     }
   }
 }

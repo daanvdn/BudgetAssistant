@@ -5,11 +5,10 @@ import {BehaviorSubject, map, Observable} from 'rxjs';
 import {DUMMY_USER, User} from "../model";
 import { HttpClient } from "@angular/common/http";
 import {
-  ApiBudgetAssistantBackendClientService,
-  RegisterUser,
-  TokenObtainPair,
+  BudgetAssistantApiService, UserLogin, UserRegister,
 } from '@daanvdn/budget-assistant-client';
 import {ErrorDialogService} from "../error-dialog/error-dialog.service";
+import {environment} from "../../environments/environment";
 
 export enum Response {
   SUCCESS = "SUCCESS",
@@ -52,12 +51,51 @@ export interface RegisterResponse {
 export class AuthService {
   private loggedIn: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   private user: BehaviorSubject<User> = new BehaviorSubject<User>(DUMMY_USER);
+  private devBypassChecked: boolean = false;
 
 
-  constructor(private router: Router, private apiBudgetAssistantBackendClientService: ApiBudgetAssistantBackendClientService,
+  constructor(private router: Router, private budgetAssistantApiService: BudgetAssistantApiService,
               private errorDialogService: ErrorDialogService,
+              private http: HttpClient,
               ) {
+    // DEV_AUTH_BYPASS: Auto-authenticate in dev mode by probing /api/auth/me
+    this.probeDevBypass();
+  }
 
+  /**
+   * DEV_AUTH_BYPASS: Probe the /api/auth/me endpoint on startup in dev mode.
+   * If the backend has DEV_AUTH_BYPASS enabled and returns a user, auto-authenticate.
+   */
+  private probeDevBypass(): void {
+    if (environment.production || !environment.devBypassHeader || this.devBypassChecked) {
+      return;
+    }
+    this.devBypassChecked = true;
+
+    // Create headers with the bypass header
+    const headers: { [key: string]: string } = {};
+    headers[environment.devBypassHeader] = '1';
+
+    this.http.get<{ id: number; email: string; isActive: boolean }>(
+      `${environment.API_BASE_PATH}/api/auth/me`,
+      { headers }
+    ).subscribe({
+      next: (userResponse) => {
+        console.log('DEV_AUTH_BYPASS: Auto-authenticated as', userResponse.email);
+        // Create a dev user from the response
+        const devUser: User = {
+          ...DUMMY_USER,
+          email: userResponse.email,
+          userName: userResponse.email,
+        };
+        this.user.next(devUser);
+        this.loggedIn.next(true);
+      },
+      error: (err) => {
+        // Bypass not enabled on backend or failed - continue with normal auth flow
+        console.log('DEV_AUTH_BYPASS: Probe failed, using normal auth flow', err.status);
+      }
+    });
   }
 
 
@@ -78,14 +116,12 @@ export class AuthService {
 
 
   login(user: User): Observable<LoginResponse> {
-    const loginPayload: TokenObtainPair = {
-      username: user.userName as string,
-      password: user.password as string,
-      access: '',
-      refresh: ''
+    const loginPayload: UserLogin = {
+      email: user.email as string,
+      password: user.password as string
     };
-    return this.apiBudgetAssistantBackendClientService.apiTokenCreate(loginPayload, 'response').pipe(map(response => {
-          if (!response.ok || !response.body?.access) {
+    return this.budgetAssistantApiService.authentication.loginApiAuthLoginPost(loginPayload, 'response').pipe(map(response => {
+          if (!response.ok || !response.body?.accessToken) {
             this.loggedIn.next(false);
             return {
               response: Response.FAILED,
@@ -97,7 +133,7 @@ export class AuthService {
           }
           this.loggedIn.next(true);
           this.user.next(user);
-          sessionStorage.setItem('jwtToken', response.body.access);
+          sessionStorage.setItem('jwtToken', response.body.accessToken);
           this.router.navigate(['/profiel']);
           return {
             response: Response.SUCCESS,
@@ -112,15 +148,13 @@ export class AuthService {
   }
 
   register(user: User): Observable<RegisterResponse> {
-    let registerUser
-        :
-        RegisterUser = {
-      username: user.email as string,
-      password: user.password as string,
+    let registerUser:
+        UserRegister = {
       email: user.email as string,
+      password: user.password as string,
 
     }
-    return this.apiBudgetAssistantBackendClientService.apiRegisterCreate(registerUser, 'response', true).pipe(map(response => {
+    return this.budgetAssistantApiService.authentication.registerApiAuthRegisterPost(registerUser, 'response', true).pipe(map(response => {
       if (response.ok) {
         this.loggedIn.next(true);
         this.user.next(user);
@@ -160,7 +194,7 @@ export class AuthService {
     this.loggedIn.next(false);
     this.user.next(DUMMY_USER);
     //Call this.logoutService.logoutCreate() and handle error response
-    this.apiBudgetAssistantBackendClientService.apiLogoutCreate('response').subscribe(response => {
+    this.budgetAssistantApiService.authentication.logoutApiAuthLogoutPost('response').subscribe(response =>  {
       if (response.ok) {
         this.router.navigate(['/login']);
 

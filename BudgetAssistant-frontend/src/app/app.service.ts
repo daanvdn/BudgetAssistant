@@ -14,8 +14,9 @@ import {
 import {AuthService} from "./auth/auth.service";
 import {BudgetTreeNode} from "./budget/budget.component";
 import {
-    ApiBudgetAssistantBackendClientService,
-    BankAccount,
+    BudgetAssistantApiService,
+    BankAccountCreate,
+    BankAccountRead,
     BankAccountNumber,
     BudgetTreeNode as BudgetTreeNodeApi,
     CategoryDetailsForPeriodHandlerResult,

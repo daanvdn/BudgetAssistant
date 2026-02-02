@@ -5,7 +5,9 @@
 export const environment = {
   production: false,
   //backendUrl: "http://localhost:8080",
-  API_BASE_PATH: 'http://localhost:8080'
+  API_BASE_PATH: 'http://localhost:8080',
+  // DEV_AUTH_BYPASS: Header name to add for dev auth bypass. Must match backend's DEV_BYPASS_HEADER setting.
+  devBypassHeader: 'X-DEV-AUTH'
 };
 
 /*
