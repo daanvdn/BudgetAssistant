@@ -7,18 +7,18 @@ from pathlib import Path
 src_path = Path(__file__).resolve().parent.parent / "src"
 sys.path.insert(0, str(src_path))
 
-import asyncio
-from logging.config import fileConfig
+import asyncio  # noqa: E402
+from logging.config import fileConfig  # noqa: E402
 
-from alembic import context
+from alembic import context  # noqa: E402
 
 # Import all models to ensure they're registered with SQLModel metadata
-from sqlalchemy import pool
-from sqlalchemy.engine import Connection
-from sqlalchemy.ext.asyncio import async_engine_from_config
+from sqlalchemy import pool  # noqa: E402
+from sqlalchemy.engine import Connection  # noqa: E402
+from sqlalchemy.ext.asyncio import async_engine_from_config  # noqa: E402
 
 # Import SQLModel metadata - this imports all models
-from sqlmodel import SQLModel
+from sqlmodel import SQLModel  # noqa: E402
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

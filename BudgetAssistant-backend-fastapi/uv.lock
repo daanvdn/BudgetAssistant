@@ -125,6 +125,7 @@ dev = [
     { name = "faker" },
     { name = "httpx" },
     { name = "lxml" },
+    { name = "openapi-generator-cli", extra = ["jdk4py"] },
     { name = "pandas" },
     { name = "polyfactory" },
     { name = "pre-commit" },
@@ -146,6 +147,7 @@ requires-dist = [
     { name = "httpx", marker = "extra == 'dev'", specifier = ">=0.28.0" },
     { name = "lxml", marker = "extra == 'dev'", specifier = ">=5.0.0" },
     { name = "networkx", specifier = "==3.4.1" },
+    { name = "openapi-generator-cli", extras = ["jdk4py"], marker = "extra == 'dev'" },
     { name = "pandas", marker = "extra == 'dev'", specifier = ">=2.0.0" },
     { name = "passlib", extras = ["bcrypt"], specifier = ">=1.7.4" },
     { name = "polyfactory", marker = "extra == 'dev'", specifier = ">=2.18.0" },
@@ -563,6 +565,18 @@ wheels = [
 ]
 
 [[package]]
+name = "jdk4py"
+version = "21.0.8.0"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e2/9e/1923f4d1c831af7319dd9357c3b6d3edf62c57f03770f344d54c7daa054f/jdk4py-21.0.8.0-py3-none-macosx_10_9_x86_64.whl", hash = "sha256:44306d0cc69ec19809b8d8978884510a17cadd37bb5d073702b28ec724877245", size = 30727210, upload-time = "2025-10-14T19:15:43.913Z" },
+    { url = "https://files.pythonhosted.org/packages/71/65/520a1eed5793fb548c1fabd4537b30a6485a1cbf63b50c30aab1e2781fcd/jdk4py-21.0.8.0-py3-none-macosx_11_0_arm64.whl", hash = "sha256:3e7d3dfe0e67e895911b888dd21005502907d5a1335b0fb8b58f013186744ea9", size = 29534051, upload-time = "2025-10-14T19:15:47.979Z" },
+    { url = "https://files.pythonhosted.org/packages/d0/1e/f30581ddb82bc4aba51ab1bf16d12caea25527ebb1aefe95006feb1b5d02/jdk4py-21.0.8.0-py3-none-manylinux_2_17_aarch64.whl", hash = "sha256:7f92806d87536a02f26c1e6a0fe66b7660f5e736b36b2eef473ea1db61938f79", size = 33021446, upload-time = "2025-10-14T19:15:52.133Z" },
+    { url = "https://files.pythonhosted.org/packages/7a/b8/6225b92a136482942e9c0e76964fb6362226a220dcd0745ea272b4b1b05c/jdk4py-21.0.8.0-py3-none-manylinux_2_17_x86_64.whl", hash = "sha256:28035f9f2dd99a2ffcecfc61f55849b32b906945217d1900fa8f100d264802c7", size = 33617454, upload-time = "2025-10-14T19:15:56.376Z" },
+    { url = "https://files.pythonhosted.org/packages/97/a2/aac69b73889e99ac89b25a96d3dec9aeb765c0b1b8904d82339cf9d2b7c3/jdk4py-21.0.8.0-py3-none-win_amd64.whl", hash = "sha256:d150b1812e71c3ad9ae79daf6d6a62edd78dcbaac94dad85d8d0b01654611bae", size = 30166051, upload-time = "2025-10-14T19:16:00.226Z" },
+]
+
+[[package]]
 name = "lxml"
 version = "6.0.2"
 source = { registry = "https://pypi.org/simple" }
@@ -754,6 +768,20 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/23/12/8b5fc6b9c487a09a7957188e0943c9ff08432c65e34567cabc1623b03a51/numpy-2.4.1-cp314-cp314t-win32.whl", hash = "sha256:5de60946f14ebe15e713a6f22850c2372fa72f4ff9a432ab44aa90edcadaa65a", size = 6152482, upload-time = "2026-01-10T06:44:36.798Z" },
     { url = "https://files.pythonhosted.org/packages/00/a5/9f8ca5856b8940492fc24fbe13c1bc34d65ddf4079097cf9e53164d094e1/numpy-2.4.1-cp314-cp314t-win_amd64.whl", hash = "sha256:8f085da926c0d491ffff3096f91078cc97ea67e7e6b65e490bc8dcda65663be2", size = 12627117, upload-time = "2026-01-10T06:44:38.828Z" },
     { url = "https://files.pythonhosted.org/packages/ad/0d/eca3d962f9eef265f01a8e0d20085c6dd1f443cbffc11b6dede81fd82356/numpy-2.4.1-cp314-cp314t-win_arm64.whl", hash = "sha256:6436cffb4f2bf26c974344439439c95e152c9a527013f26b3577be6c2ca64295", size = 10667121, upload-time = "2026-01-10T06:44:41.644Z" },
+]
+
+[[package]]
+name = "openapi-generator-cli"
+version = "7.19.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/9a/7a/520866b59e6bb3f9b4bbd4d9efebb94a3a619c5dfe42ad67ab1ea924c00f/openapi_generator_cli-7.19.0.tar.gz", hash = "sha256:0008c9d6ab68c44230516e582081cb74d6d545c9cb77b2c569a6eca7bf4940de", size = 27810724, upload-time = "2026-01-20T01:51:10.575Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/41/29/c5e7e1e53b0fa39da0d182ace22c69473543fa0ff09be9806e4c6ce8a7cf/openapi_generator_cli-7.19.0-py3-none-any.whl", hash = "sha256:9ca1d6b570e60c8ffed4611e6250743d2b2a2cc8b9fe39066a204ecedf6a59c6", size = 27825328, upload-time = "2026-01-20T01:51:06.609Z" },
+]
+
+[package.optional-dependencies]
+jdk4py = [
+    { name = "jdk4py" },
 ]
 
 [[package]]
