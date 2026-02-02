@@ -19,13 +19,12 @@ import {
 } from "@angular/material/table";
 import {TreeNode} from "primeng/api";
 import {
-    ApiBudgetAssistantBackendClientService,
+    BudgetAssistantApiService,
     BudgetTrackerResult,
-    ExpensesRecurrenceEnum,
+    RecurrenceType,
     RevenueExpensesQuery,
     TransactionTypeEnum
 } from "@daanvdn/budget-assistant-client";
-import {RevenueRecurrenceEnum} from "@daanvdn/budget-assistant-client";
 import {catchError, throwError} from "rxjs";
 import {NgFor, NgIf} from '@angular/common';
 
@@ -48,7 +47,7 @@ export class BudgetTrackingComponent implements OnInit, OnChanges {
     displayedColumns!: string[];
 
 
-    constructor(private appService: AppService, private apiBudgetAssistantBackendClientService: ApiBudgetAssistantBackendClientService) {
+    constructor(private appService: AppService, private apiService: BudgetAssistantApiService) {
 
 
     }
@@ -64,21 +63,27 @@ export class BudgetTrackingComponent implements OnInit, OnChanges {
             transactionType: TransactionTypeEnum.BOTH,
             start: JSON.stringify(this.criteria.startDate),
             end: JSON.stringify(this.criteria.endDate),
-            expensesRecurrence: ExpensesRecurrenceEnum.BOTH,
-            revenueRecurrence: RevenueRecurrenceEnum.BOTH
+            expensesRecurrence: RecurrenceType.BOTH,
+            revenueRecurrence: RecurrenceType.BOTH
 
         };
-        this.apiBudgetAssistantBackendClientService.apiTrackBudgetCreate(query).pipe(
+        this.apiService.analysis.trackBudgetApiAnalysisTrackBudgetPost(query).pipe(
             catchError(error => {
                 console.error('Error occurred:', error);
                 return throwError(error);
             })
         ).subscribe((res: BudgetTrackerResult) => {
-            /*this.treeNodes= res.data;
-            this.columns = res.columns;
-             this.datatIsLoaded = true;*/
-            this.dataSource = new MatTableDataSource(res.data);
-            this.displayedColumns = res.columns;
+            // Map the new BudgetTrackerResult structure to the MatTable data format
+            const tableData = res.entries?.map(entry => ({
+                data: {
+                    category: entry.categoryName,
+                    budgeted: entry.budgetedAmount,
+                    actual: entry.actualAmount,
+                    difference: entry.difference
+                }
+            })) ?? [];
+            this.dataSource = new MatTableDataSource(tableData);
+            this.displayedColumns = ['category', 'budgeted', 'actual', 'difference'];
             this.datatIsLoaded = true;
         })
     }

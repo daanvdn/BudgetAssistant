@@ -6,7 +6,7 @@ import {StartEndDateShortcut} from '../model';
 import { DateAdapter, MAT_DATE_FORMATS, NativeDateAdapter, MatOption } from '@angular/material/core';
 import { formatDate, NgFor } from '@angular/common';
 import {Subject, takeUntil} from "rxjs";
-import {BankAccount, GroupingEnum, TransactionTypeEnum} from "@daanvdn/budget-assistant-client";
+import {BankAccountRead, Grouping, TransactionTypeEnum} from "@daanvdn/budget-assistant-client";
 import { MatFormField, MatLabel, MatHint, MatSuffix } from '@angular/material/form-field';
 import { MatSelect } from '@angular/material/select';
 import { MatDateRangeInput, MatStartDate, MatEndDate, MatDatepickerToggle, MatDateRangePicker } from '@angular/material/datepicker';
@@ -51,13 +51,13 @@ export class FiltersComponent implements OnInit {
   bankAccountFormFieldGroup: FormGroup;
 
 
-  bankAccounts: BankAccount[] = [];
+  bankAccounts: BankAccountRead[] = [];
 
   startEndDateFormFieldGroup: FormGroup;
 
   groupingTypesFormFieldGroup: FormGroup;
 
-  groupingTypes: Map<string, GroupingEnum> = new Map<string, GroupingEnum>();
+  groupingTypes: Map<string, Grouping> = new Map<string, Grouping>();
   groupingTypeStringValues: string[];
 
 
@@ -91,9 +91,9 @@ export class FiltersComponent implements OnInit {
     this.transactionTypeFormFieldGroup = formBuilder.group({queryForm: ""});
     this.groupingTypesFormFieldGroup = formBuilder.group({queryForm: ""});
 
-    this.groupingTypes.set("month", GroupingEnum.month)
-    this.groupingTypes.set("year", GroupingEnum.year)
-    this.groupingTypes.set("quarter", GroupingEnum.quarter)
+    this.groupingTypes.set("month", Grouping.MONTH)
+    this.groupingTypes.set("year", Grouping.YEAR)
+    this.groupingTypes.set("quarter", Grouping.QUARTER)
     this.groupingTypeStringValues = Array.from(this.groupingTypes.keys());
 
 
@@ -121,7 +121,7 @@ export class FiltersComponent implements OnInit {
     return (date === 0 || date === 6) ? 'highlight-dates' : undefined;
   }
 
-  onBankAccountChange(bankAccount: BankAccount) {
+  onBankAccountChange(bankAccount: BankAccountRead) {
     this.appService.setBankAccount(bankAccount);
 
 
@@ -148,9 +148,9 @@ export class FiltersComponent implements OnInit {
 
   onGroupingChange(groupingStr: string) {
     console.log(groupingStr);
-    var groupingType: GroupingEnum | undefined = this.groupingTypes.get(groupingStr)
+    var groupingType: Grouping | undefined = this.groupingTypes.get(groupingStr)
     if (groupingType == undefined) {
-      groupingType = GroupingEnum.month;
+      groupingType = Grouping.MONTH;
     }
     this.appService.setGrouping(groupingType);
   }

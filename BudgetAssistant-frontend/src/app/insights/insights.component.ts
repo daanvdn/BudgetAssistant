@@ -1,6 +1,6 @@
 import {Component, OnInit} from '@angular/core';
 import {faSearch} from "@fortawesome/free-solid-svg-icons/faSearch";
-import {BankAccount, GroupingEnum, TransactionTypeEnum} from "@daanvdn/budget-assistant-client";
+import {BankAccountRead, Grouping, TransactionTypeEnum} from "@daanvdn/budget-assistant-client";
 import {MatToolbar} from '@angular/material/toolbar';
 import {MatIconButton} from '@angular/material/button';
 import {FaIconComponent} from '@fortawesome/angular-fontawesome';

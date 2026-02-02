@@ -2,7 +2,7 @@ import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {faXmark} from "@fortawesome/free-solid-svg-icons";
 import {anyIsUndefinedOrEmpty} from "../model";
 import {Criteria} from "../model/criteria.model";
-import {BankAccount, GroupingEnum, TransactionTypeEnum} from "@daanvdn/budget-assistant-client";
+import {BankAccountRead, Grouping, TransactionTypeEnum} from "@daanvdn/budget-assistant-client";
 import {NgIf} from '@angular/common';
 import {BankAccountSelectionComponent} from '../bank-account-selection/bank-account-selection.component';
 import {GroupingTypeSelectionComponent} from '../grouping-type-selection/grouping-type-selection.component';
@@ -30,8 +30,8 @@ export class CriteriaToolbarComponent implements OnInit {
     @Output() criteriaChange = new EventEmitter<Criteria>();
 
 
-    bankAccount!: BankAccount;
-    grouping!: GroupingEnum ;
+    bankAccount!: BankAccountRead;
+    grouping!: Grouping ;
     startDate!: Date;
     endDate!: Date;
     transactionType!: TransactionTypeEnum;
@@ -57,12 +57,12 @@ export class CriteriaToolbarComponent implements OnInit {
         this.maybeEmitCriteriaChange();
     }
 
-    onBankAccountChange(bankAccount: BankAccount) {
+    onBankAccountChange(bankAccount: BankAccountRead) {
         this.bankAccount = bankAccount;
         this.maybeEmitCriteriaChange();
     }
 
-    onGroupingChange(grouping: GroupingEnum) {
+    onGroupingChange(grouping: Grouping) {
         this.grouping = grouping;
         this.maybeEmitCriteriaChange();
     }

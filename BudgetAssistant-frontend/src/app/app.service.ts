@@ -14,40 +14,43 @@ import {
 import {AuthService} from "./auth/auth.service";
 import {BudgetTreeNode} from "./budget/budget.component";
 import {
-    BudgetAssistantApiService,
-    BankAccountCreate,
     BankAccountRead,
-    BankAccountNumber,
-    BudgetTreeNode as BudgetTreeNodeApi,
-    CategoryDetailsForPeriodHandlerResult,
+    BudgetAssistantApiService,
+    BudgetTreeCreate,
+    BudgetTreeNodeRead,
+    BudgetTreeNodeUpdate,
+    BudgetTreeRead,
+    CategoriesForAccountResponse,
+    CategorizeTransactionsResponse,
+    CategoryDetailsForPeriodResponse,
+    CategoryRead,
+    CategoryTreeRead,
+    DateRangeShortcut,
     ExpensesAndRevenueForPeriod,
-    GetOrCreateRuleSetWrapper,
-    GroupingEnum,
+    GetOrCreateRuleSetWrapperRequest,
+    Grouping,
     PageTransactionsInContextRequest,
     PageTransactionsRequest,
     PageTransactionsToManuallyReviewRequest,
-    ResolvedStartEndDateShortcut as ResolvedStartEndDateShortcutApi,
+    PaginatedResponseTransactionRead,
+    ResolvedDateRange,
     RevenueAndExpensesPerPeriodResponse,
     RevenueExpensesQuery,
-    RuleSetWrapper,
-    SaveAlias,
-    SimplifiedCategory,
-    SortOrderEnum,
-    SortPropertyEnum,
-    SuccessfulOperationResponse,
-    Transaction,
+    RevenueExpensesQueryWithCategory,
+    RuleSetWrapperCreate,
+    RuleSetWrapperRead,
+    SaveAliasRequest,
+    SortOrder,
+    SuccessResponse,
     TransactionInContextQuery,
     TransactionQuery,
-    TransactionsPage,
+    TransactionRead,
+    TransactionSortProperty,
     TransactionTypeEnum,
-    TypeEnum
+    TransactionUpdate,
+    UploadTransactionsResponse
 } from "@daanvdn/budget-assistant-client";
 import {environment} from "../environments/environment";
-import {UploadTransactionsResponse} from "@daanvdn/budget-assistant-client/dist/model/upload-transactions-response";
-import {BudgetTree} from "@daanvdn/budget-assistant-client/dist/model/budget-tree";
-import {
-    RevenueExpensesQueryWithCategory
-} from "@daanvdn/budget-assistant-client/dist/model/revenue-expenses-query-with-category";
 
 
 @Injectable({
@@ -56,45 +59,45 @@ import {
 export class AppService {
 
     public DUMMY_BANK_ACCOUNT = "dummy";
-    currentBankAccounts$ = new BehaviorSubject<BankAccount[]>([]);
+    currentBankAccounts$ = new BehaviorSubject<BankAccountRead[]>([]);
     currentBankAccountsObservable$ = this.currentBankAccounts$.asObservable();
     private startDate$ = new BehaviorSubject<Date | undefined>(undefined);
     selectedStartDate$ = this.startDate$.asObservable();
-    private endDate$ = new BehaviorSubject<Date |undefined>(undefined);
+    private endDate$ = new BehaviorSubject<Date | undefined>(undefined);
     selectedEndDate$ = this.endDate$.asObservable();
-    private grouping$ = new BehaviorSubject<GroupingEnum | undefined>(undefined);
+    private grouping$ = new BehaviorSubject<Grouping | undefined>(undefined);
     selectedGrouping$ = this.grouping$.asObservable();
     private transactionType$ = new BehaviorSubject<TransactionTypeEnum | undefined>(undefined);
     public selectedTransactionType$ = this.transactionType$.asObservable();
-    private expensesRecurrence$ = new BehaviorSubject<string  | undefined>(undefined);
+    private expensesRecurrence$ = new BehaviorSubject<string | undefined>(undefined);
     selectedExpensesRecurrence$ = this.expensesRecurrence$.asObservable();
-    private revenueRecurrence$ = new BehaviorSubject<string |undefined>(undefined);
+    private revenueRecurrence$ = new BehaviorSubject<string | undefined>(undefined);
     selectedRevenueRecurrence$ = this.revenueRecurrence$.asObservable();
-    private categoryQueryForSelectedPeriod$ = new BehaviorSubject<RevenueExpensesQuery |undefined>(undefined);
+    private categoryQueryForSelectedPeriod$ = new BehaviorSubject<RevenueExpensesQuery | undefined>(undefined);
     public categoryQueryForSelectedPeriodObservable$ = this.categoryQueryForSelectedPeriod$.asObservable();
 
-    public sharedCategoryTreeObservable$: Observable<SimplifiedCategory[]> = of([]);
-    public sharedCategoryTreeExpensesObservable$: Observable<SimplifiedCategory[]>;
-    public sharedCategoryTreeRevenueObservable$: Observable<SimplifiedCategory[]>;
+    public sharedCategoryTreeObservable$: Observable<CategoryRead[]> = of([]);
+    public sharedCategoryTreeExpensesObservable$: Observable<CategoryRead[]>;
+    public sharedCategoryTreeRevenueObservable$: Observable<CategoryRead[]>;
     public fileUploadComplete$ = new Subject<void>();
-    public selectedBankAccount$ = new BehaviorSubject<BankAccount | undefined>(undefined);
+    public selectedBankAccount$ = new BehaviorSubject<BankAccountRead | undefined>(undefined);
     public selectedBankAccountObservable$ = this.selectedBankAccount$.asObservable();
-    public categoryMapSubject = new BehaviorSubject<CategoryMap | undefined >(undefined);
+    public categoryMapSubject = new BehaviorSubject<CategoryMap | undefined>(undefined);
     public categoryMapObservable$ = this.categoryMapSubject.asObservable();
-    refreshBankAccounts = new BehaviorSubject<boolean | undefined>( undefined);
+    refreshBankAccounts = new BehaviorSubject<boolean | undefined>(undefined);
     refreshBankAccountsObservable$ = this.refreshBankAccounts.asObservable();
 
 
     private backendUrl = environment.API_BASE_PATH;
 
     constructor(private http: HttpClient, private authService: AuthService,
-                private apiBudgetAssistantBackendClientService: ApiBudgetAssistantBackendClientService) {
+                private apiService: BudgetAssistantApiService) {
 
 
         this.sharedCategoryTreeExpensesObservable$ = this.getSharedCategoryTreeExpensesObservable$();
         this.sharedCategoryTreeRevenueObservable$ = this.getSharedCategoryTreeRevenueObservable$();
         (async () => {
-            let categories: SimplifiedCategory[] = await this.getMergedCategoryTreeData();
+            let categories: CategoryRead[] = await this.getMergedCategoryTreeData();
             this.categoryMapSubject.next(new CategoryMap(categories));
             this.sharedCategoryTreeObservable$ = of(categories);
         })();
@@ -108,12 +111,14 @@ export class AppService {
 
 
     private getSharedCategoryTreeRevenueObservable$() {
-        return this.apiBudgetAssistantBackendClientService.apiCategoryTreeRetrieve('REVENUE').pipe(
-            map(categoryTree => {
-                let childrenCast: Array<SimplifiedCategory>  = []
-                let children = categoryTree.root.children;
-                for (let childObj of children) {
-                    childrenCast.push(childObj as unknown as SimplifiedCategory);
+        return this.apiService.categories.getCategoryTreeApiCategoriesTreeGet(TransactionTypeEnum.REVENUE).pipe(
+            map((categoryTree: CategoryTreeRead) => {
+                let childrenCast: Array<CategoryRead> = []
+                let children = categoryTree.root?.children;
+                if (children) {
+                    for (let childObj of children) {
+                        childrenCast.push(childObj as CategoryRead);
+                    }
                 }
                 return childrenCast;
 
@@ -121,13 +126,15 @@ export class AppService {
         );
     }
 
-    private getSharedCategoryTreeExpensesObservable$(): Observable<SimplifiedCategory[]> {
-        return this.apiBudgetAssistantBackendClientService.apiCategoryTreeRetrieve('EXPENSES').pipe(
-            map(categoryTree => {
-                let childrenCast: Array<SimplifiedCategory>  = []
-                let children = categoryTree.root.children;
-                for (let childObj of children) {
-                    childrenCast.push(childObj as unknown as SimplifiedCategory);
+    private getSharedCategoryTreeExpensesObservable$(): Observable<CategoryRead[]> {
+        return this.apiService.categories.getCategoryTreeApiCategoriesTreeGet(TransactionTypeEnum.EXPENSES).pipe(
+            map((categoryTree: CategoryTreeRead) => {
+                let childrenCast: Array<CategoryRead> = []
+                let children = categoryTree.root?.children;
+                if (children) {
+                    for (let childObj of children) {
+                        childrenCast.push(childObj as CategoryRead);
+                    }
                 }
                 return childrenCast;
 
@@ -138,9 +145,9 @@ export class AppService {
     // The convertSimplifiedCategoryToCategoryNode method has been removed as we now use SimplifiedCategory directly
 
 
-    private async getMergedCategoryTreeData(): Promise<SimplifiedCategory[]> {
+    private async getMergedCategoryTreeData(): Promise<CategoryRead[]> {
 
-        let allData: SimplifiedCategory[] = [];
+        let allData: CategoryRead[] = [];
         let expenses = await this.getSharedCategoryTreeExpensesObservable$().toPromise();
         let revenue = await this.getSharedCategoryTreeRevenueObservable$().toPromise();
 
@@ -157,7 +164,7 @@ export class AppService {
         return allData;
     }
 
-    setBankAccount(bankAccount: BankAccount) {
+    setBankAccount(bankAccount: BankAccountRead) {
         this.selectedBankAccount$.next(bankAccount);
     }
 
@@ -186,15 +193,15 @@ export class AppService {
         this.transactionType$.next(transactionType);
     }
 
-    setGrouping(grouping: GroupingEnum) {
+    setGrouping(grouping: Grouping) {
         this.grouping$.next(grouping);
     }
 
 
-    public fetchBankAccountsForUser(): Observable<BankAccount[]> {
+    public fetchBankAccountsForUser(): Observable<BankAccountRead[]> {
 
 
-        return this.apiBudgetAssistantBackendClientService.apiBankAccountsList('body');
+        return this.apiService.bankAccounts.getBankAccountsForUserApiBankAccountsGet();
 
 
     }
@@ -204,7 +211,7 @@ export class AppService {
             console.error('Bank account number is undefined');
             return of(0); // Return observable with 0 if bankAccount or accountNumber is undefined
         }
-        return this.apiBudgetAssistantBackendClientService.apiTransactionsCountTransactionsToManuallyReviewRetrieve(
+        return this.apiService.transactions.countTransactionsToManuallyReviewApiTransactionsCountToManuallyReviewGet(
             bankAccountNumber).pipe(map(count => count.count));
 
 
@@ -213,13 +220,13 @@ export class AppService {
 
     public getRevenueAndExpensesByYear(restQuery: RevenueExpensesQuery): Observable<Page<ExpensesAndRevenueForPeriod>> {
 
-        return this.apiBudgetAssistantBackendClientService.apiRevenueExpensesPerPeriodCreate(restQuery)
+        return this.apiService.analysis.getRevenueAndExpensesPerPeriodApiAnalysisRevenueExpensesPerPeriodPost(restQuery)
             .pipe(map((response: RevenueAndExpensesPerPeriodResponse) => {
                     let page: Page<ExpensesAndRevenueForPeriod> = {
                         content: response.content,
-                        number: response.number,
-                        size: response.size,
-                        totalElements: response.totalElements
+                        number: response.page ?? 0,
+                        size: response.size ?? response.content.length,
+                        totalElements: response.totalElements ?? response.content.length
 
                     }
                     return page;
@@ -245,14 +252,21 @@ export class AppService {
 
     }
 
-    public saveTransaction(transaction: Transaction): void {
-
-        this.apiBudgetAssistantBackendClientService.apiTransactionsSaveTransactionCreate(transaction).subscribe({
+    public saveTransaction(transaction: TransactionRead): void {
+        const transactionUpdate: TransactionUpdate = {
+            transaction: transaction.transaction,
+            categoryId: transaction.categoryId,
+            manuallyAssignedCategory: transaction.manuallyAssignedCategory,
+            isRecurring: transaction.isRecurring,
+            isAdvanceSharedAccount: transaction.isAdvanceSharedAccount,
+            isManuallyReviewed: transaction.isManuallyReviewed
+        };
+        this.apiService.transactions.saveTransactionApiTransactionsSavePost(transaction.transactionId,
+            transactionUpdate).subscribe({
             next: () => {
             },
             error: (error) => console.error('Error saving transaction:', error)
         });
-
 
 
     }
@@ -261,19 +275,19 @@ export class AppService {
         return str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
     }
 
-    private toPage(transactionsPage: TransactionsPage): Page<Transaction> {
-        //const number =    transactionsPage.number-1
-        let page =  {
-            content: transactionsPage.content,
-            number: transactionsPage.number-1,
-            size: transactionsPage.size,
-            totalElements: transactionsPage.totalElements
+    private toPage(paginatedResponse: PaginatedResponseTransactionRead): Page<TransactionRead> {
+        // Note: The new API returns 0-indexed pages
+        let page = {
+            content: paginatedResponse.content,
+            number: paginatedResponse.page,
+            size: paginatedResponse.size,
+            totalElements: paginatedResponse.totalElements
         };
-         return page;
+        return page;
     }
 
-    public pageTransactions(request: PageRequest<Transaction>,
-                            transactionQuery: TransactionQuery | undefined): Observable<Page<Transaction>> {
+    public pageTransactions(request: PageRequest<TransactionRead>,
+                            transactionQuery: TransactionQuery | undefined): Observable<Page<TransactionRead>> {
         //request.size = 1000;
 
         let tmpSortOrder = "asc";
@@ -287,15 +301,15 @@ export class AppService {
             tmpSortProperty = request.sort.property;
         }
         let pageTransactionsRequest: PageTransactionsRequest = {
-            page: request.page+1,
+            page: request.page + 1,
             size: request.size,
-            sortOrder: tmpSortOrder as SortOrderEnum,
-            sortProperty: this.camelToSnake(tmpSortProperty) as SortPropertyEnum,
+            sortOrder: tmpSortOrder as SortOrder,
+            sortProperty: this.camelToSnake(tmpSortProperty) as TransactionSortProperty,
             query: transactionQuery
 
         }
-        return this.apiBudgetAssistantBackendClientService.apiTransactionsPageTransactionsCreate(
-            pageTransactionsRequest).pipe(map((result: TransactionsPage) => {
+        return this.apiService.transactions.pageTransactionsApiTransactionsPagePost(
+            pageTransactionsRequest).pipe(map((result: PaginatedResponseTransactionRead) => {
 
             return this.toPage(result);
 
@@ -303,11 +317,10 @@ export class AppService {
         }));
 
 
-
     }
 
-    public pageTransactionsInContext(request: PageRequest<Transaction>,
-                                     query: TransactionInContextQuery): Observable<Page<Transaction>> {
+    public pageTransactionsInContext(request: PageRequest<TransactionRead>,
+                                     query: TransactionInContextQuery): Observable<Page<TransactionRead>> {
         let tmpSortOrder = "asc";
         if (request.sort && request.sort.order) {
             tmpSortOrder = request.sort.order;
@@ -321,42 +334,42 @@ export class AppService {
         let pageTransactionsInContextRequest: PageTransactionsInContextRequest = {
             page: request.page++,
             size: request.size,
-            sortOrder: tmpSortOrder as SortOrderEnum,
-            sortProperty: this.camelToSnake(tmpSortProperty) as SortPropertyEnum,
+            sortOrder: tmpSortOrder as SortOrder,
+            sortProperty: this.camelToSnake(tmpSortProperty) as TransactionSortProperty,
             query: query
 
         }
-        return this.apiBudgetAssistantBackendClientService.apiTransactionsPageTransactionsInContextCreate(
-            pageTransactionsInContextRequest).pipe( map(result => {
+        return this.apiService.transactions.pageTransactionsInContextApiTransactionsPageInContextPost(
+            pageTransactionsInContextRequest).pipe(map(result => {
             return this.toPage(result);
         }));
-/*        let orig = this.http.get<Page<string>>(`${this.backendUrl}/page_transactions_in_context`, {params});
-        return orig.pipe(map(p => {
+        /*        let orig = this.http.get<Page<string>>(`${this.backendUrl}/page_transactions_in_context`, {params});
+         return orig.pipe(map(p => {
 
-            let newContent: Transaction[] = p.content.map(t => JSON.parse(t, (k, v) => {
+         let newContent: Transaction[] = p.content.map(t => JSON.parse(t, (k, v) => {
 
-                if (k == "bookingDate" || k == "currencyDate") {
-                    return this.parseDate(v)
-                }
-                else {
-                    return v;
-                }
+         if (k == "bookingDate" || k == "currencyDate") {
+         return this.parseDate(v)
+         }
+         else {
+         return v;
+         }
 
-            }))
+         }))
 
 
-            let newPage: Page<Transaction> = {
-                content: newContent, number: p.number, size: p.size, totalElements: p.totalElements
+         let newPage: Page<Transaction> = {
+         content: newContent, number: p.number, size: p.size, totalElements: p.totalElements
 
-            }
+         }
 
-            return newPage;
+         return newPage;
 
-        }))*/
+         }))*/
     }
 
-    public pageTransactionsToManuallyReview(request: PageRequest<Transaction>,
-                                            transactionType: TransactionTypeEnum): Observable<Page<Transaction>> {
+    public pageTransactionsToManuallyReview(request: PageRequest<TransactionRead>,
+                                            transactionType: TransactionTypeEnum): Observable<Page<TransactionRead>> {
         let bankAccount = this.selectedBankAccount$.getValue();
         if (bankAccount == null) {
             throw new Error("Bank account is not defined!");
@@ -373,51 +386,50 @@ export class AppService {
         }
 
 
-        let pageTransactionsToManuallyReviewRequest : PageTransactionsToManuallyReviewRequest = {
+        let pageTransactionsToManuallyReviewRequest: PageTransactionsToManuallyReviewRequest = {
             page: request.page++,
             size: request.size,
-            sortOrder: tmpSortOrder as SortOrderEnum,
-            sortProperty: this.camelToSnake(tmpSortProperty) as SortPropertyEnum,
+            sortOrder: tmpSortOrder as SortOrder,
+            sortProperty: this.camelToSnake(tmpSortProperty) as TransactionSortProperty,
             bankAccount: bankAccount.accountNumber,
             transactionType: transactionType
 
 
         }
-        return this.apiBudgetAssistantBackendClientService.apiTransactionsPageTransactionsToManuallyReviewCreate(pageTransactionsToManuallyReviewRequest).pipe(
+        return this.apiService.transactions.pageTransactionsToManuallyReviewApiTransactionsPageToManuallyReviewPost(
+            pageTransactionsToManuallyReviewRequest).pipe(
             map(result => {
                 return this.toPage(result);
             })
-
         );
 
         /*
 
-        return orig.pipe(map(p => {
+         return orig.pipe(map(p => {
 
-            let newContent: Transaction[] = p.content.map(t => JSON.parse(t, (k, v) => {
+         let newContent: Transaction[] = p.content.map(t => JSON.parse(t, (k, v) => {
 
-                if (k == "bookingDate" || k == "currencyDate") {
-                    return this.parseDate(v)
-                }
-                else {
-                    return v;
-                }
+         if (k == "bookingDate" || k == "currencyDate") {
+         return this.parseDate(v)
+         }
+         else {
+         return v;
+         }
 
-            }))
+         }))
 
 
-            let newPage: Page<Transaction> = {
-                content: newContent, number: p.number, size: p.size, totalElements: p.totalElements
+         let newPage: Page<Transaction> = {
+         content: newContent, number: p.number, size: p.size, totalElements: p.totalElements
 
-            }
+         }
 
-            return newPage;
+         return newPage;
 
-        }))
-*/
+         }))
+         */
 
     }
-
 
 
     public getRevenueExpensesPerPeriodAndCategoryShow1MonthBeforeAndAfter(restQuery: RevenueExpensesQuery): Observable<DistributionByCategoryForPeriodHandlerResult2> {
@@ -435,13 +447,13 @@ export class AppService {
 
 
     public resolveStartEndDateShortcut(startEnDateShortCut: StartEndDateShortcut): Observable<ResolvedStartEndDateShortcut> {
-        return this.apiBudgetAssistantBackendClientService.apiResolveStartEndDateShortcutRetrieve(startEnDateShortCut,
-            'body')
-            .pipe(map((resolvedStartEndDateShortcutApi: ResolvedStartEndDateShortcutApi) => {
-                //parse the ResolvedStartEndDateShortcutApi.start string and ResolvedStartEndDateShortcutApi.end string
+        return this.apiService.analysis.resolveStartEndDateShortcutApiAnalysisResolveDateShortcutGet(
+            startEnDateShortCut as DateRangeShortcut)
+            .pipe(map((resolvedDateRange: ResolvedDateRange) => {
+                //parse the ResolvedDateRange.start string and ResolvedDateRange.end string
                 // to Date and return a new ResolvedStartEndDateShortcut object
-                let start: Date = this.parseDate(resolvedStartEndDateShortcutApi.start);
-                let end: Date = this.parseDate(resolvedStartEndDateShortcutApi.end);
+                let start: Date = this.parseDate(resolvedDateRange.start);
+                let end: Date = this.parseDate(resolvedDateRange.end);
                 return new ResolvedStartEndDateShortcut(start, end);
 
             }));
@@ -451,11 +463,13 @@ export class AppService {
 
     public getDistinctCounterpartyNames(bankAccount: string): Observable<Array<string>> {
 
-        return this.apiBudgetAssistantBackendClientService.apiDistinctCounterpartyNamesRetrieve(bankAccount, 'body')
+        return this.apiService.transactions.getDistinctCounterpartyNamesApiTransactionsDistinctCounterpartyNamesGet(
+            bankAccount) as Observable<Array<string>>;
     }
 
     public getDistinctCounterpartyAccounts(bankAccount: string): Observable<Array<string>> {
-        return this.apiBudgetAssistantBackendClientService.apiDistinctCounterpartyAccountsRetrieve(bankAccount, 'body')
+        return this.apiService.transactions.getDistinctCounterpartyAccountsApiTransactionsDistinctCounterpartyAccountsGet(
+            bankAccount) as Observable<Array<string>>;
     }
 
     public uploadTransactionFiles(fileWrappers: FileWrapper[],
@@ -470,7 +484,7 @@ export class AppService {
         }
 
         // Call the API client service method
-        return this.apiBudgetAssistantBackendClientService.apiTransactionsUploadTransactionsCreate(
+        return this.apiService.transactions.uploadTransactionsApiTransactionsUploadPost(
             files,
             'events',
             true
@@ -480,35 +494,37 @@ export class AppService {
 
     }
 
-    public findOrCreateBudget(bankAccount: BankAccount): Observable<BudgetTreeNode[]> {
+    public findOrCreateBudget(bankAccount: BankAccountRead): Observable<BudgetTreeNode[]> {
 
-        const bankAccountNumber: BankAccountNumber = {
-            bankAccountNumber: bankAccount.accountNumber
+        const budgetTreeCreate: BudgetTreeCreate = {
+            bankAccountId: bankAccount.accountNumber
         }
-        let obs: Observable<BudgetTree> = this.apiBudgetAssistantBackendClientService.apiFindOrCreateBudgetCreate(
-            bankAccountNumber, 'body');
-        return obs.pipe(map((budgetTree: BudgetTree) => {
+        let obs: Observable<BudgetTreeRead> = this.apiService.budget.findOrCreateBudgetApiBudgetFindOrCreatePost(
+            budgetTreeCreate);
+        return obs.pipe(map((budgetTree: BudgetTreeRead) => {
             // Convert the BudgetTree to an array of BudgetTreeNode objects
             const result: BudgetTreeNode[] = [];
 
             // Process the root node and its children recursively
-            this.convertBudgetTreeNodeApiToBudgetTreeNode(budgetTree.root, -1, result);
+            if (budgetTree.root) {
+                this.convertBudgetTreeNodeApiToBudgetTreeNode(budgetTree.root, -1, result);
+            }
 
             return result;
         }));
 
     }
 
-    private convertBudgetTreeNodeApiToBudgetTreeNode(apiNode: BudgetTreeNodeApi, parentId: number,
+    private convertBudgetTreeNodeApiToBudgetTreeNode(apiNode: BudgetTreeNodeRead, parentId: number,
                                                      result: BudgetTreeNode[]): void {
         // Create a new BudgetTreeNode from the API node
         const localNode: BudgetTreeNode = {
-            budgetTreeNodeAmount: apiNode.budgetTreeNodeAmount,
-            budgetTreeNodeId: apiNode.budgetTreeNodeId,
+            budgetTreeNodeAmount: apiNode.amount,
+            budgetTreeNodeId: apiNode.id,
             budgetTreeNodeParentId: parentId,
             children: [],
-            name: apiNode.name,
-            qualifiedName: apiNode.qualifiedName
+            name: apiNode.name ?? '',
+            qualifiedName: apiNode.qualifiedName ?? ''
         };
 
         // Add the node to the result array
@@ -516,17 +532,7 @@ export class AppService {
 
         // Process children recursively
         if (apiNode.children && apiNode.children.length > 0) {
-            for (const childObj of apiNode.children) {
-                // Extract the child node from the object
-                // Each childObj is expected to have only one key-value pair where the key is the name
-                // and the value contains the node data
-                const entries = Object.entries(childObj);
-                if (entries.length > 1) {
-                    console.warn(`childObj has ${entries.length} entries, but only the first one will be used.`, childObj);
-                }
-                const [childName, childValue] = entries[0];
-                const childNode = childValue as unknown as BudgetTreeNodeApi;
-
+            for (const childNode of apiNode.children) {
                 // Process the child node recursively
                 this.convertBudgetTreeNodeApiToBudgetTreeNode(childNode, localNode.budgetTreeNodeId, result);
 
@@ -536,11 +542,11 @@ export class AppService {
         }
     }
 
-    private convertBudgetTreeNodeToBudgetTreeNodeApi(node: BudgetTreeNode): BudgetTreeNodeApi {
+    private convertBudgetTreeNodeToBudgetTreeNodeApi(node: BudgetTreeNode): BudgetTreeNodeRead {
 
         return {
-            budgetTreeNodeAmount: node.budgetTreeNodeAmount,
-            budgetTreeNodeId: node.budgetTreeNodeId,
+            amount: node.budgetTreeNodeAmount,
+            id: node.budgetTreeNodeId,
             children: node.children.map(child => this.convertBudgetTreeNodeToBudgetTreeNodeApi(child)),
             name: node.name,
             qualifiedName: node.qualifiedName
@@ -549,61 +555,74 @@ export class AppService {
 
 
     public updateBudgetEntryAmount(budgetEntry: BudgetTreeNode): Observable<HttpResponse<any>> {
-
-        return this.apiBudgetAssistantBackendClientService.apiUpdateBudgetEntryAmountCreate(
-            this.convertBudgetTreeNodeToBudgetTreeNodeApi(budgetEntry), 'response')
-
-    }
-
-
-    public saveRuleSetWrapper(ruleSetWrapper: RuleSetWrapper): Observable<SuccessfulOperationResponse> {
-        return this.apiBudgetAssistantBackendClientService.apiSaveRuleSetWrapperCreate(ruleSetWrapper)
-
-    }
-
-    public getOrCreateRuleSetWrapper(category: SimplifiedCategory, categoryType: TypeEnum): Observable<RuleSetWrapper> {
-        const getOrCreateRuleSetWrapper: GetOrCreateRuleSetWrapper = {
-            categoryQualifiedName : category.qualifiedName,
-            type:  categoryType,
+        const budgetTreeNodeUpdate: BudgetTreeNodeUpdate = {
+            amount: budgetEntry.budgetTreeNodeAmount
         };
-        return this.apiBudgetAssistantBackendClientService.apiGetOrCreateRuleSetWrapperCreate(getOrCreateRuleSetWrapper)
+        return this.apiService.budget.updateBudgetEntryAmountApiBudgetEntryNodeIdPatch(
+            budgetEntry.budgetTreeNodeId, budgetTreeNodeUpdate, 'response')
+
+    }
+
+
+    public saveRuleSetWrapper(ruleSetWrapper: RuleSetWrapperRead): Observable<SuccessResponse> {
+        if (!ruleSetWrapper.categoryId) {
+            throw new Error("categoryId is required to save a RuleSetWrapper");
+        }
+        const ruleSetWrapperCreate: RuleSetWrapperCreate = {
+            categoryId: ruleSetWrapper.categoryId,
+            ruleSet: ruleSetWrapper.ruleSet ?? {}
+        };
+        return this.apiService.rules.saveRuleSetWrapperApiRulesSavePost(ruleSetWrapperCreate)
+
+    }
+
+    public getOrCreateRuleSetWrapper(category: CategoryRead,
+                                     categoryType: TransactionTypeEnum): Observable<RuleSetWrapperRead> {
+        const getOrCreateRuleSetWrapper: GetOrCreateRuleSetWrapperRequest = {
+            categoryQualifiedName: category.qualifiedName,
+            type: categoryType,
+        };
+        return this.apiService.rules.getOrCreateRuleSetWrapperApiRulesGetOrCreatePost(getOrCreateRuleSetWrapper)
 
     }
 
     public categorizeTransactions(userName: string): Observable<TransactionsCategorizationResponse> {
-        return this.apiBudgetAssistantBackendClientService.apiCategorizeTransactionsCreate("body").pipe(map(r => {
-                return {
-                    message: r.message,
-                    withCategoryCount: r.withCategoryCount,
-                    withoutCategoryCount: r.withoutCategoryCount
+        return this.apiService.rules.categorizeTransactionsApiRulesCategorizeTransactionsPost()
+            .pipe(map((r: CategorizeTransactionsResponse) => {
+                    return {
+                        message: r.message,
+                        withCategoryCount: r.withCategoryCount,
+                        withoutCategoryCount: r.withoutCategoryCount
 
+                    }
                 }
-        }
-        ))
+            ))
 
 
     }
 
-    public saveBankAccountAlias(bankAccount: BankAccount): Observable<any> {
+    public saveBankAccountAlias(bankAccount: BankAccountRead): Observable<any> {
 
-        const saveAlias: SaveAlias = {
+        const saveAlias: SaveAliasRequest = {
             alias: bankAccount.alias as string,
             bankAccount: bankAccount.accountNumber
         }
-        return this.apiBudgetAssistantBackendClientService.apiSaveAliasCreate(saveAlias, 'body')
+        return this.apiService.bankAccounts.saveAliasApiBankAccountsSaveAliasPost(saveAlias)
 
     }
 
-    public getCategoryDetailsForPeriod(revenueExpensesQuery: RevenueExpensesQueryWithCategory): Observable<CategoryDetailsForPeriodHandlerResult> {
-        return this.apiBudgetAssistantBackendClientService.apiAnalysisCategoryDetailsForPeriodCreate(
-            revenueExpensesQuery, 'body');
+    public getCategoryDetailsForPeriod(revenueExpensesQuery: RevenueExpensesQueryWithCategory): Observable<CategoryDetailsForPeriodResponse> {
+        return this.apiService.analysis.getCategoryDetailsForPeriodApiAnalysisCategoryDetailsForPeriodPost(
+            revenueExpensesQuery);
 
     }
 
-    public getCategoriesForAccountAndTransactionType(accountNumber: string, transactionType: TransactionTypeEnum): Observable<Array<string>>{
+    public getCategoriesForAccountAndTransactionType(accountNumber: string,
+                                                     transactionType: TransactionTypeEnum): Observable<Array<string>> {
 
-        return this.apiBudgetAssistantBackendClientService.apiAnalysisCategoriesForAccountAndTransactionTypeRetrieve(
-            accountNumber, transactionType, 'body')
+        return this.apiService.analysis.getCategoriesForAccountAndTransactionTypeApiAnalysisCategoriesForAccountGet(
+            accountNumber, transactionType)
+            .pipe(map((response: CategoriesForAccountResponse) => response.categories ?? []))
 
     }
 }

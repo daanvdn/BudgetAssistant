@@ -17,7 +17,7 @@ import {PaginationDataSource, SimpleDataSource} from "ngx-pagination-data-source
 import {AppService} from "../app.service";
 import {BehaviorSubject, map, Observable} from "rxjs";
 import {MatButtonToggle, MatButtonToggleChange, MatButtonToggleGroup} from "@angular/material/button-toggle";
-import {BankAccount, SimpleCategory, Transaction, TransactionTypeEnum} from "@daanvdn/budget-assistant-client";
+import {BankAccountRead, TransactionRead, TransactionTypeEnum} from "@daanvdn/budget-assistant-client";
 import {AmountType, CategoryMap, inferAmountType} from "../model";
 import {MatToolbar} from '@angular/material/toolbar';
 import {BankAccountSelectionComponent} from '../bank-account-selection/bank-account-selection.component';
@@ -28,35 +28,35 @@ import {CategoryTreeDropdownComponent} from '../category-tree-dropdown/category-
 interface GroupBy {
   counterparty: string;
   isGroupBy: boolean;
-  transactions: Transaction[];
+  transactions: TransactionRead[];
   isExpense: boolean;
 }
 
-class GroupByCounterpartyDataSource implements SimpleDataSource<Transaction | GroupBy> {
+class GroupByCounterpartyDataSource implements SimpleDataSource<TransactionRead | GroupBy> {
 
 
 
-  constructor(public backingPaginationDataSource: PaginationDataSource<Transaction, BankAccount>, private isExpense: boolean) {
+  constructor(public backingPaginationDataSource: PaginationDataSource<TransactionRead, BankAccountRead>, private isExpense: boolean) {
   }
 
-  connect(): Observable<Array<Transaction | GroupBy>> {
+  connect(): Observable<Array<TransactionRead | GroupBy>> {
     return this.backingPaginationDataSource.connect().pipe(map(data => {
 
-      let mapByCounterpartyName = new Map<string, Transaction[]>();
+      let mapByCounterpartyName = new Map<string, TransactionRead[]>();
 
       for (const transaction of data) {
-        let name = transaction.counterparty.name;
+        let name = transaction.counterpartyId;
         if (!name) {
           name = "";
         }
         let transactionsForCounterparty = mapByCounterpartyName.has(name) ? mapByCounterpartyName.get(name) : [];
         transactionsForCounterparty?.push(transaction);
-        mapByCounterpartyName.set(name, transactionsForCounterparty as Transaction[]);
+        mapByCounterpartyName.set(name, transactionsForCounterparty as TransactionRead[]);
       }
       let sortedKeys = Array.from(mapByCounterpartyName.keys()).sort();
-      let result = new Array<Transaction | GroupBy>();
+      let result = new Array<TransactionRead | GroupBy>();
       for (const aKey of sortedKeys) {
-        let transactionsForKey = mapByCounterpartyName.get(aKey) as Transaction[];
+        let transactionsForKey = mapByCounterpartyName.get(aKey) as TransactionRead[];
         let groupBy: GroupBy = {
           counterparty: aKey, isGroupBy: true, transactions: transactionsForKey, isExpense: this.isExpense
         };
@@ -92,14 +92,14 @@ export class ManualCategorizationViewComponent implements OnInit {
 
   @ViewChild(MatPaginator, { static: false }) paginator!: MatPaginator;
   @ViewChild(MatSort, { static: false }) sort!: MatSort;
-  @ViewChild(MatTable) table!: MatTable<Transaction>;
+  @ViewChild(MatTable) table!: MatTable<TransactionRead>;
   @ViewChild('table', {read: ElementRef, static: false}) tableElement!: ElementRef;
 
 
   dataSource!: GroupByCounterpartyDataSource;
   categoryMap!: CategoryMap;
 
-  private bankAccount!: BankAccount;
+  private bankAccount!: BankAccountRead;
   displayedColumns = [
     "transaction",
     "amount",
@@ -130,47 +130,47 @@ export class ManualCategorizationViewComponent implements OnInit {
   ngOnInit( ): void {
   }
 
-  private initDataSource(account: BankAccount, transactionType: TransactionTypeEnum): GroupByCounterpartyDataSource {
+  private initDataSource(account: BankAccountRead, transactionType: TransactionTypeEnum): GroupByCounterpartyDataSource {
     if (transactionType == TransactionTypeEnum.BOTH){
       throw new Error("TransactionType.BOTH not supported")
     }
 
     let isExpense = transactionType === TransactionTypeEnum.EXPENSES;
 
-    let paginationDataSource = new PaginationDataSource<Transaction, BankAccount>(
+    let paginationDataSource = new PaginationDataSource<TransactionRead, BankAccountRead>(
       (request:any, query:any) => {
         request.size = 50;
         return this.appService.pageTransactionsToManuallyReview(request, transactionType);
       },
-      {property: 'counterparty', order: 'asc'}, account
+      {property: 'counterpartyId', order: 'asc'}, account
     );
     return new GroupByCounterpartyDataSource(paginationDataSource, isExpense);
   }
 
 
-  saveTransaction(transaction: Transaction) {
+  saveTransaction(transaction: TransactionRead) {
     this.appService.saveTransaction(transaction)
   }
 
-  setCategory(row: (Transaction | GroupBy), selectedCategoryQualifiedNameStr: string) {
+  setCategory(row: (TransactionRead | GroupBy), selectedCategoryQualifiedNameStr: string) {
     // Get the SimpleCategory object from the CategoryMap
     const category = this.categoryMap.getSimpleCategory(selectedCategoryQualifiedNameStr);
 
     // Check if row is an interface that has key 'isGroupBy'
     if ("isGroupBy" in row) {
       (row as GroupBy).transactions.forEach(transaction => {
-        transaction.category = category;
+        transaction.categoryId = category?.id;
         this.saveTransaction(transaction);
       });
       return;
     } else {
-      let transaction = row as Transaction;
-      transaction.category = category;
+      let transaction = row as TransactionRead;
+      transaction.categoryId = category?.id;
       this.saveTransaction(transaction);
     }
   }
 
-  amountType(transaction: Transaction | GroupBy): AmountType {
+  amountType(transaction: TransactionRead | GroupBy): AmountType {
     if ("isGroupBy" in transaction) {
       return transaction.isExpense ? AmountType.EXPENSES : AmountType.REVENUE;
     }

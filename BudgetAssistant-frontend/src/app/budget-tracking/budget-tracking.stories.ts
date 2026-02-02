@@ -3,31 +3,29 @@ import { moduleMetadata } from '@storybook/angular';
 import { BudgetTrackingComponent } from './budget-tracking.component';
 import { BehaviorSubject, of } from 'rxjs';
 import { AppService } from '../app.service';
-import { BankAccount, GroupingEnum, TransactionTypeEnum } from '@daanvdn/budget-assistant-client';
+import { BankAccountRead, Grouping, TransactionTypeEnum, BudgetAssistantApiService, BudgetTrackerResult as ApiBudgetTrackerResult, RecurrenceType } from '@daanvdn/budget-assistant-client';
 import { MatTableModule } from '@angular/material/table';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { NgFor, NgIf } from '@angular/common';
 import { Criteria } from '../model/criteria.model';
-import { ApiBudgetAssistantBackendClientService } from '@daanvdn/budget-assistant-client';
 import { BudgetTrackerResult } from '../model';
 
 // Mock BankAccount data
-const mockBankAccount: BankAccount = {
+const mockBankAccount: BankAccountRead = {
   accountNumber: 'NL91ABNA0417164300',
-  alias: 'Main Account',
-  users: [1]
+  alias: 'Main Account'
 };
 
 // Mock Criteria
 const mockCriteria = new Criteria(
   mockBankAccount,
-  GroupingEnum.month,
+  Grouping.MONTH,
   new Date('2023-01-01'),
   new Date('2023-12-31'),
   TransactionTypeEnum.BOTH
 );
 
-// Mock BudgetTrackerResult data
+// Mock BudgetTrackerResult data (for the local model)
 const mockBudgetTrackerResult: BudgetTrackerResult = {
   columns: ['Category', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Total'],
   data: [
@@ -134,20 +132,43 @@ const mockBudgetTrackerResult: BudgetTrackerResult = {
   ]
 };
 
+// Mock API BudgetTrackerResult (matches new API structure)
+const mockApiBudgetTrackerResult: ApiBudgetTrackerResult = {
+  period: '2023',
+  startDate: '2023-01-01',
+  endDate: '2023-12-31',
+  entries: [
+    { categoryQualifiedName: 'EXPENSES.Household', categoryName: 'Household Expenses', budgetedAmount: 7000, actualAmount: 7180, difference: -180 },
+    { categoryQualifiedName: 'EXPENSES.Transportation', categoryName: 'Transportation', budgetedAmount: 2000, actualAmount: 1830, difference: 170 }
+  ],
+  totalBudgeted: 9000,
+  totalActual: 9010,
+  totalDifference: -10
+};
+
 // Mock empty BudgetTrackerResult
-const emptyBudgetTrackerResult: BudgetTrackerResult = {
-  columns: ['Category', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Total'],
-  data: []
+const emptyApiBudgetTrackerResult: ApiBudgetTrackerResult = {
+  period: '2023',
+  startDate: '2023-01-01',
+  endDate: '2023-12-31',
+  entries: [],
+  totalBudgeted: 0,
+  totalActual: 0,
+  totalDifference: 0
 };
 
-// Mock ApiBudgetAssistantBackendClientService
-const mockApiBudgetAssistantBackendClientService = {
-  apiTrackBudgetCreate: () => of(mockBudgetTrackerResult)
+// Mock BudgetAssistantApiService
+const mockBudgetAssistantApiService = {
+  analysis: {
+    trackBudgetApiAnalysisTrackBudgetPost: () => of(mockApiBudgetTrackerResult)
+  }
 };
 
-// Mock empty ApiBudgetAssistantBackendClientService
-const emptyApiBudgetAssistantBackendClientService = {
-  apiTrackBudgetCreate: () => of(emptyBudgetTrackerResult)
+// Mock empty BudgetAssistantApiService
+const emptyBudgetAssistantApiService = {
+  analysis: {
+    trackBudgetApiAnalysisTrackBudgetPost: () => of(emptyApiBudgetTrackerResult)
+  }
 };
 
 const meta: Meta<BudgetTrackingComponent> = {
@@ -163,7 +184,7 @@ const meta: Meta<BudgetTrackingComponent> = {
       ],
       providers: [
         { provide: AppService, useValue: {} },
-        { provide: ApiBudgetAssistantBackendClientService, useValue: mockApiBudgetAssistantBackendClientService }
+        { provide: BudgetAssistantApiService, useValue: mockBudgetAssistantApiService }
       ],
     }),
   ],
@@ -189,7 +210,7 @@ export const EmptyData: Story = {
     moduleMetadata({
       providers: [
         { provide: AppService, useValue: {} },
-        { provide: ApiBudgetAssistantBackendClientService, useValue: emptyApiBudgetAssistantBackendClientService }
+        { provide: BudgetAssistantApiService, useValue: emptyBudgetAssistantApiService }
       ],
     }),
   ],

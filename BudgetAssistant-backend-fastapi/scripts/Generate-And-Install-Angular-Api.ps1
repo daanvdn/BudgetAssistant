@@ -409,14 +409,15 @@ else
 
 # Update package.json
 # Convert to PSCustomObject with new properties
+# Note: ng-packagr generates files with the scoped package name prefix (daanvdn-budget-assistant-client)
 $packageJson = [PSCustomObject]@{
     name = "@daanvdn/budget-assistant-client"
     version = "1.0.0"
     main = "dist/bundles/budget-assistant-client.umd.js"
-    module = "dist/fesm2022/budget-assistant-client.mjs"
-    es2022 = "dist/fesm2022/budget-assistant-client.mjs"
-    esm2022 = "dist/esm2022/budget-assistant-client.mjs"
-    fesm2022 = "dist/fesm2022/budget-assistant-client.mjs"
+    module = "dist/fesm2022/daanvdn-budget-assistant-client.mjs"
+    es2022 = "dist/fesm2022/daanvdn-budget-assistant-client.mjs"
+    esm2022 = "dist/esm2022/daanvdn-budget-assistant-client.mjs"
+    fesm2022 = "dist/fesm2022/daanvdn-budget-assistant-client.mjs"
     typings = "dist/index.d.ts"
     type = "module"
     sideEffects = $false
@@ -425,12 +426,19 @@ $packageJson = [PSCustomObject]@{
         "@daanvdn:registry" = $local_registry
     }
     generatedAt = $timestamp
-}
-
-# If ng-packagr generated an exports field, use it; otherwise omit it to let ng-packagr handle it
-if ($distPackageJson -and $distPackageJson.exports)
-{
-    $packageJson | Add-Member -NotePropertyName "exports" -NotePropertyValue $distPackageJson.exports
+    # Always create exports field with correct paths including the daanvdn- prefix
+    # ng-packagr generates files with the scoped package name prefix
+    exports = @{
+        "." = @{
+            "types" = "./dist/index.d.ts"
+            "esm2022" = "./dist/esm2022/daanvdn-budget-assistant-client.mjs"
+            "esm" = "./dist/esm2022/daanvdn-budget-assistant-client.mjs"
+            "default" = "./dist/fesm2022/daanvdn-budget-assistant-client.mjs"
+        }
+        "./package.json" = @{
+            "default" = "./package.json"
+        }
+    }
 }
 
 # Preserve existing properties from the original package.json

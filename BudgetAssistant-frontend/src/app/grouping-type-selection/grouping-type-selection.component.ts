@@ -1,7 +1,7 @@
 import {Component, EventEmitter, OnInit, Output} from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {AppService} from '../app.service';
-import {GroupingEnum} from "@daanvdn/budget-assistant-client";
+import {Grouping} from "@daanvdn/budget-assistant-client";
 import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatSelect } from '@angular/material/select';
 import { NgFor } from '@angular/common';
@@ -18,21 +18,21 @@ export class GroupingTypeSelectionComponent implements OnInit {
 
   groupingTypesFormFieldGroup: FormGroup;
 
-  groupingTypes: Map<string, GroupingEnum> = new Map<string, GroupingEnum>();
+  groupingTypes: Map<string, Grouping> = new Map<string, Grouping>();
   groupingTypeStringValues: string[];
-  selectedGrouping!: GroupingEnum;
-  @Output() change: EventEmitter<GroupingEnum> = new EventEmitter<GroupingEnum>(true);
+  selectedGrouping!: Grouping;
+  @Output() change: EventEmitter<Grouping> = new EventEmitter<Grouping>(true);
 
 
 
   constructor(formBuilder: FormBuilder, private appService: AppService) {
 
     this.groupingTypesFormFieldGroup = formBuilder.group({ queryForm: "" });
-    this.groupingTypes.set("month", GroupingEnum.month)
-    this.groupingTypes.set("year", GroupingEnum.year)
-    this.groupingTypes.set("quarter", GroupingEnum.quarter)
+    this.groupingTypes.set("month", Grouping.MONTH)
+    this.groupingTypes.set("year", Grouping.YEAR)
+    this.groupingTypes.set("quarter", Grouping.QUARTER)
     this.groupingTypeStringValues = Array.from(this.groupingTypes.keys());
-    this.selectedGrouping = GroupingEnum.month;
+    this.selectedGrouping = Grouping.MONTH;
 
   }
 
@@ -48,9 +48,9 @@ export class GroupingTypeSelectionComponent implements OnInit {
 
   onGroupingChange(groupingStr: string) {
 
-    var groupingType: GroupingEnum | undefined = this.groupingTypes.get(groupingStr)
+    var groupingType: Grouping | undefined = this.groupingTypes.get(groupingStr)
     if (groupingType == undefined) {
-      this.selectedGrouping = GroupingEnum.month;
+      this.selectedGrouping = Grouping.MONTH;
     } else {
       this.selectedGrouping = groupingType;
     }

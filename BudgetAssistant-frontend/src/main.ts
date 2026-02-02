@@ -3,7 +3,7 @@ import {enableProdMode, importProvidersFrom} from '@angular/core';
 
 import {environment} from './environments/environment';
 import {
-    ApiBudgetAssistantBackendClientService,
+    BudgetAssistantApiService,
     ApiModule,
     BASE_PATH,
     Configuration
@@ -70,7 +70,7 @@ bootstrapApplication(AppComponent, {
                 basePath: environment.API_BASE_PATH,
             });
         })),
-        ApiBudgetAssistantBackendClientService,
+        BudgetAssistantApiService,
         AuthService, AuthGuard,
         DatePipe,
         { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },

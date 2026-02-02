@@ -7,19 +7,16 @@ import {MatListOption, MatSelectionList, MatSelectionListChange} from "@angular/
 // @ts-ignore
 import autocolors from 'chartjs-plugin-autocolors';
 import {
-    BankAccount,
-    ExpensesRecurrenceEnum,
+    BankAccountRead,
+    RecurrenceType,
     RevenueExpensesQuery,
-    RevenueRecurrenceEnum,
-    TransactionTypeEnum
+    TransactionTypeEnum,
+    RevenueExpensesQueryWithCategory
 } from "@daanvdn/budget-assistant-client";
 
 import {Criteria} from "../model/criteria.model";
 import {NgFor, NgIf} from '@angular/common';
 import {ChartModule} from 'primeng/chart';
-import {
-    RevenueExpensesQueryWithCategory
-} from "@daanvdn/budget-assistant-client/dist/model/revenue-expenses-query-with-category";
 
 
 interface Category {
@@ -63,7 +60,7 @@ export class CategoryDetailsComponent implements OnInit, OnChanges {
     }
 
 
-    private initCategoryLists(bankAccount: BankAccount) {
+    private initCategoryLists(bankAccount: BankAccountRead) {
         this.getCategories(bankAccount, TransactionTypeEnum.EXPENSES).subscribe((data) => {
             this.expensesCategories = data.map((category: string) => {
                 return {name: category, transactionType: TransactionTypeEnum.EXPENSES};
@@ -137,30 +134,35 @@ export class CategoryDetailsComponent implements OnInit, OnChanges {
         let query: RevenueExpensesQueryWithCategory = {
             accountNumber: this.criteria.bankAccount.accountNumber,
             grouping: this.criteria.grouping,
-            transactionType: this.criteria.transactionType,
+            transactionType: this.criteria.transactionType as TransactionTypeEnum,
             start: JSON.stringify(this.criteria.startDate),
             end: JSON.stringify(this.criteria.endDate),
-            expensesRecurrence: ExpensesRecurrenceEnum.BOTH,
-            revenueRecurrence: RevenueRecurrenceEnum.BOTH,
-            category: this.selectedCategory.name
+            expensesRecurrence: RecurrenceType.BOTH,
+            revenueRecurrence: RecurrenceType.BOTH,
+            categoryQualifiedName: this.selectedCategory.name
 
         };
 
 
         this.datatIsLoaded = false;
         this.appService.getCategoryDetailsForPeriod(query).subscribe((data) => {
-            data.datasets = data.datasets.map((dataset: Dataset) => {
-                dataset.maxBarThickness = 50
-                return dataset;
-            });
-            this.chartData = data;
+            // Transform new response structure to chart data format
+            const datasets = (data.categories ?? []).map((cat, index) => ({
+                label: cat.categoryName,
+                data: [Math.abs(cat.amount ?? 0)],
+                maxBarThickness: 50
+            }));
+            this.chartData = {
+                labels: [data.period],
+                datasets: datasets
+            };
             this.datatIsLoaded = true;
         });
 
     }
 
 
-    private getCategories(bankAccount: BankAccount, transactionType: TransactionTypeEnum):
+    private getCategories(bankAccount: BankAccountRead, transactionType: TransactionTypeEnum):
         Observable<string[]> {
         if (transactionType === TransactionTypeEnum.BOTH) {
             throw new Error("TransactionType.BOTH is not supported");

@@ -1,4 +1,4 @@
-import {SimpleCategory, SimplifiedCategory, SimplifiedCategoryChildrenInnerValue, TypeEnum} from '@daanvdn/budget-assistant-client';
+import {SimpleCategory, SimplifiedCategory, SimplifiedCategoryChildrenInnerValue, TypeEnum, CategoryRead, TransactionTypeEnum} from '@daanvdn/budget-assistant-client';
 
 export interface CategoryAndAmount {
     amount: number;
@@ -327,6 +327,9 @@ export const NO_CATEGORY: SimplifiedCategory = {
     id: -1
 }
 
+// Type that can be either SimplifiedCategory or CategoryRead
+export type CategoryNode = SimplifiedCategory | CategoryRead;
+
 export class CategoryMap {
 
     private idToNameMap: Map<number, string> = new Map<number, string>();
@@ -334,33 +337,40 @@ export class CategoryMap {
     private qualifiedNameToNameMap: Map<string, string> = new Map<string, string>();
     private simpleCategoryMap: Map<string, SimpleCategory> = new Map<string, SimpleCategory>();
 
-    constructor(nodes: SimplifiedCategory[]) {
+    constructor(nodes: CategoryNode[]) {
         for (let node of nodes) {
             this.populateMaps(node);
         }
     }
 
-    private populateMaps(node: SimplifiedCategory) {
-        this.idToNameMap.set(node.id, node.name);
-        this.qualifiedNameToIdMap.set(node.qualifiedName, node.id);
+    private populateMaps(node: CategoryNode) {
+        // Support both SimplifiedCategory (with .id) and CategoryRead (with .id)
+        const nodeId = 'id' in node ? node.id : -1;
+        this.idToNameMap.set(nodeId, node.name);
+        this.qualifiedNameToIdMap.set(node.qualifiedName, nodeId);
         this.qualifiedNameToNameMap.set(node.qualifiedName, node.name);
 
         // Store a SimpleCategory object for each node
         this.simpleCategoryMap.set(node.qualifiedName, {
             qualifiedName: node.qualifiedName,
             name: node.name,
-            id: node.id
+            id: nodeId
         });
 
-        // Process children - note that SimplifiedCategory has a different children structure
+        // Process children - handle both SimplifiedCategory and CategoryRead structures
         if (node.children && node.children.length > 0) {
             for (let childObj of node.children) {
-                const entries = Object.entries(childObj);
-                if (entries.length > 0) {
-                    const [_, value] = entries[0];
-                    // Assuming value is a SimplifiedCategory
-                    const childCategory = value as unknown as SimplifiedCategory;
-                    this.populateMaps(childCategory);
+                // For CategoryRead, children is Array<CategoryRead>
+                if ('qualifiedName' in childObj) {
+                    this.populateMaps(childObj as CategoryRead);
+                } else {
+                    // For SimplifiedCategory, children have a different structure
+                    const entries = Object.entries(childObj);
+                    if (entries.length > 0) {
+                        const [_, value] = entries[0];
+                        const childCategory = value as unknown as SimplifiedCategory;
+                        this.populateMaps(childCategory);
+                    }
                 }
             }
         }

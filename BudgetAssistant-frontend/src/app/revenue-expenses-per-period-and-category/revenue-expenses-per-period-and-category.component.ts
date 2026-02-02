@@ -2,7 +2,7 @@ import {Component, Input, OnChanges, OnInit, SimpleChanges, ViewChild} from '@an
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 
 import {AppService} from '../app.service';
-import {CategoryMap} from '../model';
+import {CategoryMap, DistributionByCategoryForPeriodTableData} from '../model';
 import {Criteria} from "../model/criteria.model";
 // @ts-ignore
 import autocolors from 'chartjs-plugin-autocolors';
@@ -10,14 +10,12 @@ import { MatTable, MatTableDataSource, MatColumnDef, MatHeaderCellDef, MatHeader
 import {MatDialog} from "@angular/material/dialog";
 import {TransactionsInContextDialogComponent} from "../transaction-dialog/transactions-in-context-dialog.component";
 import {
-  ApiBudgetAssistantBackendClientService,
-  DistributionByCategoryForPeriodChartData,
-  DistributionByCategoryForPeriodTableData,
-  ExpensesRecurrenceEnum,
-  Period,
+  BudgetAssistantApiService,
+  CategoryAmount,
+  PeriodCategoryBreakdown,
+  RecurrenceType,
   RevenueAndExpensesPerPeriodAndCategory,
   RevenueExpensesQuery,
-  RevenueRecurrenceEnum,
   TransactionInContextQuery,
   TransactionTypeEnum
 } from "@daanvdn/budget-assistant-client";
@@ -62,7 +60,7 @@ export class RevenueExpensesPerPeriodAndCategoryComponent implements OnInit, OnC
   currentTransactionInContextQuery!: TransactionInContextQuery;
   categoryMap!: CategoryMap;
 
-  constructor(private appService: AppService, public dialog: MatDialog, private apiBudgetAssistantBackendClientService: ApiBudgetAssistantBackendClientService) {
+  constructor(private appService: AppService, public dialog: MatDialog, private apiService: BudgetAssistantApiService) {
     this.appService.categoryMapObservable$.subscribe((categoryMap) => {
       if (categoryMap) {
         this.categoryMap = categoryMap;
@@ -122,62 +120,52 @@ export class RevenueExpensesPerPeriodAndCategoryComponent implements OnInit, OnC
       transactionType: TransactionTypeEnum.BOTH,
       start: JSON.stringify(this.criteria.startDate),
       end: JSON.stringify(this.criteria.endDate),
-      expensesRecurrence: ExpensesRecurrenceEnum.BOTH,
-      revenueRecurrence: RevenueRecurrenceEnum.BOTH
+      expensesRecurrence: RecurrenceType.BOTH,
+      revenueRecurrence: RecurrenceType.BOTH
 
     };
 
 
-    this.apiBudgetAssistantBackendClientService.apiAnalysisRevenueExpensesPerPeriodAndCategoryCreate(query)
+    this.apiService.analysis.getRevenueAndExpensesPerPeriodAndCategoryApiAnalysisRevenueExpensesPerPeriodAndCategoryPost(query)
         .subscribe((res: RevenueAndExpensesPerPeriodAndCategory) => {
-      this.expensesData = this.transformChartDataToPrimeNgFormat(res.chartDataExpenses);
-      this.revenueData = this.transformChartDataToPrimeNgFormat(res.chartDataRevenue);
-      let tableDataRevenue: DistributionByCategoryForPeriodTableData[] = res.tableDataRevenue;
-      let tableDataExpenses: DistributionByCategoryForPeriodTableData[] = res.tableDataExpenses;
-          let tableColumnNames = [...res.tableColumnNamesRevenue, ...res.tableColumnNamesExpenses];
-          this.displayedColumns = tableColumnNames.filter(column => column !== 'categoryId');
+      // Transform the new response structure to chart data format
+      this.expensesData = this.transformPeriodsToChartData(res.periods ?? [], res.allCategories ?? []);
+      this.revenueData = this.transformPeriodsToChartData(res.periods ?? [], res.allCategories ?? []);
+
+      // Transform periods to table data
+      const tableData = this.transformPeriodsToTableData(res.periods ?? [], res.allCategories ?? []);
+
+      // Build column names from periods + category column
+      const columnNames = ['category', ...((res.periods ?? []).map(p => p.period))];
+      this.displayedColumns = columnNames;
       this.displayedColumnsExceptFirst = this.displayedColumns.slice(1);
       this.firstColumn = this.displayedColumns[0];
-      this.expensesDataSource = new MatTableDataSource<DistributionByCategoryForPeriodTableData>(tableDataExpenses);
-      this.expensesDataSourceAll = new MatTableDataSource<DistributionByCategoryForPeriodTableData>(tableDataExpenses);
-      this.revenueDataSource = new MatTableDataSource<DistributionByCategoryForPeriodTableData>(tableDataRevenue);
-      this.revenueDataSourceAll = new MatTableDataSource<DistributionByCategoryForPeriodTableData>(tableDataRevenue);
+      this.expensesDataSource = new MatTableDataSource<DistributionByCategoryForPeriodTableData>(tableData);
+      this.expensesDataSourceAll = new MatTableDataSource<DistributionByCategoryForPeriodTableData>(tableData);
+      this.revenueDataSource = new MatTableDataSource<DistributionByCategoryForPeriodTableData>(tableData);
+      this.revenueDataSourceAll = new MatTableDataSource<DistributionByCategoryForPeriodTableData>(tableData);
       this.datatIsLoaded = true;
     })
   }
 
-
-  transformChartDataToPrimeNgFormat(chartData: DistributionByCategoryForPeriodChartData[]): any {
-    let labels: string[] = [];
+  transformPeriodsToChartData(periods: PeriodCategoryBreakdown[], allCategories: string[]): any {
+    let labels: string[] = periods.map(p => p.period);
     let datasets: any[] = [];
-
-    // First, we need to get all unique categories across all periods
-    let allCategories: string[] = [];
-    chartData.forEach(data => {
-      data.entries.forEach(entry => {
-        if (!allCategories.includes(entry.category.qualifiedName as string)) {
-          allCategories.push(entry.category.qualifiedName as string);
-        }
-      });
-    });
 
     // Initialize datasets for each category
     allCategories.forEach(category => {
       datasets.push({
         label: category,
-        //backgroundColor: '#' + (Math.random() * 0xFFFFFF << 0).toString(16), // generate random color
         data: []
       });
     });
 
     // Fill in the data for each period
-    chartData.forEach(data => {
-      labels.push((data.period as Period).value);
-
-      // Initialize a map to store the amount for each category in this period
+    periods.forEach(periodData => {
+      // Create a map of category -> amount for this period
       let categoryAmountMap: { [key: string]: number } = {};
-      data.entries.forEach(entry => {
-        categoryAmountMap[entry.category.qualifiedName as string] = Math.abs(entry.amount);
+      (periodData.categories ?? []).forEach((cat: CategoryAmount) => {
+        categoryAmountMap[cat.categoryQualifiedName] = Math.abs(cat.amount ?? 0);
       });
 
       // Fill in the data for each dataset
@@ -191,6 +179,18 @@ export class RevenueExpensesPerPeriodAndCategoryComponent implements OnInit, OnC
       labels: labels,
       datasets: datasets
     };
+  }
+
+  transformPeriodsToTableData(periods: PeriodCategoryBreakdown[], allCategories: string[]): DistributionByCategoryForPeriodTableData[] {
+    // Transform periods data into table rows, one row per category
+    return allCategories.map(category => {
+      const row: DistributionByCategoryForPeriodTableData = { category };
+      periods.forEach(period => {
+        const categoryData = (period.categories ?? []).find((c: CategoryAmount) => c.categoryQualifiedName === category);
+        row[period.period] = categoryData?.amount ?? 0;
+      });
+      return row;
+    });
   }
 
 

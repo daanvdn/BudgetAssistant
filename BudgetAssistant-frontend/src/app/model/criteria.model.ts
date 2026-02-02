@@ -1,13 +1,13 @@
-import { BankAccount, GroupingEnum, TransactionTypeEnum } from "@daanvdn/budget-assistant-client";
+import { BankAccountRead, Grouping, TransactionTypeEnum } from "@daanvdn/budget-assistant-client";
 
 export class Criteria {
-    bankAccount: BankAccount;
-    grouping: GroupingEnum;
+    bankAccount: BankAccountRead;
+    grouping: Grouping;
     startDate: Date;
     endDate: Date;
     transactionType: TransactionTypeEnum | undefined;
 
-    constructor(bankAccount: BankAccount, grouping: GroupingEnum, startDate: Date, endDate: Date,
+    constructor(bankAccount: BankAccountRead, grouping: Grouping, startDate: Date, endDate: Date,
                 transactionType: TransactionTypeEnum | undefined) {
         this.bankAccount = bankAccount;
         this.grouping = grouping;
