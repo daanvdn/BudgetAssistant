@@ -1,7 +1,7 @@
 import * as Factory from "factory.ts";
 import type { Meta, StoryObj } from '@storybook/angular';
 import { moduleMetadata } from '@storybook/angular';
-import { TransactionsComponent } from './transactions.component';
+import { Transactions0Component } from './transactions0.component';
 import { AppService } from '../app.service';
 import { AuthService } from '../auth/auth.service';
 import { ErrorDialogService } from '../error-dialog/error-dialog.service';
@@ -177,9 +177,9 @@ const mockCategoryTreeDropdownComponent = {
   outputs: ['selectionChange']
 };
 
-const meta: Meta<TransactionsComponent> = {
-  title: 'Components/TransactionsComponent',
-  component: TransactionsComponent,
+const meta: Meta<Transactions0Component> = {
+  title: 'Components/Transactions0Component',
+  component: Transactions0Component,
   decorators: [
     moduleMetadata({
       imports: [
@@ -219,7 +219,7 @@ const meta: Meta<TransactionsComponent> = {
 };
 
 export default meta;
-type Story = StoryObj<TransactionsComponent>;
+type Story = StoryObj<Transactions0Component>;
 
 // Create a mock PaginationDataSource
 const createMockDataSource = () => {

@@ -12,16 +12,14 @@
       overflow: hidden;
       transition: width 0.3s;
 
-      a {
+      a[mat-list-item] {
         text-decoration: none;
         color: inherit;
 
-        mat-list-item {
-          ::ng-deep .mdc-list-item__content {
-            display: flex !important;
-            flex-direction: row !important;
-            align-items: center !important;
-          }
+        ::ng-deep .mdc-list-item__content {
+          display: flex !important;
+          flex-direction: row !important;
+          align-items: center !important;
         }
       }
 

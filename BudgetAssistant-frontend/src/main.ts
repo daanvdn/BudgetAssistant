@@ -50,6 +50,10 @@ import {MatBadgeModule} from '@angular/material/badge';
 import {ChartModule} from 'primeng/chart';
 import {TreeTableModule} from 'primeng/treetable';
 import {AppComponent} from './app/app.component';
+import {
+    provideTanStackQuery,
+    QueryClient,
+} from '@tanstack/angular-query-experimental'
 
 if (environment.production) {
   enableProdMode();
@@ -80,7 +84,8 @@ bootstrapApplication(AppComponent, {
         },
         { provide: BASE_PATH, useValue: environment.API_BASE_PATH },
         provideHttpClient(withInterceptorsFromDi()),
-        provideAnimations()
+        provideAnimations(),
+        provideTanStackQuery(new QueryClient())
     ]
 })
   .catch(err => console.error(err));

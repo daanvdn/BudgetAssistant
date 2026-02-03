@@ -1,187 +1,269 @@
 <mat-toolbar color="primary" class="toolbar-header">
   <span>Transactions</span>
 </mat-toolbar>
-<div>
-  <div *ngIf="filesAreUploading" class="overlay">
-    <div class="spinner-container">
-      <h3>Bestanden worden geüpload</h3>
-      <mat-spinner></mat-spinner>
-    </div>
-  </div>
-  <div class="mat-z8 wrapper" >
-    <div style="padding-left: 16px;position: sticky; top:0px; background: rgba(255, 255, 255, 1); padding-top: 10px"
-         class="flex-container">
-      <bank-account-selection class="flex-child" (change)="handleAccountChange()" style="; display: flex; align-items: flex-start; justify-content: flex-start"></bank-account-selection>
-      <span style="padding-right: 5px"></span>
-      <button
-        style="max-width: 50px; max-height: 50px; padding-right: 5px; display: flex; align-items: center; justify-content: center;"
-        class="button flex-child" mat-raised-button
-        (click)="onClickFileInputButton()"
-      >
-        <input type="file" style="display: none" #fileInput accept=".csv" multiple (change)="onChangeFileInput()"/>
-        <mat-icon matTooltip="Transacties toevoegen (csv)" matTooltipPosition="below">
-          add_to_photos
-        </mat-icon>
-      </button>
-      <span style="padding-right: 5px"></span>
-      <button
-        style="max-width: 50px; max-height: 50px; padding-right: 5px; display: flex; align-items: center; justify-content: center;"
-        class="button flex-child" mat-raised-button
-        (click)="openDialog()">
-        <mat-icon matTooltip="Zoekopdracht">search</mat-icon>
-      </button>
-      <span style="padding-right: 5px"></span>
-      <button
-        style="max-width: 50px; max-height: 50px; padding-right: 5px; display: flex; align-items: center; justify-content: center;"
-        class="button flex-child" mat-raised-button
-        (click)="showAllTransactions()">
-        <mat-icon matTooltip="Toon alle transacties">remove_red_eye</mat-icon>
-      </button>
-      <span style="padding-right: 5px"></span>
-      <button [matBadge]="getNrOfTransactionsToManuallyReview()" matBadgeOverlap="true" matBadgeColor="warn" [matTooltip]="getNrOfTransactionsToManuallyReviewTooltip()"
-        style="max-width: 50px; max-height: 50px; padding-right: 5px; display: flex; align-items: center; justify-content: center;"
-        class="button flex-child" mat-raised-button
-        (click)="showTransactionsToManuallyReview()">
-          <fa-icon size="lg" [icon]="faTag" [fixedWidth]="true"></fa-icon>
-      </button>
 
-
-
-
-      <div class="flex-child" *ngIf="viewType == ViewType.RUN_QUERY;else showAll"
-           style="margin-left: 32px;font-size: larger;padding-top: 10px;">
-        <span class="flex-child" style="margin-left: 16px;font-style: italic;padding-top: 10px;">Zoekresultaten worden getoond</span>
+<div class="transactions-container">
+  <!-- Loading Overlay -->
+  @if (filesAreUploading()) {
+    <div class="overlay">
+      <div class="spinner-container">
+        <h3>Uploading files...</h3>
+        <mat-spinner diameter="48"></mat-spinner>
       </div>
-      <ng-template #showAll>
-        <ng-template [ngIf]="viewType == ViewType.SHOW_ALL" [ngIfElse]="third">
-          <span class="flex-child" style="margin-left: 16px;font-size: larger; font-style: italic;padding-top: 10px;">Alle records worden getoond</span>
-        </ng-template>
-      </ng-template>
-      <ng-template #third>
-        <ng-template [ngIf]="viewType == ViewType.UPLOAD_TRANSACTIONS">
-        <span class="flex-child"
-              style="margin-left: 16px;font-size: larger; font-style: italic;padding-top: 10px;">Records van geüploade bestanden</span>
-        </ng-template>
-      </ng-template>
+    </div>
+  }
 
-      <div class="flex-child">
-        <mat-paginator *ngIf="dataSource.page$ | async as page" [length]="page.totalElements" [pageSize]="page.size"
-                       [pageIndex]="page.number" (page)="dataSource.fetch($event.pageIndex)">
+  <div class="content-wrapper">
+    <!-- Action Bar -->
+    <div class="action-bar">
+      <div class="action-bar-left">
+        <bank-account-selection
+          class="bank-account-selector"
+          (change)="handleAccountChange()">
+        </bank-account-selection>
+
+        <div class="action-buttons">
+          <button
+            mat-icon-button
+            class="action-button"
+            (click)="onClickFileInputButton()"
+            matTooltip="Upload transactions (CSV)">
+            <input
+              type="file"
+              hidden
+              #fileInput
+              accept=".csv"
+              multiple
+              (change)="onChangeFileInput()"/>
+            <mat-icon>add_to_photos</mat-icon>
+          </button>
+
+          <button
+            mat-icon-button
+            class="action-button"
+            (click)="openSearchDialog()"
+            matTooltip="Search transactions">
+            <mat-icon>search</mat-icon>
+          </button>
+
+          <button
+            mat-icon-button
+            class="action-button"
+            (click)="showAllTransactions()"
+            matTooltip="Show all transactions">
+            <mat-icon>visibility</mat-icon>
+          </button>
+
+          <button
+            mat-icon-button
+            class="action-button"
+            [matBadge]="getNrOfTransactionsToManuallyReview()"
+            matBadgeColor="warn"
+            matBadgeOverlap="true"
+            [matTooltip]="getNrOfTransactionsToManuallyReviewTooltip()"
+            (click)="showTransactionsToManuallyReview()">
+            <fa-icon [icon]="faTag"></fa-icon>
+          </button>
+        </div>
+      </div>
+
+      <div class="action-bar-right">
+        @if (hasViewTypeLabel()) {
+          <span class="view-type-label">{{ viewTypeLabel() }}</span>
+        }
+
+        <mat-paginator
+          [length]="pagination().totalElements"
+          [pageSize]="pagination().size"
+          [pageIndex]="pagination().page"
+          [pageSizeOptions]="[10, 20, 50, 100]"
+          (page)="onPageChange($event)"
+          showFirstLastButtons>
         </mat-paginator>
       </div>
     </div>
-    <div style="background-color:white; overflow-y: scroll; height: 80vh">
-      <table mat-table [dataSource]="dataSource" matSort (matSortChange)="sortBy($event)" class="mat-z8"
-             style="border-collapse: separate; width: 100%"
-              matSortDisableClear matSortActive="bookingDate" matSortDirection="asc">
-        <ng-container matColumnDef="bookingDate">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header style="font-size: large; width: 15%">Date</th>
-          <td mat-cell  *matCellDef="let item">
-            <div class="default-items">
-              {{ parseDate(item.bookingDate) | date: 'dd/MM/yyyy' }}
-            </div>
-          </td>
-        </ng-container>
-        <ng-container matColumnDef="counterparty">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header style="font-size: large; width: 15%">Counterparty</th>
-          <td mat-cell  *matCellDef="let item">
-            <div class="stacked-items" style=" inline-size: 200px;">
-              <div>{{ item.counterparty.name | titlecase }}</div>
-              <div
-                style="font-style: italic; font-weight: lighter;padding-block: 2px;">{{ item.counterparty.accountNumber }}
-              </div>
-              <div
-                style="font-style: italic; font-weight: lighter;padding-block: 2px;">{{ item.counterparty.streetAndNumber }} {{
-                  item.counterparty.zipCodeAndCity
-                }}
-              </div>
-            </div>
-          </td>
-        </ng-container>
-        <ng-container matColumnDef="transaction">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header style="font-size: large;width: 20%">Transaction</th>
-          <td mat-cell *matCellDef="let item">
-            <div class="stacked-items"
-                 style="font-weight: lighter;padding-block: 2px; inline-size: 300px;  overflow-wrap: break-word;">
-              <div>{{ item.transaction }}</div>
-              <div *ngIf="item.transaction !== item.communications"
-                   style="padding-block: 2px">{{ item.communications }}
-              </div>
-            </div>
-          </td>
-        </ng-container>
-        <ng-container matColumnDef="amount">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header style="font-size: large; width: 10%">Amount</th>
-          <td mat-cell *matCellDef="let item">
-            <div class="stacked-items" style="min-width: 100px;">
-              <div>{{ item.amount }} {{ item.currency }}</div>
-            </div>
-          </td>
-        </ng-container>
-        <ng-container matColumnDef="transactionType">
-          <th mat-header-cell *matHeaderCellDef style="font-size: large; width: 40%">Transaction Type</th>
-          <td mat-cell  *matCellDef="let item">
-            <table style="width: 100%">
-              <tr >
-                <td >
-                  <div style="font-weight: lighter;font-style: italic;">categorie
-                  </div>
-                </td>
-                <td >
-                  <div>
+
+    <!-- Table Content -->
+    <div class="table-container">
+      @if (isLoading()) {
+        <div class="loading-container">
+          <mat-spinner diameter="48"></mat-spinner>
+          <p>Loading transactions...</p>
+        </div>
+      } @else if (isEmpty()) {
+        <div class="empty-state">
+          <mat-icon class="empty-icon">receipt_long</mat-icon>
+          <h3>No transactions found</h3>
+          <p>Upload CSV files or select a different bank account to see transactions.</p>
+        </div>
+      } @else {
+        <!-- Desktop Table View -->
+        <div class="desktop-table">
+          <table
+            mat-table
+            [dataSource]="transactions()"
+            matSort
+            (matSortChange)="onSortChange($event)"
+            matSortDisableClear
+            matSortActive="bookingDate"
+            matSortDirection="desc">
+
+            <!-- Date Column -->
+            <ng-container matColumnDef="bookingDate">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Date</th>
+              <td mat-cell *matCellDef="let item">
+                <span class="date-cell">{{ formatDate(item.bookingDate) }}</span>
+              </td>
+            </ng-container>
+
+            <!-- Counterparty Column -->
+            <ng-container matColumnDef="counterparty">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Counterparty</th>
+              <td mat-cell *matCellDef="let item">
+                <div class="counterparty-cell">
+                  <span class="counterparty-name">{{ item.counterparty?.name | titlecase }}</span>
+                  @if (item.counterparty?.accountNumber) {
+                    <span class="counterparty-account">{{ item.counterparty.accountNumber }}</span>
+                  }
+                  @if (item.counterparty?.streetAndNumber || item.counterparty?.zipCodeAndCity) {
+                    <span class="counterparty-address">
+                      {{ item.counterparty.streetAndNumber }} {{ item.counterparty.zipCodeAndCity }}
+                    </span>
+                  }
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Transaction Column -->
+            <ng-container matColumnDef="transaction">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Transaction</th>
+              <td mat-cell *matCellDef="let item">
+                <div class="transaction-cell">
+                  <span class="transaction-text">{{ item.transaction }}</span>
+                  @if (item.transaction !== item.communications && item.communications) {
+                    <span class="communications-text">{{ item.communications }}</span>
+                  }
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Amount Column -->
+            <ng-container matColumnDef="amount">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Amount</th>
+              <td mat-cell *matCellDef="let item">
+                <span class="amount-cell" [class.positive]="item.amount >= 0" [class.negative]="item.amount < 0">
+                  {{ item.amount | number:'1.2-2' }} {{ item.currency }}
+                </span>
+              </td>
+            </ng-container>
+
+            <!-- Transaction Type / Properties Column -->
+            <ng-container matColumnDef="transactionType">
+              <th mat-header-cell *matHeaderCellDef>Properties</th>
+              <td mat-cell *matCellDef="let item">
+                <div class="properties-cell">
+                  <div class="property-row">
+                    <span class="property-label">Category</span>
                     <app-category-tree-dropdown
                       (selectionChange)="setCategory(item, $event)"
-                      [selectedCategoryQualifiedNameStr]="item.category"
-                      [transactionTypeEnum]="amountType(item)"
-                    >
+                      [selectedCategoryQualifiedNameStr]="getCategoryQualifiedName(item)"
+                      [transactionTypeEnum]="amountType(item)">
                     </app-category-tree-dropdown>
                   </div>
-                </td>
-              </tr>
-              <tr >
-                <td >
-                  <div style="font-weight: lighter;font-style: italic;">recurrent
+
+                  <div class="property-row">
+                    <span class="property-label">Recurring</span>
+                    <mat-radio-group (change)="setIsRecurring(item, $event)">
+                      <mat-radio-button [value]="true" [checked]="item.isRecurring === true">Yes</mat-radio-button>
+                      <mat-radio-button [value]="false" [checked]="item.isRecurring === false">No</mat-radio-button>
+                    </mat-radio-group>
                   </div>
-                </td>
-                <td >
-                  <mat-radio-group name="recurrent_options" (change)="setIsRecurring(item, $event)">
-                    <mat-radio-button style="margin-right: 5px;" [value]="true"
-                                      [checked]="item.isRecurring == true">ja
-                    </mat-radio-button>
-                    <mat-radio-button style="padding-right: 5px;" [value]="false"
-                                      [checked]="item.isRecurring == false">nee
-                    </mat-radio-button>
-                  </mat-radio-group>
-                </td>
-              </tr>
-              <tr >
-                <td >
-                  <div style="font-weight: lighter; font-style: italic;">needs<br>reimbursement
+
+                  <div class="property-row">
+                    <span class="property-label">Needs reimbursement</span>
+                    <mat-radio-group (change)="setIsAdvanceSharedAccount(item, $event)">
+                      <mat-radio-button [value]="true" [checked]="item.isAdvanceSharedAccount === true">Yes</mat-radio-button>
+                      <mat-radio-button [value]="false" [checked]="item.isAdvanceSharedAccount === false">No</mat-radio-button>
+                    </mat-radio-group>
                   </div>
-                </td>
-                <td >
-                  <mat-radio-group name="voorschot_options" (change)="setIsAdvanceSharedAccount(item, $event)">
-                    <mat-radio-button style="margin-right: 5px;" [value]="true"
-                                      [checked]="item.isAdvanceSharedAccount == true">ja
-                    </mat-radio-button>
-                    <mat-radio-button style="margin-right: 5px;" [value]="false"
-                                      [checked]="item.isAdvanceSharedAccount == false">nee
-                    </mat-radio-button>
-                  </mat-radio-group>
-                </td>
-              </tr>
+                </div>
+              </td>
+            </ng-container>
 
-            </table>
-          </td>
-        </ng-container>
+            <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns" class="transaction-row"></tr>
+          </table>
+        </div>
 
-        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr VALIGN=TOP mat-row *matRowDef="let row; columns: displayedColumns"></tr>
-      </table>
+        <!-- Mobile Card View -->
+        <div class="mobile-cards">
+          @for (item of transactions(); track item.transactionId) {
+            <mat-card class="transaction-card">
+              <mat-card-content>
+                <div class="card-header">
+                  <span class="card-date">{{ formatDate(item.bookingDate) }}</span>
+                  <span class="card-amount" [class.positive]="item.amount >= 0" [class.negative]="item.amount < 0">
+                    {{ item.amount | number:'1.2-2' }} {{ item.currency }}
+                  </span>
+                </div>
 
-      <mat-paginator *ngIf="dataSource.page$ | async as page" [length]="page.totalElements" [pageSize]="page.size"
-                     [pageIndex]="page.number" (page)="dataSource.fetch($event.pageIndex)">
-      </mat-paginator>
+                <div class="card-counterparty">
+                  <span class="counterparty-name">{{ item.counterparty?.name | titlecase }}</span>
+                  @if (item.counterparty?.accountNumber) {
+                    <span class="counterparty-account">{{ item.counterparty.accountNumber }}</span>
+                  }
+                </div>
+
+                @if (item.transaction) {
+                  <div class="card-transaction">
+                    <span class="transaction-text">{{ item.transaction }}</span>
+                  </div>
+                }
+
+                <div class="card-properties">
+                  <div class="property-row">
+                    <span class="property-label">Category</span>
+                    <app-category-tree-dropdown
+                      (selectionChange)="setCategory(item, $event)"
+                      [selectedCategoryQualifiedNameStr]="getCategoryQualifiedName(item)"
+                      [transactionTypeEnum]="amountType(item)">
+                    </app-category-tree-dropdown>
+                  </div>
+
+                  <div class="property-row inline">
+                    <div class="inline-property">
+                      <span class="property-label">Recurring</span>
+                      <mat-radio-group (change)="setIsRecurring(item, $event)">
+                        <mat-radio-button [value]="true" [checked]="item.isRecurring === true">Yes</mat-radio-button>
+                        <mat-radio-button [value]="false" [checked]="item.isRecurring === false">No</mat-radio-button>
+                      </mat-radio-group>
+                    </div>
+                    <div class="inline-property">
+                      <span class="property-label">Reimburse</span>
+                      <mat-radio-group (change)="setIsAdvanceSharedAccount(item, $event)">
+                        <mat-radio-button [value]="true" [checked]="item.isAdvanceSharedAccount === true">Yes</mat-radio-button>
+                        <mat-radio-button [value]="false" [checked]="item.isAdvanceSharedAccount === false">No</mat-radio-button>
+                      </mat-radio-group>
+                    </div>
+                  </div>
+                </div>
+              </mat-card-content>
+            </mat-card>
+          }
+        </div>
+
+        <!-- Bottom Paginator -->
+        <div class="bottom-paginator">
+          <mat-paginator
+            [length]="pagination().totalElements"
+            [pageSize]="pagination().size"
+            [pageIndex]="pagination().page"
+            [pageSizeOptions]="[10, 20, 50, 100]"
+            (page)="onPageChange($event)"
+            showFirstLastButtons>
+          </mat-paginator>
+        </div>
+      }
     </div>
   </div>
 </div>

@@ -45,7 +45,7 @@ class GroupByCounterpartyDataSource implements SimpleDataSource<TransactionRead 
       let mapByCounterpartyName = new Map<string, TransactionRead[]>();
 
       for (const transaction of data) {
-        let name = transaction.counterpartyId;
+        let name = transaction.counterparty?.name;
         if (!name) {
           name = "";
         }
@@ -142,7 +142,7 @@ export class ManualCategorizationViewComponent implements OnInit {
         request.size = 50;
         return this.appService.pageTransactionsToManuallyReview(request, transactionType);
       },
-      {property: 'counterpartyId', order: 'asc'}, account
+      {property: 'counterparty', order: 'asc'}, account
     );
     return new GroupByCounterpartyDataSource(paginationDataSource, isExpense);
   }
@@ -159,14 +159,12 @@ export class ManualCategorizationViewComponent implements OnInit {
     // Check if row is an interface that has key 'isGroupBy'
     if ("isGroupBy" in row) {
       (row as GroupBy).transactions.forEach(transaction => {
-        transaction.categoryId = category?.id;
-        this.saveTransaction(transaction);
+        this.appService.saveTransactionWithCategoryId(transaction, category?.id);
       });
       return;
     } else {
       let transaction = row as TransactionRead;
-      transaction.categoryId = category?.id;
-      this.saveTransaction(transaction);
+      this.appService.saveTransactionWithCategoryId(transaction, category?.id);
     }
   }
 

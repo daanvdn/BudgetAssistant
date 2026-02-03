@@ -1,69 +1,473 @@
-section {
+// Variables
+$primary-color: #3f51b5;
+$accent-color: #ff4081;
+$success-color: #4caf50;
+$error-color: #f44336;
+$text-primary: rgba(0, 0, 0, 0.87);
+$text-secondary: rgba(0, 0, 0, 0.54);
+$border-color: rgba(0, 0, 0, 0.12);
+$background-hover: rgba(0, 0, 0, 0.04);
+
+// Breakpoints
+$breakpoint-mobile: 768px;
+$breakpoint-tablet: 1024px;
+
+// Toolbar
+.toolbar-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+// Main container
+.transactions-container {
   display: flex;
-  align-items: flex-start;
-}
-
-
-.spinner-container {
-  background-color: #ffffff; /* Change this to your desired color */
-  padding: 20px;
-  border-radius: 10px;
-  display: flex; /* Add this line */
-  justify-content: center; /* Add this line */
-  align-items: center; /* Add this line */
   flex-direction: column;
+  height: calc(100vh - 64px);
+  background-color: #fafafa;
 }
+
+// Content wrapper
+.content-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+// Action bar
+.action-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px;
+  background-color: #fff;
+  border-bottom: 1px solid $border-color;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+
+  @media (max-width: $breakpoint-mobile) {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 12px;
+    gap: 12px;
+  }
+}
+
+.action-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+
+  @media (max-width: $breakpoint-mobile) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+}
+
+.action-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+
+  @media (max-width: $breakpoint-mobile) {
+    justify-content: space-between;
+  }
+}
+
+.bank-account-selector {
+  min-width: 200px;
+
+  @media (max-width: $breakpoint-mobile) {
+    min-width: 100%;
+  }
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+
+  @media (max-width: $breakpoint-mobile) {
+    justify-content: center;
+  }
+}
+
+.action-button {
+  width: 48px;
+  height: 48px;
+
+  &:hover {
+    background-color: $background-hover;
+  }
+}
+
+.view-type-label {
+  font-size: 14px;
+  font-style: italic;
+  color: $text-secondary;
+  white-space: nowrap;
+
+  @media (max-width: $breakpoint-mobile) {
+    display: none;
+  }
+}
+
+// Table container
+.table-container {
+  flex: 1;
+  overflow: auto;
+  padding: 0;
+}
+
+// Desktop table
+.desktop-table {
+  display: block;
+
+  @media (max-width: $breakpoint-mobile) {
+    display: none;
+  }
+
+  table {
+    width: 100%;
+    background-color: #fff;
+  }
+
+  th.mat-header-cell {
+    font-size: 14px;
+    font-weight: 600;
+    color: $text-primary;
+    background-color: #fff;
+    padding: 16px 12px;
+  }
+
+  td.mat-cell {
+    padding: 12px;
+    vertical-align: top;
+    border-bottom: 1px solid $border-color;
+  }
+
+  .transaction-row {
+    &:hover {
+      background-color: $background-hover;
+    }
+  }
+}
+
+// Cell styles
+.date-cell {
+  white-space: nowrap;
+  font-size: 14px;
+}
+
+.counterparty-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 250px;
+}
+
+.counterparty-name {
+  font-weight: 500;
+  font-size: 14px;
+  color: $text-primary;
+}
+
+.counterparty-account,
+.counterparty-address {
+  font-size: 12px;
+  color: $text-secondary;
+  font-style: italic;
+}
+
+.transaction-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 300px;
+  word-break: break-word;
+}
+
+.transaction-text {
+  font-size: 14px;
+  color: $text-primary;
+}
+
+.communications-text {
+  font-size: 12px;
+  color: $text-secondary;
+}
+
+.amount-cell {
+  font-weight: 500;
+  font-size: 14px;
+  white-space: nowrap;
+
+  &.positive {
+    color: $success-color;
+  }
+
+  &.negative {
+    color: $error-color;
+  }
+}
+
+.properties-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 280px;
+}
+
+.property-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  &.inline {
+    flex-wrap: wrap;
+  }
+}
+
+.property-label {
+  font-size: 12px;
+  color: $text-secondary;
+  font-style: italic;
+  min-width: 100px;
+}
+
+.inline-property {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+// Radio buttons
+mat-radio-button {
+  margin-right: 8px;
+
+  ::ng-deep .mdc-label {
+    font-size: 13px;
+  }
+}
+
+// Mobile cards
+.mobile-cards {
+  display: none;
+  padding: 12px;
+  gap: 12px;
+
+  @media (max-width: $breakpoint-mobile) {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+.transaction-card {
+  margin-bottom: 0;
+
+  mat-card-content {
+    padding: 16px;
+  }
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.card-date {
+  font-size: 13px;
+  color: $text-secondary;
+}
+
+.card-amount {
+  font-size: 16px;
+  font-weight: 600;
+
+  &.positive {
+    color: $success-color;
+  }
+
+  &.negative {
+    color: $error-color;
+  }
+}
+
+.card-counterparty {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 8px;
+
+  .counterparty-name {
+    font-size: 15px;
+  }
+
+  .counterparty-account {
+    font-size: 12px;
+  }
+}
+
+.card-transaction {
+  margin-bottom: 12px;
+  padding: 8px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+
+  .transaction-text {
+    font-size: 13px;
+    word-break: break-word;
+  }
+}
+
+.card-properties {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid $border-color;
+
+  .property-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+
+    &.inline {
+      flex-direction: row;
+      justify-content: space-between;
+
+      .inline-property {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+      }
+    }
+  }
+
+  .property-label {
+    min-width: unset;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+}
+
+// Bottom paginator
+.bottom-paginator {
+  background-color: #fff;
+  border-top: 1px solid $border-color;
+  padding: 8px;
+
+  @media (max-width: $breakpoint-mobile) {
+    position: sticky;
+    bottom: 0;
+  }
+}
+
+// Loading state
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  gap: 16px;
+
+  p {
+    color: $text-secondary;
+    font-size: 14px;
+  }
+}
+
+// Empty state
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+  text-align: center;
+  padding: 24px;
+
+  .empty-icon {
+    font-size: 72px;
+    width: 72px;
+    height: 72px;
+    color: $border-color;
+    margin-bottom: 16px;
+  }
+
+  h3 {
+    font-size: 18px;
+    color: $text-primary;
+    margin: 0 0 8px 0;
+  }
+
+  p {
+    font-size: 14px;
+    color: $text-secondary;
+    max-width: 300px;
+    margin: 0;
+  }
+}
+
+// Overlay for file upload
 .overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.3);
+  background-color: rgba(0, 0, 0, 0.4);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 9999;
 }
 
-
-button {
-
-  padding: 1.40em 0;
-  line-height: 1;
-
-}
-
-.example-element-detail {
-  overflow: hidden;
+.spinner-container {
+  background-color: #fff;
+  padding: 32px 48px;
+  border-radius: 8px;
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+
+  h3 {
+    margin: 0;
+    font-size: 16px;
+    color: $text-primary;
+  }
 }
 
-.stacked-items {
-  min-width: 250px;
-  // border: 2px solid black;
-  padding: 2px;
-  // font-weight: lighter;
-  margin: 2px 0;
-  //height: 204px;
+// Paginator customization
+::ng-deep .mat-mdc-paginator-container {
+  @media (max-width: $breakpoint-mobile) {
+    padding: 0 8px;
+
+    .mat-mdc-paginator-page-size {
+      display: none;
+    }
+  }
 }
 
-.default-items {
-  padding: 8px;
-  // font-weight: lighter;
-  margin: 8px 0;
-  //height: 204px;
-  max-width: 100%;
-  white-space: nowrap;
-}
-.flex-container {
-  display: flex;
-}
+// Category dropdown adjustments
+app-category-tree-dropdown {
+  min-width: 180px;
 
-.flex-child{
-  flex: 1;
-}
-
-.flex-child:first-child {
-  margin-right: 2px;
+  @media (max-width: $breakpoint-mobile) {
+    min-width: 100%;
+    width: 100%;
+  }
 }

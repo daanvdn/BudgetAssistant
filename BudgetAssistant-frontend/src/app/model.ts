@@ -330,12 +330,13 @@ export class FlatCategoryNode {
 }
 
 
-export const NO_CATEGORY: SimplifiedCategory = {
+export const NO_CATEGORY: CategoryRead = {
     children: [],
     name: "NO CATEGORY",
     qualifiedName: "NO CATEGORY",
-    type: "EXPENSES" as TypeEnum,
-    id: -1
+    type: "EXPENSES",
+    id: -1,
+    isRoot: false
 }
 
 // Type that can be either SimplifiedCategory or CategoryRead

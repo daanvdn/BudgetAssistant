@@ -1,0 +1,187 @@
+<mat-toolbar color="primary" class="toolbar-header">
+  <span>Transactions</span>
+</mat-toolbar>
+<div>
+  <div *ngIf="filesAreUploading" class="overlay">
+    <div class="spinner-container">
+      <h3>Bestanden worden geüpload</h3>
+      <mat-spinner></mat-spinner>
+    </div>
+  </div>
+  <div class="mat-z8 wrapper" >
+    <div style="padding-left: 16px;position: sticky; top:0px; background: rgba(255, 255, 255, 1); padding-top: 10px"
+         class="flex-container">
+      <bank-account-selection class="flex-child" (change)="handleAccountChange()" style="; display: flex; align-items: flex-start; justify-content: flex-start"></bank-account-selection>
+      <span style="padding-right: 5px"></span>
+      <button
+        style="max-width: 50px; max-height: 50px; padding-right: 5px; display: flex; align-items: center; justify-content: center;"
+        class="button flex-child" mat-raised-button
+        (click)="onClickFileInputButton()"
+      >
+        <input type="file" style="display: none" #fileInput accept=".csv" multiple (change)="onChangeFileInput()"/>
+        <mat-icon matTooltip="Transacties toevoegen (csv)" matTooltipPosition="below">
+          add_to_photos
+        </mat-icon>
+      </button>
+      <span style="padding-right: 5px"></span>
+      <button
+        style="max-width: 50px; max-height: 50px; padding-right: 5px; display: flex; align-items: center; justify-content: center;"
+        class="button flex-child" mat-raised-button
+        (click)="openDialog()">
+        <mat-icon matTooltip="Zoekopdracht">search</mat-icon>
+      </button>
+      <span style="padding-right: 5px"></span>
+      <button
+        style="max-width: 50px; max-height: 50px; padding-right: 5px; display: flex; align-items: center; justify-content: center;"
+        class="button flex-child" mat-raised-button
+        (click)="showAllTransactions()">
+        <mat-icon matTooltip="Toon alle transacties">remove_red_eye</mat-icon>
+      </button>
+      <span style="padding-right: 5px"></span>
+      <button [matBadge]="getNrOfTransactionsToManuallyReview()" matBadgeOverlap="true" matBadgeColor="warn" [matTooltip]="getNrOfTransactionsToManuallyReviewTooltip()"
+        style="max-width: 50px; max-height: 50px; padding-right: 5px; display: flex; align-items: center; justify-content: center;"
+        class="button flex-child" mat-raised-button
+        (click)="showTransactionsToManuallyReview()">
+          <fa-icon size="lg" [icon]="faTag" [fixedWidth]="true"></fa-icon>
+      </button>
+
+
+
+
+      <div class="flex-child" *ngIf="viewType == ViewType.RUN_QUERY;else showAll"
+           style="margin-left: 32px;font-size: larger;padding-top: 10px;">
+        <span class="flex-child" style="margin-left: 16px;font-style: italic;padding-top: 10px;">Zoekresultaten worden getoond</span>
+      </div>
+      <ng-template #showAll>
+        <ng-template [ngIf]="viewType == ViewType.SHOW_ALL" [ngIfElse]="third">
+          <span class="flex-child" style="margin-left: 16px;font-size: larger; font-style: italic;padding-top: 10px;">Alle records worden getoond</span>
+        </ng-template>
+      </ng-template>
+      <ng-template #third>
+        <ng-template [ngIf]="viewType == ViewType.UPLOAD_TRANSACTIONS">
+        <span class="flex-child"
+              style="margin-left: 16px;font-size: larger; font-style: italic;padding-top: 10px;">Records van geüploade bestanden</span>
+        </ng-template>
+      </ng-template>
+
+      <div class="flex-child">
+        <mat-paginator *ngIf="dataSource.page$ | async as page" [length]="page.totalElements" [pageSize]="page.size"
+                       [pageIndex]="page.number" (page)="dataSource.fetch($event.pageIndex)">
+        </mat-paginator>
+      </div>
+    </div>
+    <div style="background-color:white; overflow-y: scroll; height: 80vh">
+      <table mat-table [dataSource]="dataSource" matSort (matSortChange)="sortBy($event)" class="mat-z8"
+             style="border-collapse: separate; width: 100%"
+              matSortDisableClear matSortActive="bookingDate" matSortDirection="asc">
+        <ng-container matColumnDef="bookingDate">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header style="font-size: large; width: 15%">Date</th>
+          <td mat-cell  *matCellDef="let item">
+            <div class="default-items">
+              {{ parseDate(item.bookingDate) | date: 'dd/MM/yyyy' }}
+            </div>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="counterparty">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header style="font-size: large; width: 15%">Counterparty</th>
+          <td mat-cell  *matCellDef="let item">
+            <div class="stacked-items" style=" inline-size: 200px;">
+              <div>{{ item.counterparty.name | titlecase }}</div>
+              <div
+                style="font-style: italic; font-weight: lighter;padding-block: 2px;">{{ item.counterparty.accountNumber }}
+              </div>
+              <div
+                style="font-style: italic; font-weight: lighter;padding-block: 2px;">{{ item.counterparty.streetAndNumber }} {{
+                  item.counterparty.zipCodeAndCity
+                }}
+              </div>
+            </div>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="transaction">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header style="font-size: large;width: 20%">Transaction</th>
+          <td mat-cell *matCellDef="let item">
+            <div class="stacked-items"
+                 style="font-weight: lighter;padding-block: 2px; inline-size: 300px;  overflow-wrap: break-word;">
+              <div>{{ item.transaction }}</div>
+              <div *ngIf="item.transaction !== item.communications"
+                   style="padding-block: 2px">{{ item.communications }}
+              </div>
+            </div>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="amount">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header style="font-size: large; width: 10%">Amount</th>
+          <td mat-cell *matCellDef="let item">
+            <div class="stacked-items" style="min-width: 100px;">
+              <div>{{ item.amount }} {{ item.currency }}</div>
+            </div>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="transactionType">
+          <th mat-header-cell *matHeaderCellDef style="font-size: large; width: 40%">Transaction Type</th>
+          <td mat-cell  *matCellDef="let item">
+            <table style="width: 100%">
+              <tr >
+                <td >
+                  <div style="font-weight: lighter;font-style: italic;">categorie
+                  </div>
+                </td>
+                <td >
+                  <div>
+                    <app-category-tree-dropdown
+                      (selectionChange)="setCategory(item, $event)"
+                      [selectedCategoryQualifiedNameStr]="item.category"
+                      [transactionTypeEnum]="amountType(item)"
+                    >
+                    </app-category-tree-dropdown>
+                  </div>
+                </td>
+              </tr>
+              <tr >
+                <td >
+                  <div style="font-weight: lighter;font-style: italic;">recurrent
+                  </div>
+                </td>
+                <td >
+                  <mat-radio-group name="recurrent_options" (change)="setIsRecurring(item, $event)">
+                    <mat-radio-button style="margin-right: 5px;" [value]="true"
+                                      [checked]="item.isRecurring == true">ja
+                    </mat-radio-button>
+                    <mat-radio-button style="padding-right: 5px;" [value]="false"
+                                      [checked]="item.isRecurring == false">nee
+                    </mat-radio-button>
+                  </mat-radio-group>
+                </td>
+              </tr>
+              <tr >
+                <td >
+                  <div style="font-weight: lighter; font-style: italic;">needs<br>reimbursement
+                  </div>
+                </td>
+                <td >
+                  <mat-radio-group name="voorschot_options" (change)="setIsAdvanceSharedAccount(item, $event)">
+                    <mat-radio-button style="margin-right: 5px;" [value]="true"
+                                      [checked]="item.isAdvanceSharedAccount == true">ja
+                    </mat-radio-button>
+                    <mat-radio-button style="margin-right: 5px;" [value]="false"
+                                      [checked]="item.isAdvanceSharedAccount == false">nee
+                    </mat-radio-button>
+                  </mat-radio-group>
+                </td>
+              </tr>
+
+            </table>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr VALIGN=TOP mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+
+      <mat-paginator *ngIf="dataSource.page$ | async as page" [length]="page.totalElements" [pageSize]="page.size"
+                     [pageIndex]="page.number" (page)="dataSource.fetch($event.pageIndex)">
+      </mat-paginator>
+    </div>
+  </div>
+</div>

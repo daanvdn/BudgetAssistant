@@ -1,425 +1,515 @@
-import {AsyncPipe, DatePipe, NgIf, TitleCasePipe} from '@angular/common';
-import {AfterViewInit, Component, Input, OnInit, ViewChild} from '@angular/core';
+import {CommonModule, DatePipe, TitleCasePipe} from '@angular/common';
+import {Component, computed, DestroyRef, inject, OnInit, signal, ViewChild} from '@angular/core';
+import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 import {MatDialog} from '@angular/material/dialog';
-import {MatPaginator} from '@angular/material/paginator';
+import {MatPaginator, PageEvent} from '@angular/material/paginator';
 import {MatRadioButton, MatRadioChange, MatRadioGroup} from '@angular/material/radio';
-import {MatSort, MatSortHeader} from '@angular/material/sort';
+import {MatSort, MatSortHeader, Sort} from '@angular/material/sort';
 import {
-    MatCell,
-    MatCellDef,
-    MatColumnDef,
-    MatHeaderCell,
-    MatHeaderCellDef,
-    MatHeaderRow,
-    MatHeaderRowDef,
-    MatRow,
-    MatRowDef,
-    MatTable
+  MatCell,
+  MatCellDef,
+  MatColumnDef,
+  MatHeaderCell,
+  MatHeaderCellDef,
+  MatHeaderRow,
+  MatHeaderRowDef,
+  MatRow,
+  MatRowDef,
+  MatTable
 } from '@angular/material/table';
-import {PaginationDataSource} from 'ngx-pagination-data-source';
-import {AppService} from '../app.service';
-import {AmountType, CategoryMap, CompositeTransactionsFileUploadResponse, FileWrapper, inferAmountType} from '../model';
-import {BankAccountSelectionComponent} from '../bank-account-selection/bank-account-selection.component';
-import {TransactionSearchDialogComponent} from '../transaction-search-dialog/transaction-search-dialog.component';
-import {AuthService} from "../auth/auth.service";
-import {HttpEventType, HttpResponse} from "@angular/common/http";
-import {ErrorDialogService} from "../error-dialog/error-dialog.service";
-import {faTag} from "@fortawesome/free-solid-svg-icons";
-import {Router} from "@angular/router";
-import {TransactionRead, TransactionQuery, TransactionTypeEnum} from '@daanvdn/budget-assistant-client';
 import {MatToolbar} from '@angular/material/toolbar';
 import {MatProgressSpinner} from '@angular/material/progress-spinner';
-import {MatButton} from '@angular/material/button';
+import {MatIconButton} from '@angular/material/button';
 import {MatIcon} from '@angular/material/icon';
 import {MatTooltip} from '@angular/material/tooltip';
 import {MatBadge} from '@angular/material/badge';
+import {MatSnackBar, MatSnackBarModule} from '@angular/material/snack-bar';
+import {MatCard, MatCardContent} from '@angular/material/card';
 import {FaIconComponent} from '@fortawesome/angular-fontawesome';
-import {CategoryTreeDropdownComponent} from '../category-tree-dropdown/category-tree-dropdown.component';
-import {DateUtilsService} from '../shared/date-utils.service';
-import {takeUntil} from "rxjs";
+import {faTag} from '@fortawesome/free-solid-svg-icons';
+import {Router} from '@angular/router';
+import {
+  BudgetAssistantApiService,
+  PageTransactionsRequest,
+  SortOrder,
+  TransactionQuery,
+  TransactionRead,
+  TransactionSortProperty,
+  TransactionTypeEnum,
+  TransactionUpdate,
+  UploadTransactionsResponse
+} from '@daanvdn/budget-assistant-client';
+import {injectMutation, injectQuery, injectQueryClient} from '@tanstack/angular-query-experimental';
+import {firstValueFrom} from 'rxjs';
 
+import {AppService} from '../app.service';
+import {AmountType, CategoryMap, inferAmountType} from '../model';
+import {BankAccountSelectionComponent} from '../bank-account-selection/bank-account-selection.component';
+import {TransactionSearchDialogComponent} from '../transaction-search-dialog/transaction-search-dialog.component';
+import {AuthService} from '../auth/auth.service';
+import {ErrorDialogService} from '../error-dialog/error-dialog.service';
+import {CategoryTreeDropdownComponent} from '../category-tree-dropdown/category-tree-dropdown.component';
+import {HttpEventType, HttpResponse} from '@angular/common/http';
 
 enum ViewType {
-    INITIAL_VIEW = "INITIAL_VIEW",
-    RUN_QUERY = "RUN_QUERY",
-    SHOW_ALL = "SHOW_ALL",
-    UPLOAD_TRANSACTIONS = "UPLOAD_TRANSACTIONS",
+  INITIAL_VIEW = 'INITIAL_VIEW',
+  RUN_QUERY = 'RUN_QUERY',
+  SHOW_ALL = 'SHOW_ALL',
+  UPLOAD_TRANSACTIONS = 'UPLOAD_TRANSACTIONS',
 }
 
+interface SortConfig {
+  property: TransactionSortProperty;
+  order: SortOrder;
+}
+
+interface PaginationState {
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
 
 @Component({
-    selector: 'app-transactions',
-    templateUrl: './transactions.component.html',
-    styleUrls: ['./transactions.component.scss'],
-    standalone: true,
-    imports: [MatToolbar, NgIf, MatProgressSpinner, BankAccountSelectionComponent, MatButton, MatIcon, MatTooltip, MatBadge, FaIconComponent, MatPaginator, MatTable, MatSort, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatSortHeader, MatCellDef, MatCell, CategoryTreeDropdownComponent, MatRadioGroup, MatRadioButton, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow, AsyncPipe, TitleCasePipe, DatePipe]
+  selector: 'app-transactions',
+  templateUrl: './transactions.component.html',
+  styleUrls: ['./transactions.component.scss'],
+  standalone: true,
+  imports: [
+    CommonModule,
+    MatToolbar,
+    MatProgressSpinner,
+    BankAccountSelectionComponent,
+    MatIconButton,
+    MatIcon,
+    MatTooltip,
+    MatBadge,
+    FaIconComponent,
+    MatPaginator,
+    MatTable,
+    MatSort,
+    MatColumnDef,
+    MatHeaderCellDef,
+    MatHeaderCell,
+    MatSortHeader,
+    MatCellDef,
+    MatCell,
+    CategoryTreeDropdownComponent,
+    MatRadioGroup,
+    MatRadioButton,
+    MatHeaderRowDef,
+    MatHeaderRow,
+    MatRowDef,
+    MatRow,
+    TitleCasePipe,
+    MatSnackBarModule,
+    MatCard,
+    MatCardContent
+  ],
+  providers: [DatePipe]
 })
-export class TransactionsComponent implements OnInit, AfterViewInit {
-    protected readonly ViewType = ViewType;
-    protected readonly faTag = faTag;
+export class TransactionsComponent implements OnInit {
+  // Dependency injection
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly appService = inject(AppService);
+  private readonly authService = inject(AuthService);
+  private readonly apiService = inject(BudgetAssistantApiService);
+  private readonly dialog = inject(MatDialog);
+  private readonly datePipe = inject(DatePipe);
+  private readonly errorDialogService = inject(ErrorDialogService);
+  private readonly router = inject(Router);
+  private readonly snackBar = inject(MatSnackBar);
+  private readonly queryClient = injectQueryClient();
 
+  // Icon
+  protected readonly faTag = faTag;
 
-    //table stuff
-    @ViewChild(MatPaginator, {static: false}) paginator!: MatPaginator;
-    @ViewChild(MatSort, {static: false}) sort!: MatSort;
-    @ViewChild(MatTable) table!: MatTable<TransactionRead>;
-    @ViewChild(BankAccountSelectionComponent) accountSelectionComponent!: BankAccountSelectionComponent;
-    private currentSort?: any;
+  // ViewChild references
+  @ViewChild(MatPaginator) paginator!: MatPaginator;
+  @ViewChild(MatSort) sort!: MatSort;
+  @ViewChild(MatTable) table!: MatTable<TransactionRead>;
+  @ViewChild(BankAccountSelectionComponent) accountSelectionComponent!: BankAccountSelectionComponent;
+  @ViewChild('fileInput') fileInput: any;
 
+  // Signals for state management
+  protected readonly viewType = signal<ViewType>(ViewType.INITIAL_VIEW);
+  protected readonly selectedAccount = signal<string | undefined>(undefined);
+  protected readonly transactionQuery = signal<TransactionQuery | undefined>(undefined);
+  protected readonly filesAreUploading = signal(false);
+  protected readonly transactionsToManuallyReview = signal(0);
+  protected readonly categoryMap = signal<CategoryMap | undefined>(undefined);
 
-    filesAreUploading = false; // Add this line
-    transactionToManuallyReview!: number;
+  // Pagination state
+  protected readonly currentPage = signal(0);
+  protected readonly pageSize = signal(20);
+  protected readonly sortConfig = signal<SortConfig>({
+    property: 'booking_date' as TransactionSortProperty,
+    order: 'desc' as SortOrder
+  });
 
-    @Input() dataSource!: PaginationDataSource<TransactionRead, TransactionQuery>;
-    displayedColumns = [
-        "bookingDate",
-        "counterparty",
-        "transaction",
-        "amount",
-        "transactionType"
-    ];
-    transactionQuery?: TransactionQuery;
-    transactionQueryAsJson?: string;
-    selectedAccount?: string;
+  // Table configuration
+  protected readonly displayedColumns = [
+    'bookingDate',
+    'counterparty',
+    'transaction',
+    'amount',
+    'transactionType'
+  ];
 
-    @ViewChild('fileInput') fileInput: any;
-
-    viewType: ViewType = ViewType.INITIAL_VIEW;
-    categoryMap?: CategoryMap;
-
-
-    constructor(private appService: AppService, private authService: AuthService, public dialog: MatDialog,
-                public datepipe: DatePipe, private errorDialogService: ErrorDialogService, private router: Router,
-                private dateUtils: DateUtilsService) {
-
-        // Only initialize dataSource if it's not provided via @Input()
-        if (!this.dataSource) {
-            let account = undefined;
-            this.dataSource = this.initDataSource(account);
-        }
-        this.appService.categoryMapObservable$.subscribe(categoryMap => {
-            this.categoryMap = categoryMap;
-        })
-
-        this.appService.selectedBankAccountObservable$.subscribe(bankAccount => {
-            if (bankAccount && bankAccount.accountNumber) {
-                this.appService.countTransactionToManuallyReview(bankAccount.accountNumber).subscribe(count => {
-                    this.transactionToManuallyReview = count.valueOf();
-                });
-            }
-            else {
-                // Set a default value if bankAccount or accountNumber is undefined
-                this.transactionToManuallyReview = 0;
-            }
-        })
-
+  // Computed values
+  protected readonly viewTypeLabel = computed(() => {
+    switch (this.viewType()) {
+      case ViewType.RUN_QUERY:
+        return 'Search results';
+      case ViewType.SHOW_ALL:
+        return 'All transactions';
+      case ViewType.UPLOAD_TRANSACTIONS:
+        return 'Uploaded transactions';
+      default:
+        return '';
     }
+  });
 
-    showTransactionsToManuallyReview() {
-        // Check if there are transactions to manually review before navigating
-        if (this.transactionToManuallyReview !== undefined &&
-            this.transactionToManuallyReview !== null &&
-            this.transactionToManuallyReview > 0) {
-            this.router.navigate(['/categorieën']);
-        }
-        else {
-            console.error('No transactions to manually review or count is undefined');
-        }
+  protected readonly hasViewTypeLabel = computed(() => {
+    return this.viewType() !== ViewType.INITIAL_VIEW;
+  });
+
+  // TanStack Query for transactions
+  transactionsQuery = injectQuery(() => ({
+    queryKey: ['transactions', this.selectedAccount(), this.currentPage(), this.pageSize(), this.sortConfig(), this.transactionQuery()],
+    queryFn: async () => {
+      const account = this.selectedAccount();
+      const query = this.transactionQuery();
+
+      const request: PageTransactionsRequest = {
+        page: this.currentPage(),
+        size: this.pageSize(),
+        sortOrder: this.sortConfig().order,
+        sortProperty: this.sortConfig().property,
+        query: query ? {...query, accountNumber: query.accountNumber || account} : {accountNumber: account}
+      };
+
+      return firstValueFrom(
+          this.apiService.transactions.pageTransactionsApiTransactionsPagePost(request)
+      );
+    },
+    enabled: !!this.selectedAccount(),
+    staleTime: 30000, // 30 seconds
+    refetchOnWindowFocus: false
+  }));
+
+  // Computed signals for template
+  protected readonly transactions = computed(() => {
+    return this.transactionsQuery.data()?.content ?? [];
+  });
+
+  protected readonly pagination = computed<PaginationState>(() => {
+    const data = this.transactionsQuery.data();
+    return {
+      page: data?.page ?? 0,
+      size: data?.size ?? this.pageSize(),
+      totalElements: data?.totalElements ?? 0,
+      totalPages: data?.totalPages ?? 0
+    };
+  });
+
+  protected readonly isLoading = computed(() => {
+    return this.transactionsQuery.isPending() || this.filesAreUploading();
+  });
+
+  protected readonly isEmpty = computed(() => {
+    return !this.isLoading() && this.transactions().length === 0 && this.selectedAccount();
+  });
+
+  // Save transaction mutation
+  saveTransactionMutation = injectMutation(() => ({
+    mutationFn: async (params: { transactionId: string; update: TransactionUpdate }) => {
+      return firstValueFrom(
+          this.apiService.transactions.saveTransactionApiTransactionsSavePost(
+              params.transactionId,
+              params.update
+          )
+      );
+    },
+    onSuccess: () => {
+      this.snackBar.open('Transaction saved', 'Close', {duration: 2000});
+    },
+    onError: (error: any) => {
+      console.error('Error saving transaction:', error);
+      this.snackBar.open('Failed to save transaction', 'Close', {duration: 3000});
     }
+  }));
 
-    onClickFileInputButton(): void {
-        this.fileInput.nativeElement.click();
-    }
-
-    onChangeFileInput(): void {
-        this.filesAreUploading = true;
-        let files: File[] = this.fileInput.nativeElement.files;
-        let fileWrapperArray: FileWrapper[] = [];
-
-        for (let index = 0; index < files.length; index++) {
-            const file = files[index];
-            fileWrapperArray.push({file: file, inProgress: false, progress: 0, failed: false});
-        }
-
-        let currentUser = this.authService.getUser();
-        if (!currentUser || !currentUser.userName) {
-            this.errorDialogService.openErrorDialog("Cannot upload transactions!", "User is not defined");
-            return;
-        }
-        this.appService.uploadTransactionFiles(fileWrapperArray, currentUser.userName).subscribe(result => {
-
-            if (result.type === HttpEventType.Response) {
-
-
-                let response = result as HttpResponse<CompositeTransactionsFileUploadResponse>
-                let uploadTimestamp = response.body?.uploadTimestamp;
-                if (uploadTimestamp === undefined) {
-                    this.filesAreUploading = false;
-                    throw new Error("uploadTimestamp is undefined");
-                }
-
-                this.appService.triggerRefreshBankAccounts();
-                let newSort;
-                if (this.currentSort !== undefined) {
-                    newSort = this.currentSort;
-                }
-                else {
-
-                    newSort = {property: 'bookingDate', order: 'desc'}
-                    this.currentSort = newSort;
-                }
-
-                let transactionQuery: TransactionQuery = {
-                    transactionType: TransactionTypeEnum.BOTH,
-                    counterpartyName: undefined,
-                    minAmount: undefined,
-                    maxAmount: undefined,
-                    accountNumber: undefined,
-                    categoryId: undefined,
-                    counterpartyAccountNumber: undefined,
-                    startDate: undefined,
-                    endDate: undefined,
-                    transactionOrCommunication: undefined,
-                    uploadTimestamp: uploadTimestamp
-                }
-
-                this.dataSource = new PaginationDataSource<TransactionRead, TransactionQuery>(
-                    (request: any, query: any) => {
-                        return this.appService.pageTransactions(request, query);
-                    },
-                    newSort, transactionQuery
-                );
-                this.viewType = ViewType.UPLOAD_TRANSACTIONS;
-                this.filesAreUploading = false;
-
-                if (this.selectedAccount) {
-                    this.appService.countTransactionToManuallyReview(this.selectedAccount).subscribe(count => {
-                        this.transactionToManuallyReview = count.valueOf();
-                    });
-
-                }
-
-
-            }
-
-
-        })
-
-
-    }
-
-
-    translateBooleanToDutchJaNee(b: Boolean | undefined): string {
-        if (b === undefined) {
-            return "N/A";
-        }
-
-        if (b) {
-            return "ja";
-        }
-
-        return "nee";
-    }
-
-    displayNumberOrNA(number: Number | undefined): string {
-        if (number === undefined) {
-            return "N/A";
-        }
-
-        return number.toString();
-    }
-
-    displayStringOrNA(s: string | undefined | null): string {
-        if (s === undefined || s === null) {
-            return "N/A";
-        }
-
-        return s;
-    }
-
-    amountType(transaction: TransactionRead): AmountType {
-        if (transaction.amount === undefined || transaction.amount === null) {
-            return AmountType.BOTH;
-        }
-        return inferAmountType(transaction.amount)
-
-
-    }
-
-    displayDateOrNA(s: Date | undefined | null): string | null {
-        if (s === undefined || s === null) {
-            return "N/A";
-        }
-        return this.datepipe.transform(s, 'dd-MM-yyyy')
-    }
-
-    parseDate(dateStr: string | undefined | null): Date | null {
-        return this.dateUtils.parseDate(dateStr);
-    }
-
-    openDialog(): void {
-
-
-        const dialogRef = this.dialog.open(TransactionSearchDialogComponent, {
-            restoreFocus: false
+  ngOnInit(): void {
+    // Subscribe to category map updates
+    this.appService.categoryMapObservable$
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(categoryMap => {
+          this.categoryMap.set(categoryMap);
         });
 
-        dialogRef.afterClosed().subscribe(result => {
-            // console.log('The dialog was closed');
-            if (result === undefined) {
+    // Subscribe to selected bank account changes
+    this.appService.selectedBankAccountObservable$
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(bankAccount => {
+          if (bankAccount?.accountNumber) {
+            this.loadTransactionsToManuallyReviewCount(bankAccount.accountNumber);
+          }
+          else {
+            this.transactionsToManuallyReview.set(0);
+          }
+        });
+  }
+
+  private loadTransactionsToManuallyReviewCount(accountNumber: string): void {
+    this.appService.countTransactionToManuallyReview(accountNumber)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: count => this.transactionsToManuallyReview.set(count.valueOf()),
+          error: () => this.transactionsToManuallyReview.set(0)
+        });
+  }
+
+  // Event handlers
+  handleAccountChange(): void {
+    if (!this.accountSelectionComponent?.selectedBankAccount) {
+      console.error('Selected bank account is undefined');
+      return;
+    }
+
+    const accountNumber = this.accountSelectionComponent.selectedBankAccount.accountNumber;
+    if (!accountNumber || accountNumber === this.appService.DUMMY_BANK_ACCOUNT) {
+      console.error('Invalid account number');
+      return;
+    }
+
+    this.selectedAccount.set(accountNumber);
+    this.transactionQuery.set({
+      transactionType: TransactionTypeEnum.BOTH,
+      accountNumber: accountNumber
+    });
+    this.currentPage.set(0);
+    this.viewType.set(ViewType.SHOW_ALL);
+  }
+
+  showAllTransactions(): void {
+    const account = this.selectedAccount();
+    if (!account) {
+      this.snackBar.open('Please select a bank account first', 'Close', {duration: 3000});
+      return;
+    }
+
+    this.transactionQuery.set({
+      transactionType: TransactionTypeEnum.BOTH,
+      accountNumber: account
+    });
+    this.currentPage.set(0);
+    this.viewType.set(ViewType.SHOW_ALL);
+  }
+
+  showTransactionsToManuallyReview(): void {
+    if (this.transactionsToManuallyReview() > 0) {
+      this.router.navigate(['/categorieën']);
+    }
+    else {
+      this.snackBar.open('No transactions to manually review', 'Close', {duration: 3000});
+    }
+  }
+
+  onClickFileInputButton(): void {
+    this.fileInput.nativeElement.click();
+  }
+
+  async onChangeFileInput(): Promise<void> {
+    const files: FileList = this.fileInput.nativeElement.files;
+    if (!files || files.length === 0) {
+      return;
+    }
+
+    const currentUser = this.authService.getUser();
+    if (!currentUser?.userName) {
+      this.errorDialogService.openErrorDialog('Cannot upload transactions!', 'User is not defined');
+      return;
+    }
+
+    this.filesAreUploading.set(true);
+
+    const fileWrappers = Array.from(files).map(file => ({
+      file,
+      inProgress: false,
+      progress: 0,
+      failed: false
+    }));
+
+    this.appService.uploadTransactionFiles(fileWrappers, currentUser.userName)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: (event) => {
+            if (event.type === HttpEventType.Response) {
+              const response = event as HttpResponse<UploadTransactionsResponse>;
+              const uploadTimestamp = response.body?.uploadTimestamp;
+
+              if (!uploadTimestamp) {
+                this.filesAreUploading.set(false);
+                this.errorDialogService.openErrorDialog('Upload Error', 'Upload timestamp is undefined');
                 return;
-            }
-            else {
-                this.transactionQuery = result;
-                if (this.transactionQuery != undefined) {
-                    this.transactionQuery.accountNumber = this.selectedAccount;
+              }
 
-                }
+              // Refresh bank accounts
+              this.appService.triggerRefreshBankAccounts();
 
+              // Update query to show uploaded transactions
+              this.transactionQuery.set({
+                transactionType: TransactionTypeEnum.BOTH,
+                uploadTimestamp: uploadTimestamp,
+                accountNumber: this.selectedAccount()
+              });
+              this.currentPage.set(0);
+              this.viewType.set(ViewType.UPLOAD_TRANSACTIONS);
+              this.filesAreUploading.set(false);
+
+              // Invalidate queries to refresh data
+              this.queryClient.invalidateQueries({queryKey: ['transactions']});
+
+              // Refresh manual review count
+              const account = this.selectedAccount();
+              if (account) {
+                this.loadTransactionsToManuallyReviewCount(account);
+              }
+
+              this.snackBar.open('Transactions uploaded successfully', 'Close', {duration: 3000});
             }
-            if (this.transactionQuery !== undefined) {
-                this.transactionQueryAsJson = JSON.stringify(this.transactionQuery)
-            }
-            this.doQuery(this.transactionQuery)
+          },
+          error: (error) => {
+            this.filesAreUploading.set(false);
+            console.error('Upload error:', error);
+            this.errorDialogService.openErrorDialog('Upload Failed',
+                error.message || 'An error occurred during upload');
+          }
         });
 
-    }
+    // Reset file input
+    this.fileInput.nativeElement.value = '';
+  }
 
-    handleAccountChange() {
-        // Check if selectedBankAccount exists before accessing its properties
-        if (!this.accountSelectionComponent || !this.accountSelectionComponent.selectedBankAccount) {
-            console.error('Selected bank account is undefined in handleAccountChange');
+  openSearchDialog(): void {
+    const dialogRef = this.dialog.open(TransactionSearchDialogComponent, {
+      restoreFocus: false,
+      width: '500px',
+      maxWidth: '95vw'
+    });
+
+    dialogRef.afterClosed()
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(result => {
+          if (!result) {
             return;
-        }
+          }
 
-        this.selectedAccount = this.accountSelectionComponent.selectedBankAccount.accountNumber;
-        if (this.selectedAccount === undefined || this.selectedAccount === this.appService.DUMMY_BANK_ACCOUNT) {
-            console.error('Selected account number is undefined or dummy in handleAccountChange');
-            return;
-        }
+          const query: TransactionQuery = {
+            ...result,
+            accountNumber: this.selectedAccount()
+          };
 
-        this.transactionQuery = {
-            transactionType: TransactionTypeEnum.BOTH,
-            counterpartyName: undefined,
-            minAmount: undefined,
-            maxAmount: undefined,
-            accountNumber: this.selectedAccount,
-            categoryId: undefined,
-            counterpartyAccountNumber: undefined,
-            startDate: undefined,
-            endDate: undefined,
-            transactionOrCommunication: undefined,
-            uploadTimestamp: undefined
-        }
+          this.transactionQuery.set(query);
+          this.currentPage.set(0);
+          this.viewType.set(ViewType.RUN_QUERY);
+        });
+  }
 
-        this.doQuery(this.transactionQuery);
+  // Pagination handlers
+  onPageChange(event: PageEvent): void {
+    this.currentPage.set(event.pageIndex);
+    this.pageSize.set(event.pageSize);
+  }
+
+  // Sort handler
+  onSortChange(event: Sort): void {
+    const propertyMap: Record<string, TransactionSortProperty> = {
+      'bookingDate': 'booking_date' as TransactionSortProperty,
+      'counterparty': 'counterparty' as TransactionSortProperty,
+      'transaction': 'transaction' as TransactionSortProperty,
+      'amount': 'amount' as TransactionSortProperty
+    };
+
+    const property = propertyMap[event.active] || 'booking_date' as TransactionSortProperty;
+    const order = (event.direction || 'asc') as SortOrder;
+
+    this.sortConfig.set({property, order});
+  }
+
+  // Transaction update handlers
+  setCategory(transaction: TransactionRead, selectedCategoryQualifiedNameStr: string): void {
+    const category = this.categoryMap()?.getSimpleCategory(selectedCategoryQualifiedNameStr);
+    if (!category) {
+      this.snackBar.open('Category not found', 'Close', {duration: 3000});
+      return;
     }
 
-    showAllTransactions() {
-        this.dataSource = this.initDataSource(this.selectedAccount);
-        this.transactionQuery = undefined;
-        this.viewType = ViewType.SHOW_ALL;
+    const update: TransactionUpdate = {
+      categoryId: category.id,
+      manuallyAssignedCategory: true
+    };
 
+    this.saveTransactionMutation.mutate({
+      transactionId: transaction.transactionId,
+      update
+    });
+  }
+
+  setIsRecurring(transaction: TransactionRead, event: MatRadioChange): void {
+    const update: TransactionUpdate = {
+      isRecurring: event.value
+    };
+
+    this.saveTransactionMutation.mutate({
+      transactionId: transaction.transactionId,
+      update
+    });
+  }
+
+  setIsAdvanceSharedAccount(transaction: TransactionRead, event: MatRadioChange): void {
+    const update: TransactionUpdate = {
+      isAdvanceSharedAccount: event.value
+    };
+
+    this.saveTransactionMutation.mutate({
+      transactionId: transaction.transactionId,
+      update
+    });
+  }
+
+  // Helper methods
+  amountType(transaction: TransactionRead): AmountType {
+    if (transaction.amount === undefined || transaction.amount === null) {
+      return AmountType.BOTH;
     }
+    return inferAmountType(transaction.amount);
+  }
 
-    ngAfterViewInit(): void {
+  getCategoryQualifiedName(transaction: TransactionRead): string | undefined {
+    return transaction.category?.qualifiedName;
+  }
 
+  formatDate(dateStr: string | null | undefined): string {
+    if (!dateStr) {
+      return 'N/A';
     }
-
-
-    ngOnInit() {
-
+    try {
+      const date = new Date(dateStr);
+      return this.datePipe.transform(date, 'dd/MM/yyyy') || 'N/A';
+    } catch {
+      return 'N/A';
     }
+  }
 
+  getNrOfTransactionsToManuallyReview(): string {
+    const count = this.transactionsToManuallyReview();
+    return count > 0 ? count.toString() : '';
+  }
 
-    private initDataSource(account: string | undefined): PaginationDataSource<TransactionRead, TransactionQuery> {
-        let query = {} as TransactionQuery;
-        if (account !== undefined) {
-            query.accountNumber = account;
-
-        }
-        return new PaginationDataSource<TransactionRead, TransactionQuery>(
-            (request: any, query: any) => {
-                return this.appService.pageTransactions(request, query);
-            },
-            {property: 'bookingDate', order: 'desc'}, query
-        );
-    }
-
-
-    saveTransaction(transaction: TransactionRead) {
-        this.appService.saveTransaction(transaction)
-    }
-
-    setIsRecurring(transaction: TransactionRead, event: MatRadioChange) {
-        transaction.isRecurring = event.value;
-        this.saveTransaction(transaction);
-    }
-
-
-    setIsAdvanceSharedAccount(transaction: TransactionRead, event: MatRadioChange) {
-        transaction.isAdvanceSharedAccount = event.value;
-        this.saveTransaction(transaction);
-    }
-
-
-    setCategory(transaction: TransactionRead, selectedCategoryQualifiedNameStr: string) {
-        let category = this.categoryMap?.getSimpleCategory(selectedCategoryQualifiedNameStr);
-        if (!category) {
-            throw new Error("No category found for " + selectedCategoryQualifiedNameStr);
-        }
-        transaction.categoryId = category.id;
-        this.saveTransaction(transaction);
-    }
-
-    sortBy(event: any) {
-        let key = event.active;
-        let direction = event.direction;
-        this.currentSort = {
-            property: key,
-            order: direction || "ASC"
-
-        };
-        this.dataSource.sortBy(this.currentSort);
-    }
-
-    doQuery(transactionQuery: TransactionQuery | undefined): void {
-        if (transactionQuery === undefined) {
-            return;
-        }
-
-        let newSort;
-        if (this.currentSort !== undefined) {
-            newSort = this.currentSort;
-        }
-        else {
-
-            newSort = {property: 'bookingDate', order: 'desc'}
-            this.currentSort = newSort;
-        }
-
-        this.dataSource = new PaginationDataSource<TransactionRead, TransactionQuery>(
-            (request: any, query: any) => {
-                return this.appService.pageTransactions(request, query);
-            },
-            newSort, transactionQuery
-        );
-
-        this.viewType = ViewType.RUN_QUERY;
-    }
-
-
-    getNrOfTransactionsToManuallyReview(): string {
-        if (this.transactionToManuallyReview !== undefined && this.transactionToManuallyReview !== null) {
-            return this.transactionToManuallyReview.toString();
-        }
-        return "";
-    }
-
-    getNrOfTransactionsToManuallyReviewTooltip(): string {
-        if (this.transactionToManuallyReview !== undefined && this.transactionToManuallyReview !== null) {
-            return `You have ${this.transactionToManuallyReview} transactions to manually review`;
-        }
-        return "";
-    }
+  getNrOfTransactionsToManuallyReviewTooltip(): string {
+    const count = this.transactionsToManuallyReview();
+    return count > 0 ? `You have ${count} transactions to manually review` : 'No transactions to review';
+  }
 }

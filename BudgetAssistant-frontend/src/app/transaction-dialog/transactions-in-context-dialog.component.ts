@@ -101,8 +101,7 @@ export class TransactionsInContextDialogComponent implements OnInit, AfterViewIn
         if (! simpleCategory){
             throw new Error("No category found for " + selectedCategoryQualifiedNameStr);
         }
-        transaction.categoryId = simpleCategory.id;
-        this.saveTransaction(transaction);
+        this.appService.saveTransactionWithCategoryId(transaction, simpleCategory.id);
     }
 
     saveTransaction(transaction: TransactionRead) {

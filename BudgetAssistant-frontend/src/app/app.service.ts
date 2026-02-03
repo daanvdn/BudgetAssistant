@@ -255,7 +255,7 @@ export class AppService {
     public saveTransaction(transaction: TransactionRead): void {
         const transactionUpdate: TransactionUpdate = {
             transaction: transaction.transaction,
-            categoryId: transaction.categoryId,
+            categoryId: transaction.category?.id,
             manuallyAssignedCategory: transaction.manuallyAssignedCategory,
             isRecurring: transaction.isRecurring,
             isAdvanceSharedAccount: transaction.isAdvanceSharedAccount,
@@ -269,6 +269,27 @@ export class AppService {
         });
 
 
+    }
+
+    /**
+     * Saves a transaction with a specific category ID.
+     * Use this method when you need to update the category without having a full CategoryRead object.
+     */
+    public saveTransactionWithCategoryId(transaction: TransactionRead, categoryId: number | undefined): void {
+        const transactionUpdate: TransactionUpdate = {
+            transaction: transaction.transaction,
+            categoryId: categoryId,
+            manuallyAssignedCategory: true,
+            isRecurring: transaction.isRecurring,
+            isAdvanceSharedAccount: transaction.isAdvanceSharedAccount,
+            isManuallyReviewed: transaction.isManuallyReviewed
+        };
+        this.apiService.transactions.saveTransactionApiTransactionsSavePost(transaction.transactionId,
+            transactionUpdate).subscribe({
+            next: () => {
+            },
+            error: (error) => console.error('Error saving transaction:', error)
+        });
     }
 
     private camelToSnake(str: string): string {
@@ -301,7 +322,7 @@ export class AppService {
             tmpSortProperty = request.sort.property;
         }
         let pageTransactionsRequest: PageTransactionsRequest = {
-            page: request.page + 1,
+            page: request.page,
             size: request.size,
             sortOrder: tmpSortOrder as SortOrder,
             sortProperty: this.camelToSnake(tmpSortProperty) as TransactionSortProperty,

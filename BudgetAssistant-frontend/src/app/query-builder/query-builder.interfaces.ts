@@ -362,11 +362,11 @@ export class Rule {
   field: Array<string> = [];
   fieldType?: FieldTypeEnum;
   value: Array<string> = [];
-  valueMatchType?: MatchTypeOption;
+  valueMatchType?: RuleMatchType;
   operator?: Operator | RuleOperator;
 
   // Additional properties
-  fieldMatchType?: MatchTypeOption;
+  fieldMatchType?: RuleMatchType;
   ruleForm?: FormGroup;
   rules?: Array<RuleSetRulesInner>;
   condition?: ConditionEnum;
@@ -375,8 +375,8 @@ export class Rule {
   // Internal properties to store Field objects
   private _fieldObjects?: Field | Field[];
 
-  constructor(field?: Field | Field[], fieldType?: FieldType, fieldMatchType?: MatchTypeOption, value?: any,
-              valueMatchType?: MatchTypeOption, operator?: Operator, ruleForm?: FormGroup) {
+  constructor(field?: Field | Field[], fieldType?: FieldType, fieldMatchType?: RuleMatchType, value?: any,
+              valueMatchType?: RuleMatchType, operator?: Operator, ruleForm?: FormGroup) {
     this.clazz = 'Rule';
     this.type = 'Rule';
     this._fieldObjects = field;
@@ -402,7 +402,7 @@ export class Rule {
       }
     }
 
-    this.valueMatchType = valueMatchType as MatchTypeOption;
+    this.valueMatchType = valueMatchType;
     this.operator = operator;
     this.ruleForm = ruleForm;
   }
@@ -714,16 +714,18 @@ function ruleSetReviverFn(key: string, value: any) {
       }
 
       //revive the fieldMatchType
-      let fieldMatchType;
+      let fieldMatchType: RuleMatchType | undefined;
       if (value.fieldMatchType && typeof value.fieldMatchType === 'string') {
-        fieldMatchType = MATCH_TYPES_BY_NAME_MAP.get(value.fieldMatchType);
+        const matchTypeOption = MATCH_TYPES_BY_NAME_MAP.get(value.fieldMatchType);
+        fieldMatchType = matchTypeOption?.value;
       } else {
         throw new Error('Invalid fieldMatchType');
       }
 
-      let valueMatchType;
+      let valueMatchType: RuleMatchType | undefined;
       if (value.valueMatchType && typeof value.valueMatchType === 'string') {
-        valueMatchType = MATCH_TYPES_BY_NAME_MAP.get(value.fieldMatchType);
+        const matchTypeOption = MATCH_TYPES_BY_NAME_MAP.get(value.valueMatchType);
+        valueMatchType = matchTypeOption?.value;
       } else {
         throw new Error('Invalid valueMatchType');
       }

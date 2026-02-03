@@ -1,43 +1,30 @@
 <mat-drawer-container class="example-container mat-typography mat-app-background">
   <mat-drawer #drawer mode="side" disableClose="true" opened="true">
     <mat-nav-list>
-      <a routerLink="/profiel" routerLinkActive="activebutton" ariaCurrentWhenActive="page">
-        <mat-list-item>
-          <fa-icon [icon]="faUser" [fixedWidth]="true"></fa-icon>
-          <span>Profiel</span>
-        </mat-list-item>
+      <a mat-list-item routerLink="/profiel" routerLinkActive="activebutton" ariaCurrentWhenActive="page">
+        <fa-icon [icon]="faUser" [fixedWidth]="true"></fa-icon>
+        <span>Profiel</span>
       </a>
-      <a routerLink="/transacties" routerLinkActive="activebutton" ariaCurrentWhenActive="page">
-        <mat-list-item>
-          <fa-icon [icon]="faDollarSign" [fixedWidth]="true"></fa-icon>
-          <span>Transacties</span>
-        </mat-list-item>
+      <a mat-list-item routerLink="/transacties" routerLinkActive="activebutton" ariaCurrentWhenActive="page">
+        <fa-icon [icon]="faDollarSign" [fixedWidth]="true"></fa-icon>
+        <span>Transacties</span>
       </a>
-      <a routerLink="/inzichten" routerLinkActive="activebutton" ariaCurrentWhenActive="page">
-        <mat-list-item>
-          <fa-icon [icon]="faChartPie" [fixedWidth]="true"></fa-icon>
-          <span>Inzichten</span>
-        </mat-list-item>
+      <a mat-list-item routerLink="/inzichten" routerLinkActive="activebutton" ariaCurrentWhenActive="page">
+        <fa-icon [icon]="faChartPie" [fixedWidth]="true"></fa-icon>
+        <span>Inzichten</span>
       </a>
-      <a routerLink="/regels" routerLinkActive="activebutton" ariaCurrentWhenActive="page">
-        <mat-list-item>
-          <fa-icon [icon]="faNetworkWired" [fixedWidth]="true"></fa-icon>
-          <span>Regels</span>
-        </mat-list-item>
+      <a mat-list-item routerLink="/regels" routerLinkActive="activebutton" ariaCurrentWhenActive="page">
+        <fa-icon [icon]="faNetworkWired" [fixedWidth]="true"></fa-icon>
+        <span>Regels</span>
       </a>
-      <a routerLink="/budget" routerLinkActive="activebutton" ariaCurrentWhenActive="page">
-        <mat-list-item>
-          <fa-icon [icon]="faScaleBalanced" [fixedWidth]="true"></fa-icon>
-          <span>Budget</span>
-        </mat-list-item>
+      <a mat-list-item routerLink="/budget" routerLinkActive="activebutton" ariaCurrentWhenActive="page">
+        <fa-icon [icon]="faScaleBalanced" [fixedWidth]="true"></fa-icon>
+        <span>Budget</span>
       </a>
-      <a (click)="onLogout()">
-        <mat-list-item>
-          <fa-icon [icon]="faRightFromBracket" [fixedWidth]="true"></fa-icon>
-          <span>Logout</span>
-        </mat-list-item>
+      <a mat-list-item (click)="onLogout()">
+        <fa-icon [icon]="faRightFromBracket" [fixedWidth]="true"></fa-icon>
+        <span>Logout</span>
       </a>
-
 
     </mat-nav-list>
       <button mat-icon-button></button>
