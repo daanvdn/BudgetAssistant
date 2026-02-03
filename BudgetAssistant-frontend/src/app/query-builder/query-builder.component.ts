@@ -26,8 +26,7 @@ import { MatOption } from '@angular/material/core';
 import { MatInput } from '@angular/material/input';
 import { MatIcon } from '@angular/material/icon';
 import { MatCheckbox } from '@angular/material/checkbox';
-import {FieldTypeEnum, RuleMatchType, RuleOperator} from "@daanvdn/budget-assistant-client";
-import {ConditionEnum} from "@daanvdn/budget-assistant-client";
+import {FieldTypeEnum, RuleMatchType, RuleOperator, ConditionEnum} from './query-builder.interfaces';
 
 
 export class FieldsMetaData {
@@ -653,7 +652,7 @@ export class QueryBuilderComponent implements OnChanges, ControlValueAccessor, V
     if (this.disabled) {
       return;
     }
-    rule.operator = value;
+    rule.operator = value as any;
 
 
     this.handleTouched();
@@ -742,9 +741,9 @@ export class QueryBuilderComponent implements OnChanges, ControlValueAccessor, V
     let operator = field[0]?.operators?.[0];
     if (operator){
 
-      rule.operator = operator;
+      rule.operator = operator as any;
     } else {
-        rule.operator = StringOperators.CONTAINS;
+        rule.operator = StringOperators.CONTAINS as any;
     }
 
 
@@ -764,10 +763,10 @@ export class QueryBuilderComponent implements OnChanges, ControlValueAccessor, V
 
     rule.fieldType = fieldType as FieldTypeEnum;
     rule.field = [];
-    rule.fieldMatchType = MatchTypes.ANY_OF;
+    rule.fieldMatchType = MatchTypes.ANY_OF.value;
     // delete rule.value;
-    rule.valueMatchType = MatchTypes.ANY_OF;
-    rule.operator = StringOperators.CONTAINS;
+    rule.valueMatchType = MatchTypes.ANY_OF.value;
+    rule.operator = StringOperators.CONTAINS as any;
 
 
     this.handleTouched();

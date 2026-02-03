@@ -7,8 +7,7 @@ import {parse} from 'date-fns';
 import {isNaN} from "lodash";
 import {AppService} from "../app.service";
 import {Criteria} from "../model/criteria.model";
-import {ExpensesRecurrenceEnum, RevenueExpensesQuery, TransactionTypeEnum} from "@daanvdn/budget-assistant-client";
-import {RevenueRecurrenceEnum} from "@daanvdn/budget-assistant-client";
+import {RecurrenceType, RevenueExpensesQuery, TransactionTypeEnum} from "@daanvdn/budget-assistant-client";
 import {ExpensesAndRevenueForPeriod} from "@daanvdn/budget-assistant-client";
 import { NgIf, NgClass, DecimalPipe } from '@angular/common';
 import { ChartModule } from 'primeng/chart';
@@ -62,8 +61,8 @@ export class ExpensesRevenueComponent  implements OnInit, OnChanges {
       transactionType: TransactionTypeEnum.BOTH,
       start: JSON.stringify(this.criteria.startDate),
       end: JSON.stringify(this.criteria.endDate),
-      expensesRecurrence: ExpensesRecurrenceEnum.BOTH,
-      revenueRecurrence: RevenueRecurrenceEnum.BOTH
+      expensesRecurrence: RecurrenceType.BOTH,
+      revenueRecurrence: RecurrenceType.BOTH
 
     };
 
@@ -89,11 +88,11 @@ export class ExpensesRevenueComponent  implements OnInit, OnChanges {
     this.datatIsLoaded = content.length > 0;
     content.forEach(item => {
       let entry = {
-        "name": item.period.value, "series": [{
-          "name": "inkomsten", "value": item.revenue, "extra": item
+        "name": item.period, "series": [{
+          "name": "inkomsten", "value": item.revenue ?? 0, "extra": item
 
         }, {
-          "name": "uitgaven", "value": Math.abs(item.expenses), "extra": item
+          "name": "uitgaven", "value": Math.abs(item.expenses ?? 0), "extra": item
 
         }]
 

@@ -21,15 +21,15 @@ import {MatOption} from '@angular/material/core';
 import {MatIconButton} from '@angular/material/button';
 import {MatCheckbox} from '@angular/material/checkbox';
 import {MatIcon} from '@angular/material/icon';
-import {TransactionTypeEnum, SimplifiedCategory} from "@daanvdn/budget-assistant-client";
+import {TransactionTypeEnum, CategoryRead} from "@daanvdn/budget-assistant-client";
 
 
 // @Injectable({ providedIn: "root" })
 export class BackingDatabase {
-  dataChange = new BehaviorSubject<SimplifiedCategory[]>([]);
+  dataChange = new BehaviorSubject<CategoryRead[]>([]);
   treeData?: any[];
 
-  get data(): SimplifiedCategory[] {
+  get data(): CategoryRead[] {
     return this.dataChange.value;
   }
 
@@ -137,20 +137,20 @@ export class BackingDatabase {
 export class CategoryTreeDropdownComponent implements OnInit  {
 
   /** Map from flat node to nested node. This helps us finding the nested node to be modified */
-  flatNodeMap = new Map<FlatCategoryNode, SimplifiedCategory>();
+  flatNodeMap = new Map<FlatCategoryNode, CategoryRead>();
 
   /** Map from nested node to flattened node. This helps us to keep the same object for selection */
-  nestedNodeMap = new Map<SimplifiedCategory, FlatCategoryNode>();
+  nestedNodeMap = new Map<CategoryRead, FlatCategoryNode>();
 
-  qualifiedNameToNodeMap = new Map<string, SimplifiedCategory>();
+  qualifiedNameToNodeMap = new Map<string, CategoryRead>();
 
   @Input()
   selectedCategoryQualifiedNameStr?: string;
-  selectedCategory?: SimplifiedCategory;
+  selectedCategory?: CategoryRead;
   selectedCategoryName?: string = "select category"
-  // treeControl = new NestedTreeControl<SimplifiedCategory>(node => this.getChildren(node));
+  // treeControl = new NestedTreeControl<CategoryRead>(node => this.getChildren(node));
   treeControl!: FlatTreeControl<FlatCategoryNode>
-  dataSource!: MatTreeFlatDataSource<SimplifiedCategory, FlatCategoryNode>;
+  dataSource!: MatTreeFlatDataSource<CategoryRead, FlatCategoryNode>;
   @Input()
   transactionTypeEnum?: TransactionTypeEnum;
 
@@ -162,7 +162,7 @@ export class CategoryTreeDropdownComponent implements OnInit  {
 
 
 
-  treeFlattener: MatTreeFlattener<SimplifiedCategory, FlatCategoryNode>;
+  treeFlattener: MatTreeFlattener<CategoryRead, FlatCategoryNode>;
 
   /** The selection for checklist */
   checklistSelection = new SelectionModel<FlatCategoryNode>(false /* multiple */);
@@ -215,7 +215,7 @@ export class CategoryTreeDropdownComponent implements OnInit  {
   }
 
 
-  transformer = (node: SimplifiedCategory, level: number) => {
+  transformer = (node: CategoryRead, level: number) => {
     const existingNode = this.nestedNodeMap.get(node);
     const flatNode =
       existingNode && existingNode.qualifiedName === node.qualifiedName
@@ -226,7 +226,7 @@ export class CategoryTreeDropdownComponent implements OnInit  {
     flatNode.qualifiedName = node.qualifiedName;
     flatNode.level = level;
     flatNode.expandable = (node.children != undefined && node.children.length > 0);
-    flatNode.type = node.type;
+    flatNode.type = node.type as any;
     this.flatNodeMap.set(flatNode, node);
     this.nestedNodeMap.set(node, flatNode);
     this.qualifiedNameToNodeMap.set(node.qualifiedName, node);
@@ -237,17 +237,12 @@ export class CategoryTreeDropdownComponent implements OnInit  {
 
   isExpandable = (node: FlatCategoryNode) => node.expandable;
 
-  getChildren = (node: SimplifiedCategory): SimplifiedCategory[] => {
-    const children: SimplifiedCategory[] = [];
+  getChildren = (node: CategoryRead): CategoryRead[] => {
+    const children: CategoryRead[] = [];
     if (node.children && node.children.length > 0) {
       for (let childObj of node.children) {
-        const entries = Object.entries(childObj);
-        if (entries.length > 0) {
-          const [_, value] = entries[0];
-          // Assuming value is a SimplifiedCategory
-          const childCategory = value as unknown as SimplifiedCategory;
-          children.push(childCategory);
-        }
+        // CategoryRead children are already CategoryRead objects
+        children.push(childObj as CategoryRead);
       }
     }
     return children;

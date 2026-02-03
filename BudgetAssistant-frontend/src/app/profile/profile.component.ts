@@ -17,7 +17,7 @@ import {
   MatTableDataSource
 } from "@angular/material/table";
 import {faSearch} from "@fortawesome/free-solid-svg-icons/faSearch";
-import {BankAccount} from "@daanvdn/budget-assistant-client";
+import {BankAccountRead} from "@daanvdn/budget-assistant-client";
 import {MatToolbar} from '@angular/material/toolbar';
 import {MatCard, MatCardContent} from '@angular/material/card';
 import {MatFormField, MatSuffix} from '@angular/material/form-field';
@@ -40,9 +40,9 @@ export class ProfileComponent implements OnInit {
   currentUser!: User;
   hidePassword = true;
   form: FormGroup;
-  bankAccounts!: BankAccount[];
+  bankAccounts!: BankAccountRead[];
   displayedColumns: string[] = ['accountNumber', 'alias', 'saveOrEditButton'];
-  dataSource!: MatTableDataSource<BankAccount>;
+  dataSource!: MatTableDataSource<BankAccountRead>;
 
 
   constructor(private authService : AuthService, private fb: FormBuilder, private appService: AppService) {
@@ -70,7 +70,7 @@ export class ProfileComponent implements OnInit {
 
 
 
-  saveAlias(bankAccount: BankAccount): void {
+  saveAlias(bankAccount: BankAccountRead): void {
 
 
     this.appService.saveBankAccountAlias(bankAccount).subscribe(() => {});

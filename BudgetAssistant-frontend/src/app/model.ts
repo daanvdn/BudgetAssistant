@@ -1,4 +1,21 @@
-import {SimpleCategory, SimplifiedCategory, SimplifiedCategoryChildrenInnerValue, TypeEnum, CategoryRead, TransactionTypeEnum} from '@daanvdn/budget-assistant-client';
+import {CategoryRead, TransactionTypeEnum} from '@daanvdn/budget-assistant-client';
+
+// Define local types that were previously imported from the client
+export interface SimpleCategory {
+    id: number;
+    name: string;
+    qualifiedName: string;
+}
+
+export interface SimplifiedCategory {
+    id: number;
+    name: string;
+    qualifiedName: string;
+    type: string;
+    children?: any[];
+}
+
+export type TypeEnum = 'EXPENSES' | 'REVENUE';
 
 export interface CategoryAndAmount {
     amount: number;
@@ -312,13 +329,7 @@ export class FlatCategoryNode {
     type!: TypeEnum;
 }
 
-const DUMMY_CATEGORY: SimplifiedCategory = {
-    children: [],
-    name: "DUMMY CATEGORY",
-    qualifiedName: "DUMMY CATEGORY",
-    type: "EXPENSES" as TypeEnum,
-    id: -1
-}
+
 export const NO_CATEGORY: SimplifiedCategory = {
     children: [],
     name: "NO CATEGORY",

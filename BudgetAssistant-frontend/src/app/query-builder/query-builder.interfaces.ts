@@ -1,19 +1,39 @@
 import {FormGroup} from "@angular/forms";
 
-import {CategoryType} from "../model";
-import {
-  RuleMatchType,
-  Rule as ClientRule,
-  RuleOperator,
-  RuleSet as ClientRuleSet,
-  RuleSetRulesInner as ClientRuleSetRulesInner,
-  RuleSetWrapper as ClientRuleSetWrapper,
-  FieldTypeEnum,
-  ConditionEnum,
-  TypeEnum,
-  SimpleCategory,
-  SimpleUser
-} from "@daanvdn/budget-assistant-client";
+import {TypeEnum} from "../model";
+import {RuleSetWrapperRead as ClientRuleSetWrapper} from "@daanvdn/budget-assistant-client";
+
+// Define local types that were previously imported from the client
+export type RuleMatchType = 'all' | 'any';
+export type RuleOperator = 'eq' | 'ne' | 'gt' | 'gte' | 'lt' | 'lte' | 'contains' | 'not_contains' | 'starts_with' | 'ends_with' | 'is_null' | 'is_not_null' | 'in' | 'not_in';
+export type FieldTypeEnum = 'string' | 'number' | 'categorical';
+export type ConditionEnum = 'AND' | 'OR';
+
+export interface ClientRule {
+  field: string;
+  operator: RuleOperator;
+  value?: any;
+  fieldType?: FieldTypeEnum;
+}
+
+export interface ClientRuleSet {
+  condition: ConditionEnum;
+  rules: Array<ClientRule | ClientRuleSet>;
+}
+
+export interface ClientRuleSetRulesInner {
+  field?: string;
+  operator?: RuleOperator;
+  value?: any;
+  fieldType?: FieldTypeEnum;
+  condition?: ConditionEnum;
+  rules?: Array<ClientRuleSetRulesInner>;
+}
+
+export interface SimpleUser {
+  id: number;
+  username: string;
+}
 
 // Extended type to ensure all required properties exist on both Rule and RuleSet
 // Using any as a temporary solution to get the code to compile
@@ -60,7 +80,7 @@ export function isObject(object: any): boolean {
 }
 
 // Using RuleOperator from @daanvdn/budget-assistant-client
-export class Operator implements RuleOperator {
+export class Operator {
   readonly name: string;
   readonly value: string;
   readonly type: string;
@@ -75,7 +95,7 @@ export class Operator implements RuleOperator {
     return this.value === operator.value && this.type === operator.type && this.name === operator.name;
   }
   public asOperator():  RuleOperator {
-   return this;
+   return this.value as RuleOperator;
 }
 }
 
@@ -112,20 +132,20 @@ function isEmptyString(value: string | undefined | null): boolean {
 }
 
 
-// Using ClientRuleSet from @daanvdn/budget-assistant-client
-export class RuleSet implements ClientRuleSet {
+// Local RuleSet class - doesn't implement ClientRuleSet directly due to type incompatibilities
+export class RuleSet {
   clazz: string = 'RuleSet';
-  type: any; // Required by ClientRuleSet
+  type: any;
   condition: ExtendedConditionEnum;
   rules: Array<RuleSetRulesInner> = [];
   isChild: boolean = false;
 
-  // Additional properties not in ClientRuleSet
+  // Additional properties
   collapsed?: boolean;
 
   constructor(condition: string, rules: Array<any>, collapsed?: boolean, isChild?: boolean) {
     this.clazz = 'RuleSet';
-    this.type = 'RuleSet'; // Required by ClientRuleSet
+    this.type = 'RuleSet';
     this.condition = condition as ConditionEnum;
 
     // Convert rules to RuleSetRulesInner array
@@ -219,13 +239,19 @@ export interface RuleSetWrapper extends ClientRuleSetWrapper {
 
 
 
-export class MatchTypes {
-  static ANY_OF: RuleMatchType = {name: 'any of', value:'any of'};
-  static ALL_OF = {name: 'all of', value: 'all of'};
-  static ALL: RuleMatchType[] = [MatchTypes.ANY_OF, MatchTypes.ALL_OF];
+// RuleMatchType is now a string union type ('all' | 'any')
+export interface MatchTypeOption {
+  name: string;
+  value: RuleMatchType;
 }
 
-export const MATCH_TYPES: RuleMatchType[] = MatchTypes.ALL;
+export class MatchTypes {
+  static ANY_OF: MatchTypeOption = {name: 'any of', value: 'any'};
+  static ALL_OF: MatchTypeOption = {name: 'all of', value: 'all'};
+  static ALL: MatchTypeOption[] = [MatchTypes.ANY_OF, MatchTypes.ALL_OF];
+}
+
+export const MATCH_TYPES: MatchTypeOption[] = MatchTypes.ALL;
 
 export class RuleUtils {
 
@@ -263,7 +289,8 @@ export class RuleUtils {
       return true;
     }
     if (rule.fieldType !== undefined && rule.fieldType === 'categorical') {
-      if (rule.operator !== undefined && rule.operator === CategoricalOperators.EQUALS) {
+      const op = rule.operator instanceof Operator ? rule.operator : null;
+      if (rule.operator !== undefined && op && op.equals(CategoricalOperators.EQUALS)) {
         return true;
       }
     }
@@ -328,18 +355,18 @@ export class RuleUtils {
 }
 
 
-// Using ClientRule from @daanvdn/budget-assistant-client
-export class Rule implements ClientRule {
+// Local Rule class - doesn't implement ClientRule directly due to type incompatibilities
+export class Rule {
   clazz: string = 'Rule';
-  type: any; // Required by ClientRule
+  type: any;
   field: Array<string> = [];
-  fieldType: FieldTypeEnum;
+  fieldType?: FieldTypeEnum;
   value: Array<string> = [];
-  valueMatchType: RuleMatchType;
-  operator: RuleOperator;
+  valueMatchType?: MatchTypeOption;
+  operator?: Operator | RuleOperator;
 
-  // Additional properties not in ClientRule
-  fieldMatchType?: RuleMatchType;
+  // Additional properties
+  fieldMatchType?: MatchTypeOption;
   ruleForm?: FormGroup;
   rules?: Array<RuleSetRulesInner>;
   condition?: ConditionEnum;
@@ -348,10 +375,10 @@ export class Rule implements ClientRule {
   // Internal properties to store Field objects
   private _fieldObjects?: Field | Field[];
 
-  constructor(field?: Field | Field[], fieldType?: FieldType, fieldMatchType?: RuleMatchType, value?: any,
-              valueMatchType?: RuleMatchType, operator?: Operator, ruleForm?: FormGroup) {
+  constructor(field?: Field | Field[], fieldType?: FieldType, fieldMatchType?: MatchTypeOption, value?: any,
+              valueMatchType?: MatchTypeOption, operator?: Operator, ruleForm?: FormGroup) {
     this.clazz = 'Rule';
-    this.type = 'Rule'; // Required by ClientRule
+    this.type = 'Rule';
     this._fieldObjects = field;
 
     // Convert Field objects to string array for ClientRule
@@ -375,8 +402,8 @@ export class Rule implements ClientRule {
       }
     }
 
-    this.valueMatchType = valueMatchType as RuleMatchType;
-    this.operator = operator as RuleOperator;
+    this.valueMatchType = valueMatchType as MatchTypeOption;
+    this.operator = operator;
     this.ruleForm = ruleForm;
   }
 
@@ -420,7 +447,7 @@ export class Rule implements ClientRule {
     return true;
   }
 
-  private isEmptyOperator(value: RuleOperator | undefined | null): boolean {
+  private isEmptyOperator(value: RuleOperator |Operator | undefined | null): boolean {
     return value === undefined || value === null;
   }
 
@@ -606,15 +633,15 @@ function createFieldByPathFromTransactionMap(DEFAULT_QUERY_BUILDER_CONFIG: Query
 
 export const FIELDS_BY_PATH_FROM_TRANSACTION_MAP: Map<string, Field> = createFieldByPathFromTransactionMap(DEFAULT_QUERY_BUILDER_CONFIG);
 
-function createMatchTypesByNameMap(MATCH_TYPES: RuleMatchType[]): Map<string, RuleMatchType> {
-  let map = new Map<string, RuleMatchType>();
-  for (let matchType of MATCH_TYPES) {
+function createMatchTypesByNameMap(matchTypes: MatchTypeOption[]): Map<string, MatchTypeOption> {
+  let map = new Map<string, MatchTypeOption>();
+  for (let matchType of matchTypes) {
     map.set(matchType.name, matchType);
   }
   return map;
 }
 
-export const MATCH_TYPES_BY_NAME_MAP: Map<string, RuleMatchType> = createMatchTypesByNameMap(MATCH_TYPES);
+export const MATCH_TYPES_BY_NAME_MAP: Map<string, MatchTypeOption> = createMatchTypesByNameMap(MATCH_TYPES);
 
 
 function ruleSetReviverFn0(key: string, value: any) {
@@ -751,7 +778,8 @@ function isValidRuleSetObject(obj: any): boolean {
       if (!rule.operator) {
         return false;
       } else {
-        if (!(rule.operator instanceof Operator)) {
+        // Operator can be either an Operator instance or a string (RuleOperator)
+        if (!(rule.operator instanceof Operator || typeof rule.operator === 'string')) {
           return false;
         }
       }
@@ -880,17 +908,15 @@ export class Comparator {
 /**
  * Converts a Rule to a ClientRule
  */
-export function convertRuleToClientRule(rule: Rule, type: TypeEnum = TypeEnum.BOTH): ClientRule {
+export function convertRuleToClientRule(rule: Rule, type: string = 'BOTH'): ClientRule {
+  const operatorValue = rule.operator instanceof Operator ? rule.operator.value : rule.operator;
   return {
-    clazz: rule.clazz,
-    type: type,
-    field: rule.field,
-    fieldType: rule.fieldType as FieldTypeEnum,
-    value: rule.value instanceof Array 
-      ? rule.value.map(v => String(v)) 
-      : [String(rule.value)],
-    valueMatchType: rule.valueMatchType as RuleMatchType,
-    operator: rule.operator as RuleOperator
+    field: rule.field.join('.'),
+    fieldType: rule.fieldType,
+    value: rule.value instanceof Array
+      ? rule.value.map(v => String(v)).join(',')
+      : String(rule.value),
+    operator: operatorValue as RuleOperator
   };
 }
 
@@ -924,34 +950,48 @@ export function convertRuleSetToClientRuleSet(ruleSet: RuleSet, type: TypeEnum =
  */
 export function convertClientRuleToRule(clientRule: ClientRule): Rule {
   const rule = new Rule();
-  rule.clazz = clientRule.clazz;
-  // We can't set field directly because it's a Field object, not a string array
-  // rule.field = clientRule.field;
-  rule.fieldType = clientRule.fieldType;
-  rule.value = clientRule.value;
-  rule.valueMatchType = clientRule.valueMatchType;
-  rule.operator = clientRule.operator as Operator;
+  rule.clazz = (clientRule as any).clazz || 'Rule';
+  // Handle field - it's a string in the new API
+  if (typeof clientRule.field === 'string') {
+    rule.field = clientRule.field.split('.');
+  }
+  if (clientRule.fieldType) {
+    rule.fieldType = clientRule.fieldType;
+  }
+  // Handle value - it could be a string or undefined
+  if (clientRule.value) {
+    rule.value = typeof clientRule.value === 'string' ? clientRule.value.split(',') : [String(clientRule.value)];
+  }
+  rule.valueMatchType = (clientRule as any).valueMatchType;
+  rule.operator = clientRule.operator;
   return rule;
 }
 
 /**
  * Converts a ClientRuleSet to a RuleSet
  */
-export function convertClientRuleSetToRuleSet(clientRuleSet: ClientRuleSet): RuleSet {
+export function convertClientRuleSetToRuleSet(clientRuleSet: ClientRuleSet | { [key: string]: any }): RuleSet {
+  // Handle empty or invalid input
+  if (!clientRuleSet || !clientRuleSet.condition) {
+    return new RuleSet('AND', [], false, false);
+  }
+
   const ruleSet = new RuleSet(
     clientRuleSet.condition,
     [],
     false,
-    clientRuleSet.isChild
+    (clientRuleSet as any).isChild
   );
 
-  ruleSet.rules = clientRuleSet.rules.map(rule => {
-    if (rule.clazz === 'RuleSet') {
-      return convertClientRuleSetToRuleSet(rule as ClientRuleSet);
-    } else {
-      return convertClientRuleToRule(rule as ClientRule);
-    }
-  });
+  if (clientRuleSet.rules && Array.isArray(clientRuleSet.rules)) {
+    ruleSet.rules = clientRuleSet.rules.map((rule: any) => {
+      if (rule.clazz === 'RuleSet' || (rule.condition && rule.rules)) {
+        return convertClientRuleSetToRuleSet(rule as ClientRuleSet);
+      } else {
+        return convertClientRuleToRule(rule as ClientRule);
+      }
+    });
+  }
 
   return ruleSet;
 }

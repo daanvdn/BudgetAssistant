@@ -10,7 +10,7 @@ import {AuthService} from "../auth/auth.service";
 import {ErrorDialogService} from "../error-dialog/error-dialog.service";
 import {QueryBuilderComponent} from '../query-builder/query-builder.component';
 import {FormsModule} from '@angular/forms';
-import {TypeEnum, RuleSetWrapper, SimplifiedCategory} from "@daanvdn/budget-assistant-client";
+import {TransactionTypeEnum, RuleSetWrapperRead, CategoryRead} from "@daanvdn/budget-assistant-client";
 
 
 @Component({
@@ -22,11 +22,11 @@ import {TypeEnum, RuleSetWrapper, SimplifiedCategory} from "@daanvdn/budget-assi
 })
 export class RulesBuilderComponent implements OnInit, OnChanges {
 
-  @Input() categoryNode!: SimplifiedCategory;
+  @Input() categoryNode!: CategoryRead;
 
   ruleSet!: RuleSet;
 
-  ruleSetWrapper!: RuleSetWrapper;
+  ruleSetWrapper!: RuleSetWrapperRead;
 
 
   config: QueryBuilderConfig = DEFAULT_QUERY_BUILDER_CONFIG;
@@ -40,16 +40,16 @@ export class RulesBuilderComponent implements OnInit, OnChanges {
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['categoryNode']) {
       // categoryNode input has changed, do something with it
-      let categoryType: TypeEnum = this.categoryNode.type as TypeEnum;
+      let categoryType: TransactionTypeEnum = this.categoryNode.type as TransactionTypeEnum;
       let user = this.authService.getUser();
       if (!user || !user.userName) {
         this.errorDialogService.openErrorDialog("User is not defined!", undefined);
         return;
       }
       this.appService.getOrCreateRuleSetWrapper(this.categoryNode, categoryType)
-          .subscribe((response: RuleSetWrapper) => {
+          .subscribe((response: RuleSetWrapperRead) => {
               this.ruleSetWrapper = response;
-              this.ruleSet =  convertClientRuleSetToRuleSet(this.ruleSetWrapper.ruleSet);
+              this.ruleSet = convertClientRuleSetToRuleSet(this.ruleSetWrapper.ruleSet as any);
             });
 
 

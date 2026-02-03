@@ -2,7 +2,7 @@ import {Component, EventEmitter, OnDestroy, OnInit, Output} from '@angular/core'
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {AppService} from '../app.service';
 import {Subject, takeUntil} from "rxjs";
-import {BankAccount} from "@daanvdn/budget-assistant-client";
+import {BankAccountRead} from "@daanvdn/budget-assistant-client";
 import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatSelect } from '@angular/material/select';
 import { NgFor, UpperCasePipe } from '@angular/common';
@@ -21,10 +21,10 @@ export class BankAccountSelectionComponent implements OnInit, OnDestroy {
 
 
   bankAccountFormFieldGroup: FormGroup;
-  selectedBankAccount!: BankAccount;
-  bankAccounts: BankAccount[] = [];
+  selectedBankAccount!: BankAccountRead;
+  bankAccounts: BankAccountRead[] = [];
 
-  @Output() change: EventEmitter<BankAccount> = new EventEmitter<BankAccount>(true);
+  @Output() change: EventEmitter<BankAccountRead> = new EventEmitter<BankAccountRead>(true);
   private destroy$ = new Subject<void>();
 
   constructor(private appService: AppService, private formBuilder: FormBuilder) {

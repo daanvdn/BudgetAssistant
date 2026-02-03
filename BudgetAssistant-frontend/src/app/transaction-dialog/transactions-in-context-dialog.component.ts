@@ -8,7 +8,7 @@ import {
     MatDialogRef,
     MatDialogTitle
 } from "@angular/material/dialog";
-import {Transaction, TransactionInContextQuery} from "@daanvdn/budget-assistant-client";
+import {TransactionRead, TransactionInContextQuery} from "@daanvdn/budget-assistant-client";
 import {AmountType, CategoryMap, inferAmountType} from "../model";
 import {
     MatCell,
@@ -37,7 +37,7 @@ import {DateUtilsService} from '../shared/date-utils.service';
     imports: [MatDialogTitle, MatDialogContent, MatTable, MatSort, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatSortHeader, MatCellDef, MatCell, NgIf, CategoryTreeDropdownComponent, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow, MatPaginator, MatDialogActions, MatButton, AsyncPipe, TitleCasePipe, DatePipe]
 })
 export class TransactionsInContextDialogComponent implements OnInit, AfterViewInit {
-    dataSource!: PaginationDataSource<Transaction, TransactionInContextQuery>;
+    dataSource!: PaginationDataSource<TransactionRead, TransactionInContextQuery>;
     displayedColumns = [
         "bookingDate",
         "counterparty",
@@ -85,7 +85,7 @@ export class TransactionsInContextDialogComponent implements OnInit, AfterViewIn
             this.currentSort = newSort;
         }
 
-        this.dataSource = new PaginationDataSource<Transaction, TransactionInContextQuery>(
+        this.dataSource = new PaginationDataSource<TransactionRead, TransactionInContextQuery>(
             (request:any, query:any) => {
                 request.size = 50;
                 return this.appService.pageTransactionsInContext(request, query);
@@ -96,20 +96,20 @@ export class TransactionsInContextDialogComponent implements OnInit, AfterViewIn
 
     }
 
-    setCategory(transaction: Transaction, selectedCategoryQualifiedNameStr: string) {
+    setCategory(transaction: TransactionRead, selectedCategoryQualifiedNameStr: string) {
         let simpleCategory = this.categoryMap?.getSimpleCategory(selectedCategoryQualifiedNameStr);
         if (! simpleCategory){
             throw new Error("No category found for " + selectedCategoryQualifiedNameStr);
         }
-        transaction.category = simpleCategory;
+        transaction.categoryId = simpleCategory.id;
         this.saveTransaction(transaction);
     }
 
-    saveTransaction(transaction: Transaction) {
+    saveTransaction(transaction: TransactionRead) {
         this.appService.saveTransaction(transaction)
     }
 
-    amountType(transaction: Transaction): AmountType {
+    amountType(transaction: TransactionRead): AmountType {
         if (transaction.amount === undefined || transaction.amount === null) {
             return AmountType.BOTH;
         }

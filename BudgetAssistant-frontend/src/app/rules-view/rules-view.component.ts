@@ -31,15 +31,13 @@ import {MatTooltip} from '@angular/material/tooltip';
 import {NgSwitch, NgSwitchCase} from '@angular/common';
 import {MatIcon} from '@angular/material/icon';
 import {RulesBuilderComponent} from '../rules-builder/rules-builder.component';
-import {CdkScrollable} from '@angular/cdk/scrolling';
-import {SimplifiedCategory} from '@daanvdn/budget-assistant-client'
+import {CategoryRead} from '@daanvdn/budget-assistant-client'
 
 @Component({
     selector: 'app-dialog', templateUrl: './run-categorization-dialog-component.component.html',
     standalone: true,
     imports: [
         MatDialogTitle,
-        CdkScrollable,
         MatDialogContent,
         MatDialogActions,
         MatButton,
@@ -70,7 +68,7 @@ export class RulesViewComponent implements OnInit {
     expensesCategoryWrapper!: CategoryTreeWrapper;
     revenueCategoryTreeWrapper!: CategoryTreeWrapper;
 
-    selectedCategoryNode!: SimplifiedCategory;
+    selectedCategoryNode!: CategoryRead;
 
 
     showCategoryTree: boolean = true;
@@ -81,7 +79,7 @@ export class RulesViewComponent implements OnInit {
     }
 
 
-    onClickCreateRule(node: SimplifiedCategory) {
+    onClickCreateRule(node: CategoryRead) {
         this.selectedCategoryNode = node;
         this.showCategoryTree = false;
     }
@@ -91,7 +89,7 @@ export class RulesViewComponent implements OnInit {
         this.revenueCategoryTreeWrapper = new CategoryTreeWrapper(this.appService, "revenue");
     }
 
-    hasChild = (_: number, node: SimplifiedCategory) => !!node.children && node.children.length > 0;
+    hasChild = (_: number, node: CategoryRead) => !!node.children && node.children.length > 0;
 
 
     protected readonly faNetworkWired = faNetworkWired;
@@ -99,7 +97,7 @@ export class RulesViewComponent implements OnInit {
 
 
     getTooltip(node: any): string {
-        let qualifiedName = (node as SimplifiedCategory).qualifiedName;
+        let qualifiedName = (node as CategoryRead).qualifiedName;
         return `create rule for category ${qualifiedName}`
 
     }
@@ -156,10 +154,10 @@ export class RulesViewComponent implements OnInit {
     protected readonly faSearch = faSearch;
 }
 
-function doGetChildren(node: SimplifiedCategory): Array<SimplifiedCategory> | undefined {
+function doGetChildren(node: CategoryRead): Array<CategoryRead> | undefined {
     let children = node.children;
     if (children && children.length > 0) {
-        return children as unknown as Array<SimplifiedCategory>;
+        return children as Array<CategoryRead>;
     }
     return undefined;
 }
@@ -167,16 +165,16 @@ function doGetChildren(node: SimplifiedCategory): Array<SimplifiedCategory> | un
 class CategoryTreeWrapper {
 
 
-    treeControl = new NestedTreeControl<SimplifiedCategory>(doGetChildren);
+    treeControl = new NestedTreeControl<CategoryRead>(doGetChildren);
 
 
-    dataSource = new MatTreeNestedDataSource<SimplifiedCategory>();
+    dataSource = new MatTreeNestedDataSource<CategoryRead>();
 
 
     constructor(private appService: AppService, type: string) {
         const illegalNodes = ["NO CATEGORY", "DUMMY CATEGORY"]
 
-        const filterAndSortNodes = (nodes: SimplifiedCategory[]) => {
+        const filterAndSortNodes = (nodes: CategoryRead[]) => {
             return nodes.filter(n => !illegalNodes.includes(n.name)).sort((a, b) => a.name.localeCompare(b.name));
         }
 

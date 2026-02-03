@@ -26,7 +26,7 @@ import {HttpEventType, HttpResponse} from "@angular/common/http";
 import {ErrorDialogService} from "../error-dialog/error-dialog.service";
 import {faTag} from "@fortawesome/free-solid-svg-icons";
 import {Router} from "@angular/router";
-import {Transaction, TransactionQuery, TransactionTypeEnum} from '@daanvdn/budget-assistant-client';
+import {TransactionRead, TransactionQuery, TransactionTypeEnum} from '@daanvdn/budget-assistant-client';
 import {MatToolbar} from '@angular/material/toolbar';
 import {MatProgressSpinner} from '@angular/material/progress-spinner';
 import {MatButton} from '@angular/material/button';
@@ -62,7 +62,7 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
     //table stuff
     @ViewChild(MatPaginator, {static: false}) paginator!: MatPaginator;
     @ViewChild(MatSort, {static: false}) sort!: MatSort;
-    @ViewChild(MatTable) table!: MatTable<Transaction>;
+    @ViewChild(MatTable) table!: MatTable<TransactionRead>;
     @ViewChild(BankAccountSelectionComponent) accountSelectionComponent!: BankAccountSelectionComponent;
     private currentSort?: any;
 
@@ -70,7 +70,7 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
     filesAreUploading = false; // Add this line
     transactionToManuallyReview!: number;
 
-    @Input() dataSource!: PaginationDataSource<Transaction, TransactionQuery>;
+    @Input() dataSource!: PaginationDataSource<TransactionRead, TransactionQuery>;
     displayedColumns = [
         "bookingDate",
         "counterparty",
@@ -183,7 +183,7 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
                     uploadTimestamp: uploadTimestamp
                 }
 
-                this.dataSource = new PaginationDataSource<Transaction, TransactionQuery>(
+                this.dataSource = new PaginationDataSource<TransactionRead, TransactionQuery>(
                     (request: any, query: any) => {
                         return this.appService.pageTransactions(request, query);
                     },
@@ -237,7 +237,7 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
         return s;
     }
 
-    amountType(transaction: Transaction): AmountType {
+    amountType(transaction: TransactionRead): AmountType {
         if (transaction.amount === undefined || transaction.amount === null) {
             return AmountType.BOTH;
         }
@@ -332,13 +332,13 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
     }
 
 
-    private initDataSource(account: string | undefined): PaginationDataSource<Transaction, TransactionQuery> {
+    private initDataSource(account: string | undefined): PaginationDataSource<TransactionRead, TransactionQuery> {
         let query = {} as TransactionQuery;
         if (account !== undefined) {
             query.accountNumber = account;
 
         }
-        return new PaginationDataSource<Transaction, TransactionQuery>(
+        return new PaginationDataSource<TransactionRead, TransactionQuery>(
             (request: any, query: any) => {
                 return this.appService.pageTransactions(request, query);
             },
@@ -347,28 +347,28 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
     }
 
 
-    saveTransaction(transaction: Transaction) {
+    saveTransaction(transaction: TransactionRead) {
         this.appService.saveTransaction(transaction)
     }
 
-    setIsRecurring(transaction: Transaction, event: MatRadioChange) {
+    setIsRecurring(transaction: TransactionRead, event: MatRadioChange) {
         transaction.isRecurring = event.value;
         this.saveTransaction(transaction);
     }
 
 
-    setIsAdvanceSharedAccount(transaction: Transaction, event: MatRadioChange) {
+    setIsAdvanceSharedAccount(transaction: TransactionRead, event: MatRadioChange) {
         transaction.isAdvanceSharedAccount = event.value;
         this.saveTransaction(transaction);
     }
 
 
-    setCategory(transaction: Transaction, selectedCategoryQualifiedNameStr: string) {
+    setCategory(transaction: TransactionRead, selectedCategoryQualifiedNameStr: string) {
         let category = this.categoryMap?.getSimpleCategory(selectedCategoryQualifiedNameStr);
         if (!category) {
             throw new Error("No category found for " + selectedCategoryQualifiedNameStr);
         }
-        transaction.category = category;
+        transaction.categoryId = category.id;
         this.saveTransaction(transaction);
     }
 
@@ -398,7 +398,7 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
             this.currentSort = newSort;
         }
 
-        this.dataSource = new PaginationDataSource<Transaction, TransactionQuery>(
+        this.dataSource = new PaginationDataSource<TransactionRead, TransactionQuery>(
             (request: any, query: any) => {
                 return this.appService.pageTransactions(request, query);
             },
