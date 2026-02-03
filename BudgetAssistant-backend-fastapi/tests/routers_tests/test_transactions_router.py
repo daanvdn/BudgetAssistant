@@ -1,5 +1,7 @@
 """Tests for transactions router."""
 
+import importlib.resources
+
 import pytest
 from httpx import ASGITransport, AsyncClient
 
@@ -216,9 +218,7 @@ class TestTransactionsEndpointsAuthenticated:
         assert "total_elements" in data
 
     @pytest.mark.asyncio
-    async def test_page_transactions_in_context_with_auth(
-        self, authenticated_client, seed_bank_account
-    ):
+    async def test_page_transactions_in_context_with_auth(self, authenticated_client, seed_bank_account):
         """Test paging transactions in context with authentication."""
         client, access_token = authenticated_client
         headers = {"Authorization": f"Bearer {access_token}"}
@@ -247,9 +247,7 @@ class TestTransactionsEndpointsAuthenticated:
         assert "content" in data
 
     @pytest.mark.asyncio
-    async def test_page_to_manually_review_with_auth(
-        self, authenticated_client, seed_bank_account
-    ):
+    async def test_page_to_manually_review_with_auth(self, authenticated_client, seed_bank_account):
         """Test paging transactions to review with authentication."""
         client, access_token = authenticated_client
         headers = {"Authorization": f"Bearer {access_token}"}
@@ -271,9 +269,7 @@ class TestTransactionsEndpointsAuthenticated:
         assert "content" in data
 
     @pytest.mark.asyncio
-    async def test_count_to_manually_review_with_auth(
-        self, authenticated_client, seed_bank_account
-    ):
+    async def test_count_to_manually_review_with_auth(self, authenticated_client, seed_bank_account):
         """Test counting transactions to review with authentication."""
         client, access_token = authenticated_client
         headers = {"Authorization": f"Bearer {access_token}"}
@@ -290,9 +286,7 @@ class TestTransactionsEndpointsAuthenticated:
         assert "count" in data
 
     @pytest.mark.asyncio
-    async def test_distinct_counterparty_names_with_auth(
-        self, authenticated_client, seed_bank_account
-    ):
+    async def test_distinct_counterparty_names_with_auth(self, authenticated_client, seed_bank_account):
         """Test getting distinct counterparty names with authentication."""
         client, access_token = authenticated_client
         headers = {"Authorization": f"Bearer {access_token}"}
@@ -309,9 +303,7 @@ class TestTransactionsEndpointsAuthenticated:
         assert isinstance(data, list)
 
     @pytest.mark.asyncio
-    async def test_distinct_counterparty_accounts_with_auth(
-        self, authenticated_client, seed_bank_account
-    ):
+    async def test_distinct_counterparty_accounts_with_auth(self, authenticated_client, seed_bank_account):
         """Test getting distinct counterparty accounts with authentication."""
         client, access_token = authenticated_client
         headers = {"Authorization": f"Bearer {access_token}"}
@@ -328,13 +320,19 @@ class TestTransactionsEndpointsAuthenticated:
         assert isinstance(data, list)
 
     @pytest.mark.asyncio
-    async def test_upload_transactions_with_auth(self, authenticated_client):
+    async def test_upload_transactions_with_auth(self, authenticated_client_with_session):
         """Test uploading transactions with authentication."""
-        client, access_token = authenticated_client
+        client, access_token, test_session_maker = authenticated_client_with_session
         headers = {"Authorization": f"Bearer {access_token}"}
-
-        # Create a simple CSV content
-        csv_content = b"header1,header2\nvalue1,value2\n"
+        resource = importlib.resources.files("resources").joinpath("belfius_transactions_2.csv")
+        with resource.open(mode="rb") as f:
+            csv_content = f.read()
+            # convert to string and split lines
+            csv_content_lines = csv_content.decode("utf-8").splitlines()
+            # remove any empty line from csv_content_lines
+            csv_content_lines = [csv_content for csv_content in csv_content_lines if csv_content]
+            # remove first line (header)
+            csv_content_lines = csv_content_lines[1:]
 
         response = await client.post(
             "/api/transactions/upload",
@@ -343,7 +341,16 @@ class TestTransactionsEndpointsAuthenticated:
         )
 
         # Should succeed or return error depending on CSV format validation
-        assert response.status_code in [200, 400, 422]
+        assert response.status_code == 200
+        # query the database to ensure that the correct number of transactions were added
+        from sqlmodel import select
+
+        from models import Transaction
+
+        async with test_session_maker() as session:
+            result = await session.execute(select(Transaction))
+            transactions = result.scalars().all()
+            assert len(transactions) == len(csv_content_lines)
 
     @pytest.mark.asyncio
     async def test_save_transaction_with_auth_not_found(self, authenticated_client):

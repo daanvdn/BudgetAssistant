@@ -12,6 +12,7 @@ from schemas import (
     BudgetTreeNodeCreate,
     BudgetTreeNodeRead,
     CategoryRead,
+    CounterpartyRead,
     RuleSetWrapperCreate,
     RuleSetWrapperRead,
     TransactionCreate,
@@ -159,10 +160,10 @@ class TestTransactionSchemas:
         """Test TransactionRead get_transaction_type for revenue."""
         transaction_read = TransactionRead(
             transaction_id="txn_001",
-            bank_account_id="123456",
+            bank_account=BankAccountRead(account_number="123456", alias=None),
             booking_date=date(2023, 10, 1),
             statement_number="stmt_001",
-            counterparty_id="counterparty1",
+            counterparty=CounterpartyRead(name="counterparty1", account_number="CP123"),
             transaction_number="txn_001",
             currency_date=date(2023, 10, 1),
             amount=100.0,
@@ -180,10 +181,10 @@ class TestTransactionSchemas:
         """Test TransactionRead get_transaction_type for expenses."""
         transaction_read = TransactionRead(
             transaction_id="txn_001",
-            bank_account_id="123456",
+            bank_account=BankAccountRead(account_number="123456", alias=None),
             booking_date=date(2023, 10, 1),
             statement_number="stmt_001",
-            counterparty_id="counterparty1",
+            counterparty=CounterpartyRead(name="counterparty1", account_number="CP123"),
             transaction_number="txn_001",
             currency_date=date(2023, 10, 1),
             amount=-100.0,

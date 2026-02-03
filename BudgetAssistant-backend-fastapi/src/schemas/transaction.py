@@ -1,10 +1,15 @@
 """Pydantic schemas for Transaction API operations."""
 
 from datetime import date, datetime
+from typing import Optional
 
 from pydantic import BaseModel
 
 from common.enums import TransactionTypeEnum
+
+from .bank_account import BankAccountRead
+from .category import CategoryRead
+from .counterparty import CounterpartyRead
 
 
 class TransactionCreate(BaseModel):
@@ -32,10 +37,10 @@ class TransactionRead(BaseModel):
     """Schema for reading transaction data (response)."""
 
     transaction_id: str
-    bank_account_id: str
+    bank_account: BankAccountRead
     booking_date: date
     statement_number: str
-    counterparty_id: str
+    counterparty: CounterpartyRead
     transaction_number: str
     transaction: str | None = None
     currency_date: date
@@ -44,7 +49,7 @@ class TransactionRead(BaseModel):
     bic: str | None = None
     country_code: str
     communications: str | None = None
-    category_id: int | None = None
+    category: Optional[CategoryRead] = None
     manually_assigned_category: bool
     is_recurring: bool
     is_advance_shared_account: bool

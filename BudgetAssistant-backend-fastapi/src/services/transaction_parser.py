@@ -88,8 +88,15 @@ class BelfiusTransactionParser(AbstractTransactionParser):
             )
         )
         if not link_result.scalar_one_or_none():
-            link = UserBankAccountLink(user_id=user.id, bank_account_number=normalized)
-            session.add(link)
+            pending_link = any(
+                isinstance(obj, UserBankAccountLink)
+                and obj.user_id == user.id
+                and obj.bank_account_number == normalized
+                for obj in session.new
+            )
+            if not pending_link:
+                link = UserBankAccountLink(user_id=user.id, bank_account_number=normalized)
+                session.add(link)
 
         return bank_account
 
@@ -136,8 +143,13 @@ class BelfiusTransactionParser(AbstractTransactionParser):
             )
         )
         if not link_result.scalar_one_or_none():
-            link = UserCounterpartyLink(user_id=user.id, counterparty_name=name)
-            session.add(link)
+            pending_link = any(
+                isinstance(obj, UserCounterpartyLink) and obj.user_id == user.id and obj.counterparty_name == name
+                for obj in session.new
+            )
+            if not pending_link:
+                link = UserCounterpartyLink(user_id=user.id, counterparty_name=name)
+                session.add(link)
 
         return counterparty
 

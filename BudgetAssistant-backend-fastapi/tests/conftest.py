@@ -206,6 +206,77 @@ async def auth_headers(authenticated_client) -> dict[str, str]:
 
 
 @pytest_asyncio.fixture(scope="function")
+async def authenticated_client_with_session(
+    async_engine,
+) -> AsyncGenerator[tuple[AsyncClient, str, async_sessionmaker], None]:
+    """Create an async HTTP client with authentication and access to the test session maker.
+
+    This fixture registers a new user, logs in, and returns the client
+    with the access token and session maker for direct database access.
+    Returns a tuple of (client, access_token, test_session_maker).
+    """
+    # Create a session maker for the test database
+    test_session_maker = async_sessionmaker(
+        async_engine,
+        class_=AsyncSession,
+        expire_on_commit=False,
+        autoflush=False,
+        autocommit=False,
+    )
+
+    # Override the get_session dependency to use the test database
+    async def get_test_session() -> AsyncGenerator[AsyncSession, None]:
+        async with test_session_maker() as session:
+            try:
+                yield session
+                await session.commit()
+            except Exception:
+                await session.rollback()
+                raise
+            finally:
+                await session.close()
+
+    app.dependency_overrides[get_session] = get_test_session
+
+    try:
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            # Register a new user
+            register_response = await client.post(
+                "/api/auth/register",
+                json={
+                    "password": TEST_USER_PASSWORD,
+                    "email": TEST_USER_EMAIL,
+                },
+            )
+            # Log registration result for debugging
+            if register_response.status_code != 201:
+                print(f"Registration response: {register_response.status_code} - {register_response.text}")
+
+            # Login to get token - use /login endpoint with JSON body
+            login_response = await client.post(
+                "/api/auth/login",
+                json={
+                    "email": TEST_USER_EMAIL,
+                    "password": TEST_USER_PASSWORD,
+                },
+            )
+
+            if login_response.status_code == 200:
+                token_data = login_response.json()
+                access_token = token_data["access_token"]
+                yield client, access_token, test_session_maker
+            else:
+                # Log login failure for debugging
+                print(f"Login response: {login_response.status_code} - {login_response.text}")
+                # If login fails, yield without auth (tests will fail appropriately)
+                yield client, "", test_session_maker
+    finally:
+        # Clean up the dependency override
+        app.dependency_overrides.pop(get_session, None)
+
+
+@pytest_asyncio.fixture(scope="function")
 async def seed_category_trees(async_session: AsyncSession) -> dict:
     """Seed category trees for testing.
 
