@@ -1,14 +1,16 @@
+// Import shared theme variables
+@import '../../styles/variables';
 
 .mat-mdc-table {
   border-collapse: collapse;
   td, th {
-    border: 1px solid #ddd;
+    border: 1px solid $border-gray;
     padding: 8px;
     text-align: left;
 
   }
   th {
-    background-color: #f2f2f2;
+    background-color: $table-header-bg;
     font-weight: bold;
 
   }
@@ -19,36 +21,36 @@
 
 
 .mat-mdc-table-sticky {
-  background: #59abfd;
+  background: $table-sticky-bg;
   opacity: 1;
 }
 .mat-mdc-table-sticky-border-elem-top {
-  border-bottom: 2px solid midnightblue;
+  border-bottom: 2px solid $table-sticky-border;
 }
 
 .mat-mdc-table-sticky-border-elem-right {
-  border-left: 2px solid midnightblue;
+  border-left: 2px solid $table-sticky-border;
 }
 
 .mat-mdc-table-sticky-border-elem-bottom {
-  border-top: 2px solid midnightblue;
+  border-top: 2px solid $table-sticky-border;
 }
 
 .mat-mdc-table-sticky-border-elem-left {
-  border-right: 2px solid midnightblue;
+  border-right: 2px solid $table-sticky-border;
 }
 
 .color-red {
-  color: red;
+  color: $error-danger-red;
 
 }
 .color-light-coral {
-  background: lightcoral;
+  background: $expense-red-bg;
 
 }
 
 .color-green {
-  color: green;
+  color: $success-green;
 }
 
 .example-menu {
@@ -56,7 +58,7 @@
   flex-direction: column;
   min-width: 180px;
   max-width: 280px;
-  background-color: lightgray;
+  background-color: $tag-background;
   padding: 6px 0;
 }
 
@@ -77,9 +79,9 @@
 }
 
 .example-menu-item:hover {
-  background-color: rgb(208, 208, 208);
+  background-color: $border-gray;
 }
 
 .example-menu-item:active {
-  background-color: rgb(170, 170, 170);
+  background-color: $text-muted-light;
 }

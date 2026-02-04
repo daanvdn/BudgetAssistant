@@ -1,3 +1,6 @@
+// Import shared theme variables
+@import '../../styles/variables';
+
 section {
   display: flex;
   align-items: flex-start;
@@ -5,12 +8,12 @@ section {
 
 
 .spinner-container {
-  background-color: #ffffff; /* Change this to your desired color */
+  background-color: $card-background;
   padding: 20px;
-  border-radius: 10px;
-  display: flex; /* Add this line */
-  justify-content: center; /* Add this line */
-  align-items: center; /* Add this line */
+  border-radius: $radius-tag;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   flex-direction: column;
 }
 .overlay {

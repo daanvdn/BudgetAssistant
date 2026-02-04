@@ -1,0 +1,76 @@
+// =============================================================================
+// Theme Variables - Based on Angular Theme & Styling Guide
+// =============================================================================
+
+// -----------------------------------------------------------------------------
+// Primary Colors
+// -----------------------------------------------------------------------------
+$primary-blue: #0d6efd;
+$link-button-blue: #007bff;
+$button-hover-blue: #0056b3;
+$light-blue-hover: #f0f7ff;
+
+// -----------------------------------------------------------------------------
+// Status/Semantic Colors
+// -----------------------------------------------------------------------------
+$success-green: #28a745;
+$success-green-hover: #218838;
+$error-danger-red: #dc3545;
+
+// Income/Expense backgrounds
+$income-green-bg: #d4edda;
+$income-green-border: #c3e6cb;
+$expense-red-bg: #f8d7da;
+$expense-red-border: #f5c6cb;
+$info-blue-bg: #d1ecf1;
+$info-blue-border: #bee5eb;
+
+// -----------------------------------------------------------------------------
+// Neutral Colors
+// -----------------------------------------------------------------------------
+$page-background: #f5f5f5;
+$card-background: #ffffff;
+$filter-section-bg: #f8f9fa;
+$text-primary: #333333;
+$text-secondary: #555555;
+$text-muted: #666666;
+$text-muted-light: #888888;
+$border-gray: #dddddd;
+$hover-gray: #f9f9f9;
+$tag-background: #e9ecef;
+
+// Table styling
+$table-header-bg: #f2f2f2;
+$table-sticky-bg: #59abfd;
+$table-sticky-border: midnightblue;
+
+// -----------------------------------------------------------------------------
+// Box Shadows
+// -----------------------------------------------------------------------------
+$shadow-card: 0 2px 4px rgba(0, 0, 0, 0.1);
+$shadow-dropdown: 0 6px 12px rgba(0, 0, 0, 0.15);
+$shadow-dialog: 0 10px 40px rgba(0, 0, 0, 0.3);
+$shadow-fab: 0 2px 8px rgba(40, 167, 69, 0.4);
+$shadow-fab-hover: 0 4px 12px rgba(40, 167, 69, 0.5);
+
+// -----------------------------------------------------------------------------
+// Border Radius
+// -----------------------------------------------------------------------------
+$radius-card: 8px;
+$radius-button: 4px;
+$radius-input: 4px;
+$radius-tag: 10px;
+$radius-dialog: 12px;
+
+// -----------------------------------------------------------------------------
+// Transitions
+// -----------------------------------------------------------------------------
+$transition-fast: 0.2s ease;
+$transition-standard: 0.3s ease;
+
+// -----------------------------------------------------------------------------
+// Breakpoints
+// -----------------------------------------------------------------------------
+$breakpoint-mobile: 420px;
+$breakpoint-tablet: 768px;
+$breakpoint-desktop: 1024px;

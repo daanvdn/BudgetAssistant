@@ -1,12 +1,15 @@
+// Import shared theme variables
+@import '../../styles/variables';
+
 .highlight-row-no-error{
-  background-color: lightgreen;
+  background-color: $income-green-bg;
 }
 .highlight-row-error{
-  background-color: lightpink;
+  background-color: $expense-red-bg;
 }
 
 .highlight-total-row{
-  background-color: lightgray;
+  background-color: $tag-background;
   font-weight: bold;
 }
 /*td.mat-cell, th.mat-header-cell, tr.mat-header-row, tr.mat-row {

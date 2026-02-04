@@ -1,23 +1,34 @@
 /* You can add global styles to this file, and also import other style files */
 
+// Theme variables
+@import './styles/variables';
+
 //@import "@ng-select/ng-select/themes/material.theme.css";
 //@import '@angular/material/prebuilt-themes/deeppurple-amber.css';
 @import '@angular/material/prebuilt-themes/indigo-pink';
 @import url("https://fonts.googleapis.com/icon?family=Material+Icons");
 
-
+// Global Reset
+* {
+  box-sizing: border-box;
+}
 
 html, body {
   height: 100%;
+  margin: 0;
 }
 
 body {
   margin: 0;
   font-family: Roboto, "Helvetica Neue", sans-serif;
+  background-color: $page-background;
+  color: $text-primary;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .wrapper {
-  border: 1px solid gray;
+  border: 1px solid $border-gray;
 }
 
 .inline_block {

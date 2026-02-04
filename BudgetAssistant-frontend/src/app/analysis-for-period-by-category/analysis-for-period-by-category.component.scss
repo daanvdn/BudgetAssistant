@@ -1,47 +1,48 @@
+// Import shared theme variables
+@import '../../styles/variables';
+
 .parent {
-  border: 1px solid black;
+  border: 1px solid $border-gray;
   margin: 1rem;
   padding: 2rem 2rem;
   text-align: center;
 }
 .child {
   display: inline-block;
-  border: 1px solid red;
+  border: 1px solid $error-danger-red;
   padding: 1rem 1rem;
   vertical-align: middle;
 }
 
 .chart-parent {
-  border: 1px solid black;
-  display: flex;        /* Display children vertically */
-  flex-direction: column; /* Display children vertically */
-  overflow-y: auto;      /* Add vertical scrollbar when content overflows */
+  border: 1px solid $border-gray;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
 }
 
 .chart-child {
-  margin-bottom: 10px;   /* Add some spacing between charts */
+  margin-bottom: 10px;
   width: 50%;
 }
 
 .dashboard{
-  //flex-wrap:wrap;
-  //width: 50%;
   .card{
-    background: #FFFFFF;
+    background: $card-background;
     padding:0;
     .card-title{
       display:flex;
-      justify-content: center; /* align horizontal */
-      align-items: center; /* align vertical */
+      justify-content: center;
+      align-items: center;
 
       .title{
         font-size: 20px;
-        color: #262B3D;
+        color: $text-primary;
       }
     }
     .description{
       font-size: 12px;
-      color: #525252;
+      color: $text-secondary;
     }
 
   }

@@ -1,3 +1,6 @@
+// Import shared theme variables
+@import '../../styles/variables';
+
 :host {
   display: block;
   width: 100%;
@@ -40,7 +43,7 @@
   }
 
   .q-add-icon {
-    color: #555;
+    color: $text-secondary;
 
     &::before {
       content: '➕'
@@ -48,7 +51,7 @@
   }
 
   .q-remove-button {
-    color: #B3415D;
+    color: $error-danger-red;
     width: 31px;
   }
 
@@ -64,7 +67,7 @@
   .q-button {
     margin-left: 8px;
     padding: 0 8px;
-    background-color: white;
+    background-color: $card-background;
 
     &:disabled {
       display: none;
@@ -81,10 +84,10 @@
   .q-input-control, .q-operator-control, .q-field-control, .q-entity-control {
     display: inline-block;
     padding: 2px 6px;
-    color: #555;
-    background-color: #fff;
+    color: $text-secondary;
+    background-color: $card-background;
     background-image: none;
-    border: 1px solid #ccc;
+    border: 1px solid $border-gray;
     border-radius: 2px;
     box-sizing: border-box;
     min-width: 50px;
@@ -115,12 +118,12 @@
 
     &:hover {
       cursor: pointer;
-      background-color: #F0F0F0;
+      background-color: $hover-gray;
     }
   }
 
   .q-switch-label {
-    background-color: #e4e4e4;
+    background-color: $tag-background;
     padding: 0 8px;
   }
 
@@ -133,9 +136,9 @@
     overflow: hidden;
 
     &:checked + .q-switch-label {
-      border: 1px solid rgb(97, 158, 215);
-      background: white;
-      color: rgb(49, 118, 179);
+      border: 1px solid $link-button-blue;
+      background: $card-background;
+      color: $link-button-blue;
     }
 
     &:disabled + .q-switch-label {
@@ -161,12 +164,12 @@
   }
 
   .q-ruleset {
-    border: 1px solid #CCC;
+    border: 1px solid $border-gray;
   }
 
   .q-rule {
-    border: 1px solid #CCC;
-    background: white;
+    border: 1px solid $border-gray;
+    background: $card-background;
   }
 
   .q-transition {
@@ -213,7 +216,7 @@
     &::before, &::after {
       content: '';
       left: -12px;
-      border-color: #CCC;
+      border-color: $border-gray;
       border-style: solid;
       width: 9px;
       height: calc(50% + 6px);
@@ -242,7 +245,7 @@
   }
 
   .grid-item {
-    border: 1px solid #ccc;
+    border: 1px solid $border-gray;
     padding: 10px;
     text-align: center;
   }
@@ -253,7 +256,7 @@
   flex-direction: column;
   border-style: solid;
   border-width: 1px;
-  border-color: #ccc;
+  border-color: $border-gray;
   padding-bottom: 2px ;
 
   mat-form-field {
@@ -261,7 +264,7 @@
     margin-bottom: 3px;
     border-style: solid;
     border-width: 1px;
-    border-color: #ccc;
+    border-color: $border-gray;
   }
   /* TODO(mdc-migration): The following rule targets internal classes of list that may no longer apply for the MDC version.*/
   mat-list-item {
@@ -283,7 +286,7 @@
     margin-bottom: 4px;
     border-style: solid;
     border-width: 1px;
-    border-color: #ccc;
+    border-color: $border-gray;
   }
   /* TODO(mdc-migration): The following rule targets internal classes of list that may no longer apply for the MDC version.*/
   mat-list-item {
