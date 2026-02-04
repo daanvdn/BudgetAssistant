@@ -19,6 +19,10 @@ class CategoryService:
         session: AsyncSession,
     ) -> Optional[CategoryTree]:
         """Get the category tree for a transaction type."""
+
+        # if transaction_type == TransactionTypeEnum.BOTH then we can leave out the where clause
+        if transaction_type == TransactionTypeEnum.BOTH:
+            raise ValueError("transaction_type must be EXPENSES or REVENUE, not BOTH")
         result = await session.execute(
             select(CategoryTree)
             .options(selectinload(CategoryTree.root))

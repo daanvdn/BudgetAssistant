@@ -2,10 +2,12 @@
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from auth.router import router as auth_router
+from common.logging_utils import LoggerFactory
 from db import init_db
 from routers import (
     analysis_router,
@@ -15,6 +17,9 @@ from routers import (
     rules_router,
     transactions_router,
 )
+
+# Configure logging
+logger = LoggerFactory.for_caller()
 
 
 @asynccontextmanager
@@ -50,6 +55,22 @@ app.include_router(categories_router, prefix="/api")
 app.include_router(analysis_router, prefix="/api")
 app.include_router(budget_router, prefix="/api")
 app.include_router(rules_router, prefix="/api")
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """
+    Global exception handler for all unhandled exceptions.
+
+    This ensures that:
+    1. All exceptions are logged with full stack traces
+    2. A proper JSON response is returned (allowing CORS headers to be applied)
+    """
+    logger.error(f"Unhandled exception on {request.method} {request.url.path}: {exc}", exc_info=True, stack_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error"},
+    )
 
 
 @app.get("/")

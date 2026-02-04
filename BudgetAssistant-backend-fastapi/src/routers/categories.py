@@ -63,11 +63,33 @@ async def get_category_tree(
     )
 
 
-@router.get("/category_index", response_model=CategoryIndex)
+async def _build_category_tree_read(transaction_type: TransactionTypeEnum, session: AsyncSession) -> CategoryTreeRead:
+    """Helper to build a CategoryTreeRead from database, properly handling async loading."""
+    tree = await category_service.get_category_tree(transaction_type, session)
+    if not tree:
+        raise ValueError(f"Category tree for {transaction_type.value} not found")
+    root_response = None
+    if tree.root:
+        # Use build_category_tree to properly fetch children asynchronously
+        root_dict = await category_service.build_category_tree(tree.root, session)
+        root_response = _dict_to_category_read(root_dict)
+
+        return CategoryTreeRead(id=tree.id, type=tree.type, root=root_response)
+    else:
+        raise ValueError("Category tree root not found!")
+
+
+@router.get("/category-index", response_model=CategoryIndex)
 async def get_category_index(current_user: CurrentUser = None, session: AsyncSession = Depends(get_session)):
-    tree = await category_service.get_category_tree(TransactionTypeEnum.BOTH, session)
-    index = CategoryIndex.from_tree(tree)
-    return index
+    """Get a combined category index for both expenses and revenue categories."""
+    # Build Pydantic schemas with properly loaded children (avoids lazy loading issues)
+    expenses_tree_read = await _build_category_tree_read(TransactionTypeEnum.EXPENSES, session)
+    expenses_index = CategoryIndex.from_tree(expenses_tree_read)
+
+    revenue_tree_read = await _build_category_tree_read(TransactionTypeEnum.REVENUE, session)
+    revenue_index = CategoryIndex.from_tree(revenue_tree_read)
+
+    return expenses_index.merge(revenue_index)
 
 
 @router.get("", response_model=List[CategoryRead])
