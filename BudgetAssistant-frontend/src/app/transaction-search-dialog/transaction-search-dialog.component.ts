@@ -7,7 +7,7 @@ import {
     MatDialogActions
 } from '@angular/material/dialog';
 import {CategoryTreeDropdownComponent} from '../category-tree-dropdown/category-tree-dropdown.component';
-import {AmountType, CategoryMap, TransactionType} from '../model';
+import {AmountType, TransactionType} from '../model';
 import {PeriodSelectionComponent} from '../period-selection/period-selection.component';
 import {
     CounterpartyAccountNumberSelectionComponent
@@ -26,7 +26,7 @@ import {
     CounterpartyAccountNumberSelectionComponent as CounterpartyAccountNumberSelectionComponent_1
 } from '../counterparty-account-number-selection/counterparty-account-number-selection.component';
 import {MatButton} from '@angular/material/button';
-import {TransactionQuery, TransactionTypeEnum} from "@daanvdn/budget-assistant-client";
+import {CategoryIndex, TransactionQuery, TransactionTypeEnum} from "@daanvdn/budget-assistant-client";
 import {AppService} from "../app.service";
 
 @Component({
@@ -49,13 +49,13 @@ export class TransactionSearchDialogComponent implements OnInit, AfterViewInit {
     @ViewChild(
         TransactionCommunicationsSearchComponent) transactionCommunicationsSearch!: TransactionCommunicationsSearchComponent;
 
-    private categoryMap?: CategoryMap;
+    private categoryIndex?: CategoryIndex;
 
     constructor(
         public dialogRef: MatDialogRef<TransactionSearchDialogComponent>,
         @Inject(MAT_DIALOG_DATA) public data: TransactionQuery, private appService: AppService) {
-        this.appService.categoryMapObservable$.subscribe((categoryMap: CategoryMap | undefined) => {
-            this.categoryMap = categoryMap;
+        this.appService.categoryIndexObservable$.subscribe((categoryIndex: CategoryIndex | undefined) => {
+            this.categoryIndex = categoryIndex;
 
         });
 
@@ -147,14 +147,17 @@ export class TransactionSearchDialogComponent implements OnInit, AfterViewInit {
 
     handleCategorySelectionChange() {
         let vCategory: string | undefined = this.categorySelection.selectedCategoryQualifiedNameStr;
-        if (this.categoryMap === undefined) {
-            throw new Error("Category map is undefined");
+        if (this.categoryIndex === undefined) {
+            throw new Error("Category index is undefined");
         }
         if (vCategory === undefined) {
             console.warn("Category is undefined");
             return;
         }
-        let categoryId: number = this.categoryMap.getId(vCategory);
+        let categoryId: number | undefined = this.categoryIndex.qualifiedNameToIdIndex[vCategory];
+        if (categoryId === undefined) {
+            throw new Error("Category not found: " + vCategory);
+        }
 
 
         if (this.currentQuery === undefined) {

@@ -43,10 +43,11 @@ export class BackingDatabase {
 
     switch (transactionTypeEnum) {
       case TransactionTypeEnum.REVENUE:
-        this.appService.sharedCategoryTreeRevenueObservable$.subscribe(tree => {
+        this.appService.sharedCategoryTreeRevenue.subscribe(tree => {
           this.treeData = tree;
           // Build the tree nodes from Json object. The result is a list of `TodoItemNode` with nested
           //     file node as children.
+
           const data = tree;
 
           // Notify the change.
@@ -55,7 +56,7 @@ export class BackingDatabase {
         });
         break;
       case TransactionTypeEnum.EXPENSES:
-        this.appService.sharedCategoryTreeExpensesObservable$.subscribe(tree => {
+        this.appService.sharedCategoryTreeExpenses.subscribe(tree => {
           this.treeData = tree;
           // Build the tree nodes from Json object. The result is a list of `TodoItemNode` with nested
           //     file node as children.
@@ -69,7 +70,7 @@ export class BackingDatabase {
       case TransactionTypeEnum.BOTH:
 
 
-        this.appService.sharedCategoryTreeObservable$.subscribe(tree => {
+        this.appService.sharedCategoryTree.subscribe(tree => {
           this.treeData = tree;
           // Build the tree nodes from Json object. The result is a list of `TodoItemNode` with nested
           //     file node as children.

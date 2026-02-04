@@ -2,7 +2,7 @@ import {Component, Input, OnChanges, OnInit, SimpleChanges, ViewChild} from '@an
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 
 import {AppService} from '../app.service';
-import {CategoryMap, DistributionByCategoryForPeriodTableData} from '../model';
+import {DistributionByCategoryForPeriodTableData} from '../model';
 import {Criteria} from "../model/criteria.model";
 // @ts-ignore
 import autocolors from 'chartjs-plugin-autocolors';
@@ -12,6 +12,7 @@ import {TransactionsInContextDialogComponent} from "../transaction-dialog/transa
 import {
   BudgetAssistantApiService,
   CategoryAmount,
+  CategoryIndex,
   PeriodCategoryBreakdown,
   RecurrenceType,
   RevenueAndExpensesPerPeriodAndCategory,
@@ -58,12 +59,12 @@ export class RevenueExpensesPerPeriodAndCategoryComponent implements OnInit, OnC
 
 
   currentTransactionInContextQuery!: TransactionInContextQuery;
-  categoryMap!: CategoryMap;
+  categoryIndex?: CategoryIndex;
 
   constructor(private appService: AppService, public dialog: MatDialog, private apiService: BudgetAssistantApiService) {
-    this.appService.categoryMapObservable$.subscribe((categoryMap) => {
-      if (categoryMap) {
-        this.categoryMap = categoryMap;
+    this.appService.categoryIndexObservable$.subscribe((categoryIndex) => {
+      if (categoryIndex) {
+        this.categoryIndex = categoryIndex;
       }
     });
 

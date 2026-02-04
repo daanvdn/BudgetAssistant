@@ -1,4 +1,4 @@
-import {CategoryRead, TransactionTypeEnum} from '@daanvdn/budget-assistant-client';
+import {CategoryRead, TransactionTypeEnum, TransactionRead} from '@daanvdn/budget-assistant-client';
 
 // Define local types that were previously imported from the client
 export interface SimpleCategory {
@@ -425,4 +425,22 @@ export class CategoryMap {
         return simpleCategory;
     }
 
+}
+
+export interface TransactionWithCategory extends TransactionRead {
+    category?: CategoryRead;
+}
+
+/**
+ * Given a TransactionRead and a category index (id->CategoryRead),
+ * returns a TransactionWithCategory with the resolved category property.
+ */
+export function resolveTransactionCategory(
+    transaction: TransactionRead,
+    categoryIndex: { [id: number]: CategoryRead }
+): TransactionWithCategory {
+    return {
+        ...transaction,
+        category: transaction.categoryId != null ? categoryIndex[transaction.categoryId] : undefined,
+    };
 }

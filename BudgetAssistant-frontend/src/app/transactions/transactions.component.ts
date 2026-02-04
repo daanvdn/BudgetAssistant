@@ -30,10 +30,10 @@ import {faTag} from '@fortawesome/free-solid-svg-icons';
 import {Router} from '@angular/router';
 import {
   BudgetAssistantApiService,
+  CategoryIndex,
   PageTransactionsRequest,
   SortOrder,
   TransactionQuery,
-  TransactionRead,
   TransactionSortProperty,
   TransactionTypeEnum,
   TransactionUpdate,
@@ -43,7 +43,7 @@ import {injectMutation, injectQuery, injectQueryClient} from '@tanstack/angular-
 import {firstValueFrom} from 'rxjs';
 
 import {AppService} from '../app.service';
-import {AmountType, CategoryMap, inferAmountType} from '../model';
+import {AmountType, inferAmountType, TransactionWithCategory} from '../model';
 import {BankAccountSelectionComponent} from '../bank-account-selection/bank-account-selection.component';
 import {TransactionSearchDialogComponent} from '../transaction-search-dialog/transaction-search-dialog.component';
 import {AuthService} from '../auth/auth.service';
@@ -127,7 +127,7 @@ export class TransactionsComponent implements OnInit {
   // ViewChild references
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
-  @ViewChild(MatTable) table!: MatTable<TransactionRead>;
+  @ViewChild(MatTable) table!: MatTable<TransactionWithCategory>;
   @ViewChild(BankAccountSelectionComponent) accountSelectionComponent!: BankAccountSelectionComponent;
   @ViewChild('fileInput') fileInput: any;
 
@@ -137,7 +137,13 @@ export class TransactionsComponent implements OnInit {
   protected readonly transactionQuery = signal<TransactionQuery | undefined>(undefined);
   protected readonly filesAreUploading = signal(false);
   protected readonly transactionsToManuallyReview = signal(0);
-  protected readonly categoryMap = signal<CategoryMap | undefined>(undefined);
+  protected readonly categoryIndex = signal<CategoryIndex | undefined>(undefined);
+
+  // Computed signal to check if category index is ready for mapping
+  protected readonly isCategoryIndexReady = computed(() => {
+    const index = this.categoryIndex();
+    return index !== undefined && Object.keys(index.idToCategoryIndex).length > 0;
+  });
 
   // Pagination state
   protected readonly currentPage = signal(0);
@@ -189,11 +195,16 @@ export class TransactionsComponent implements OnInit {
         query: query ? {...query, accountNumber: query.accountNumber || account} : {accountNumber: account}
       };
 
-      return firstValueFrom(
+      const result = await firstValueFrom(
           this.apiService.transactions.pageTransactionsApiTransactionsPagePost(request)
       );
+
+      return {
+        ...result,
+        content: this.appService.mapTransactionsWithCategory(result.content)
+      };
     },
-    enabled: !!this.selectedAccount(),
+    enabled: !!this.selectedAccount() && this.isCategoryIndexReady(),
     staleTime: 30000, // 30 seconds
     refetchOnWindowFocus: false
   }));
@@ -241,11 +252,11 @@ export class TransactionsComponent implements OnInit {
   }));
 
   ngOnInit(): void {
-    // Subscribe to category map updates
-    this.appService.categoryMapObservable$
+    // Subscribe to category index updates
+    this.appService.categoryIndexObservable$
         .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe(categoryMap => {
-          this.categoryMap.set(categoryMap);
+        .subscribe(categoryIndex => {
+          this.categoryIndex.set(categoryIndex);
         });
 
     // Subscribe to selected bank account changes
@@ -439,8 +450,9 @@ export class TransactionsComponent implements OnInit {
   }
 
   // Transaction update handlers
-  setCategory(transaction: TransactionRead, selectedCategoryQualifiedNameStr: string): void {
-    const category = this.categoryMap()?.getSimpleCategory(selectedCategoryQualifiedNameStr);
+  setCategory(transaction: TransactionWithCategory, selectedCategoryQualifiedNameStr: string): void {
+    const index = this.categoryIndex();
+    const category = index?.qualifiedNameToCategoryIndex[selectedCategoryQualifiedNameStr];
     if (!category) {
       this.snackBar.open('Category not found', 'Close', {duration: 3000});
       return;
@@ -457,7 +469,7 @@ export class TransactionsComponent implements OnInit {
     });
   }
 
-  setIsRecurring(transaction: TransactionRead, event: MatRadioChange): void {
+  setIsRecurring(transaction: TransactionWithCategory, event: MatRadioChange): void {
     const update: TransactionUpdate = {
       isRecurring: event.value
     };
@@ -468,7 +480,7 @@ export class TransactionsComponent implements OnInit {
     });
   }
 
-  setIsAdvanceSharedAccount(transaction: TransactionRead, event: MatRadioChange): void {
+  setIsAdvanceSharedAccount(transaction: TransactionWithCategory, event: MatRadioChange): void {
     const update: TransactionUpdate = {
       isAdvanceSharedAccount: event.value
     };
@@ -480,14 +492,14 @@ export class TransactionsComponent implements OnInit {
   }
 
   // Helper methods
-  amountType(transaction: TransactionRead): AmountType {
+  amountType(transaction: TransactionWithCategory): AmountType {
     if (transaction.amount === undefined || transaction.amount === null) {
       return AmountType.BOTH;
     }
     return inferAmountType(transaction.amount);
   }
 
-  getCategoryQualifiedName(transaction: TransactionRead): string | undefined {
+  getCategoryQualifiedName(transaction: TransactionWithCategory): string | undefined {
     return transaction.category?.qualifiedName;
   }
 

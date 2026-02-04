@@ -8,8 +8,8 @@ import {
     MatDialogRef,
     MatDialogTitle
 } from "@angular/material/dialog";
-import {TransactionRead, TransactionInContextQuery} from "@daanvdn/budget-assistant-client";
-import {AmountType, CategoryMap, inferAmountType} from "../model";
+import {CategoryIndex, TransactionRead, TransactionInContextQuery} from "@daanvdn/budget-assistant-client";
+import {AmountType, inferAmountType} from "../model";
 import {
     MatCell,
     MatCellDef,
@@ -46,12 +46,12 @@ export class TransactionsInContextDialogComponent implements OnInit, AfterViewIn
         "transactionType"
     ];
     private currentSort?: any;
-    private categoryMap?: CategoryMap;
+    private categoryIndex?: CategoryIndex;
 
     constructor(private appService: AppService, public dialogRef: MatDialogRef<TransactionsInContextDialogComponent>,
                 @Inject(MAT_DIALOG_DATA) public query: TransactionInContextQuery, private dateUtils: DateUtilsService) {
-        this.appService.categoryMapObservable$.subscribe(categoryMap => {
-            this.categoryMap = categoryMap;
+        this.appService.categoryIndexObservable$.subscribe(categoryIndex => {
+            this.categoryIndex = categoryIndex;
         });
     }
 
@@ -97,11 +97,11 @@ export class TransactionsInContextDialogComponent implements OnInit, AfterViewIn
     }
 
     setCategory(transaction: TransactionRead, selectedCategoryQualifiedNameStr: string) {
-        let simpleCategory = this.categoryMap?.getSimpleCategory(selectedCategoryQualifiedNameStr);
-        if (! simpleCategory){
+        let category = this.categoryIndex?.qualifiedNameToCategoryIndex[selectedCategoryQualifiedNameStr];
+        if (!category){
             throw new Error("No category found for " + selectedCategoryQualifiedNameStr);
         }
-        this.appService.saveTransactionWithCategoryId(transaction, simpleCategory.id);
+        this.appService.saveTransactionWithCategoryId(transaction, category.id);
     }
 
     saveTransaction(transaction: TransactionRead) {

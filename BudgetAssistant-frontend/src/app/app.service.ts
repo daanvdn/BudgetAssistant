@@ -4,12 +4,13 @@ import {BehaviorSubject, map, Observable, of, Subject, tap} from 'rxjs';
 
 import {Page, PageRequest} from "ngx-pagination-data-source";
 import {
-    CategoryMap,
     DistributionByCategoryForPeriodHandlerResult2,
     FileWrapper,
     ResolvedStartEndDateShortcut,
     StartEndDateShortcut,
-    TransactionsCategorizationResponse
+    TransactionsCategorizationResponse,
+    TransactionWithCategory,
+    resolveTransactionCategory
 } from './model';
 import {AuthService} from "./auth/auth.service";
 import {BudgetTreeNode} from "./budget/budget.component";
@@ -23,14 +24,13 @@ import {
     CategoriesForAccountResponse,
     CategorizeTransactionsResponse,
     CategoryDetailsForPeriodResponse,
+    CategoryIndex,
     CategoryRead,
-    CategoryTreeRead,
     DateRangeShortcut,
     ExpensesAndRevenueForPeriod,
     GetOrCreateRuleSetWrapperRequest,
     Grouping,
     PageTransactionsInContextRequest,
-    PageTransactionsRequest,
     PageTransactionsToManuallyReviewRequest,
     PaginatedResponseTransactionRead,
     ResolvedDateRange,
@@ -43,7 +43,6 @@ import {
     SortOrder,
     SuccessResponse,
     TransactionInContextQuery,
-    TransactionQuery,
     TransactionRead,
     TransactionSortProperty,
     TransactionTypeEnum,
@@ -76,31 +75,27 @@ export class AppService {
     private categoryQueryForSelectedPeriod$ = new BehaviorSubject<RevenueExpensesQuery | undefined>(undefined);
     public categoryQueryForSelectedPeriodObservable$ = this.categoryQueryForSelectedPeriod$.asObservable();
 
-    public sharedCategoryTreeObservable$: Observable<CategoryRead[]> = of([]);
-    public sharedCategoryTreeExpensesObservable$: Observable<CategoryRead[]>;
-    public sharedCategoryTreeRevenueObservable$: Observable<CategoryRead[]>;
+    public sharedCategoryTree: BehaviorSubject<CategoryRead[]> = new BehaviorSubject<CategoryRead[]>([]);
+    public sharedCategoryTreeExpenses: BehaviorSubject<CategoryRead[]> = new BehaviorSubject<CategoryRead[]>([]);
+    public sharedCategoryTreeRevenue: BehaviorSubject<CategoryRead[]> = new BehaviorSubject<CategoryRead[]>([]);
     public fileUploadComplete$ = new Subject<void>();
     public selectedBankAccount$ = new BehaviorSubject<BankAccountRead | undefined>(undefined);
     public selectedBankAccountObservable$ = this.selectedBankAccount$.asObservable();
-    public categoryMapSubject = new BehaviorSubject<CategoryMap | undefined>(undefined);
-    public categoryMapObservable$ = this.categoryMapSubject.asObservable();
+    public categoryIndexSubject = new BehaviorSubject<CategoryIndex | undefined>(undefined);
+    public categoryIndexObservable$ = this.categoryIndexSubject.asObservable();
     refreshBankAccounts = new BehaviorSubject<boolean | undefined>(undefined);
     refreshBankAccountsObservable$ = this.refreshBankAccounts.asObservable();
 
 
     private backendUrl = environment.API_BASE_PATH;
 
+    private idToCategoryIndex$ = new BehaviorSubject<{ [id: number]: CategoryRead }>({});
+
     constructor(private http: HttpClient, private authService: AuthService,
                 private apiService: BudgetAssistantApiService) {
 
-
-        this.sharedCategoryTreeExpensesObservable$ = this.getSharedCategoryTreeExpensesObservable$();
-        this.sharedCategoryTreeRevenueObservable$ = this.getSharedCategoryTreeRevenueObservable$();
-        (async () => {
-            let categories: CategoryRead[] = await this.getMergedCategoryTreeData();
-            this.categoryMapSubject.next(new CategoryMap(categories));
-            this.sharedCategoryTreeObservable$ = of(categories);
-        })();
+        // Fetch the category index once and derive all observables from it
+        this.fetchAndStoreCategoryIndex();
 
 
     }
@@ -110,67 +105,9 @@ export class AppService {
     }
 
 
-    private getSharedCategoryTreeRevenueObservable$() {
-        return this.apiService.categories.getCategoryTreeApiCategoriesTreeGet(TransactionTypeEnum.REVENUE).pipe(
-            map((categoryTree: CategoryTreeRead) => {
-                let childrenCast: Array<CategoryRead> = []
-                let children = categoryTree.root?.children;
-                if (children) {
-                    for (let childObj of children) {
-                        childrenCast.push(childObj as CategoryRead);
-                    }
-                }
-                return childrenCast;
-
-            })
-        );
-    }
-
-    private getSharedCategoryTreeExpensesObservable$(): Observable<CategoryRead[]> {
-        return this.apiService.categories.getCategoryTreeApiCategoriesTreeGet(TransactionTypeEnum.EXPENSES).pipe(
-            map((categoryTree: CategoryTreeRead) => {
-                let childrenCast: Array<CategoryRead> = []
-                let children = categoryTree.root?.children;
-                if (children) {
-                    for (let childObj of children) {
-                        childrenCast.push(childObj as CategoryRead);
-                    }
-                }
-                return childrenCast;
-
-            })
-        );
-    }
-
-    // The convertSimplifiedCategoryToCategoryNode method has been removed as we now use SimplifiedCategory directly
-
-
-    private async getMergedCategoryTreeData(): Promise<CategoryRead[]> {
-
-        let allData: CategoryRead[] = [];
-        let expenses = await this.getSharedCategoryTreeExpensesObservable$().toPromise();
-        let revenue = await this.getSharedCategoryTreeRevenueObservable$().toPromise();
-
-        if (expenses == undefined || revenue == undefined) {
-            throw new Error("expenses or revenue is undefined!");
-        }
-
-        allData = allData.concat(expenses);
-        for (const category of revenue) {
-            if (!(category.name === "NO CATEGORY" || category.name === "DUMMY CATEGORY")) {
-                allData.push(category);
-            }
-        }
-        return allData;
-    }
 
     setBankAccount(bankAccount: BankAccountRead) {
         this.selectedBankAccount$.next(bankAccount);
-    }
-
-
-    setCategoryQueryForSelectedPeriod$(query: RevenueExpensesQuery) {
-        this.categoryQueryForSelectedPeriod$.next(query);
     }
 
 
@@ -255,7 +192,7 @@ export class AppService {
     public saveTransaction(transaction: TransactionRead): void {
         const transactionUpdate: TransactionUpdate = {
             transaction: transaction.transaction,
-            categoryId: transaction.category?.id,
+            categoryId: transaction.categoryId,
             manuallyAssignedCategory: transaction.manuallyAssignedCategory,
             isRecurring: transaction.isRecurring,
             isAdvanceSharedAccount: transaction.isAdvanceSharedAccount,
@@ -307,38 +244,11 @@ export class AppService {
         return page;
     }
 
-    public pageTransactions(request: PageRequest<TransactionRead>,
-                            transactionQuery: TransactionQuery | undefined): Observable<Page<TransactionRead>> {
-        //request.size = 1000;
-
-        let tmpSortOrder = "asc";
-        if (request.sort && request.sort.order) {
-            tmpSortOrder = request.sort.order;
-        }
-
-        let tmpSortProperty = "bookingDate";
-        if (request.sort && request.sort.property) {
-
-            tmpSortProperty = request.sort.property;
-        }
-        let pageTransactionsRequest: PageTransactionsRequest = {
-            page: request.page,
-            size: request.size,
-            sortOrder: tmpSortOrder as SortOrder,
-            sortProperty: this.camelToSnake(tmpSortProperty) as TransactionSortProperty,
-            query: transactionQuery
-
-        }
-        return this.apiService.transactions.pageTransactionsApiTransactionsPagePost(
-            pageTransactionsRequest).pipe(map((result: PaginatedResponseTransactionRead) => {
-
-            return this.toPage(result);
-
-
-        }));
-
-
+    public mapTransactionsWithCategory(transactions: TransactionRead[]): TransactionWithCategory[] {
+        const index = this.idToCategoryIndex$.getValue();
+        return transactions.map(t => resolveTransactionCategory(t, index));
     }
+
 
     public pageTransactionsInContext(request: PageRequest<TransactionRead>,
                                      query: TransactionInContextQuery): Observable<Page<TransactionRead>> {
@@ -645,5 +555,47 @@ export class AppService {
             accountNumber, transactionType)
             .pipe(map((response: CategoriesForAccountResponse) => response.categories ?? []))
 
+    }
+
+    private fetchAndStoreCategoryIndex() {
+        this.apiService.categories.getCategoryIndexApiCategoriesCategoryIndexGet().subscribe(index => {
+            // Store the full CategoryIndex for lookups
+            this.categoryIndexSubject.next(index);
+
+            // Store the id-to-category mapping for transaction category resolution
+            this.idToCategoryIndex$.next(index.idToCategoryIndex);
+
+            // Push tree data to existing subscribers via BehaviorSubject.next()
+            this.sharedCategoryTreeExpenses.next(index.expensesRootChildren ?? []);
+            this.sharedCategoryTreeRevenue.next(index.revenueRootChildren ?? []);
+            this.sharedCategoryTree.next([
+                ...(index.expensesRootChildren ?? []),
+                ...(index.revenueRootChildren ?? [])
+            ]);
+        });
+    }
+
+    /**
+     * Get a category by its qualified name from the CategoryIndex.
+     * Returns the CategoryRead or undefined if not found.
+     */
+    public getCategoryByQualifiedName(qualifiedName: string): CategoryRead | undefined {
+        const index = this.categoryIndexSubject.getValue();
+        if (!index || !qualifiedName) {
+            return undefined;
+        }
+        return index.qualifiedNameToCategoryIndex[qualifiedName];
+    }
+
+    /**
+     * Get the category ID by its qualified name.
+     * Returns the ID or undefined if not found.
+     */
+    public getCategoryIdByQualifiedName(qualifiedName: string): number | undefined {
+        const index = this.categoryIndexSubject.getValue();
+        if (!index || !qualifiedName) {
+            return undefined;
+        }
+        return index.qualifiedNameToIdIndex[qualifiedName];
     }
 }

@@ -17,8 +17,8 @@ import {PaginationDataSource, SimpleDataSource} from "ngx-pagination-data-source
 import {AppService} from "../app.service";
 import {BehaviorSubject, map, Observable} from "rxjs";
 import {MatButtonToggle, MatButtonToggleChange, MatButtonToggleGroup} from "@angular/material/button-toggle";
-import {BankAccountRead, TransactionRead, TransactionTypeEnum} from "@daanvdn/budget-assistant-client";
-import {AmountType, CategoryMap, inferAmountType} from "../model";
+import {BankAccountRead, CategoryIndex, TransactionRead, TransactionTypeEnum} from "@daanvdn/budget-assistant-client";
+import {AmountType, inferAmountType} from "../model";
 import {MatToolbar} from '@angular/material/toolbar';
 import {BankAccountSelectionComponent} from '../bank-account-selection/bank-account-selection.component';
 import {AsyncPipe, NgIf} from '@angular/common';
@@ -97,7 +97,7 @@ export class ManualCategorizationViewComponent implements OnInit {
 
 
   dataSource!: GroupByCounterpartyDataSource;
-  categoryMap!: CategoryMap;
+  categoryIndex?: CategoryIndex;
 
   private bankAccount!: BankAccountRead;
   displayedColumns = [
@@ -114,9 +114,9 @@ export class ManualCategorizationViewComponent implements OnInit {
         this.dataSource = this.initDataSource(account, this.activeView.getValue());
       }
     });
-    appService.categoryMapObservable$.subscribe(categoryMap => {
-      if (categoryMap) {
-        this.categoryMap = categoryMap;
+    appService.categoryIndexObservable$.subscribe(categoryIndex => {
+      if (categoryIndex) {
+        this.categoryIndex = categoryIndex;
       }}
     )
 
@@ -153,8 +153,8 @@ export class ManualCategorizationViewComponent implements OnInit {
   }
 
   setCategory(row: (TransactionRead | GroupBy), selectedCategoryQualifiedNameStr: string) {
-    // Get the SimpleCategory object from the CategoryMap
-    const category = this.categoryMap.getSimpleCategory(selectedCategoryQualifiedNameStr);
+    // Get the category from the CategoryIndex
+    const category = this.categoryIndex?.qualifiedNameToCategoryIndex[selectedCategoryQualifiedNameStr];
 
     // Check if row is an interface that has key 'isGroupBy'
     if ("isGroupBy" in row) {

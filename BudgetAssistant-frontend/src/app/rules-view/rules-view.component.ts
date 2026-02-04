@@ -181,12 +181,12 @@ class CategoryTreeWrapper {
 
         switch (type) {
             case "revenue":
-                this.appService.sharedCategoryTreeRevenueObservable$.subscribe(nodes => {
+                this.appService.sharedCategoryTreeRevenue.subscribe(nodes => {
                     this.dataSource.data = filterAndSortNodes(nodes);
                 })
                 break;
             case "expenses":
-                this.appService.sharedCategoryTreeExpensesObservable$.subscribe(nodes => {
+                this.appService.sharedCategoryTreeExpenses.subscribe(nodes => {
                     this.dataSource.data = filterAndSortNodes(nodes);
                 })
                 break;
