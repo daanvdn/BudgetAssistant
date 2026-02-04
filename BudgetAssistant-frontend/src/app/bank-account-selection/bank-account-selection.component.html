@@ -1,5 +1,5 @@
-<div [formGroup]="bankAccountFormFieldGroup" class="inline_block" style="width: fit-content">
-  <mat-form-field appearance="fill" >
+<div [formGroup]="bankAccountFormFieldGroup" class="inline_block">
+  <mat-form-field appearance="fill" [style.width]="formFieldWidth">
     <mat-label>Selecteer rekening</mat-label>
     <mat-select placeholder="Rekening" name="rekening" [(value)]="selectedBankAccount" (selectionChange)="ngOnChanges()">
       <mat-option *ngFor="let bankAccount of bankAccounts" [value]="bankAccount">

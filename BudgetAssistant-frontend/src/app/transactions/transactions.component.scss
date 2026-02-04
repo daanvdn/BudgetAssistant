@@ -83,10 +83,11 @@ $breakpoint-tablet: 1024px;
 }
 
 .bank-account-selector {
-  min-width: 200px;
+  /* Width is dynamically calculated by the component based on account numbers */
+  flex-shrink: 0;
 
   @media (max-width: $breakpoint-mobile) {
-    min-width: 100%;
+    width: 100%;
   }
 }
 

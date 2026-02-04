@@ -4,8 +4,8 @@
 .inline_block {
     display: inline-block;
     padding: 2px;
-    //min-width:350px
-    /* width:120px;
-    height:120px;
-    border: 1px solid red; */
+}
+
+:host {
+    display: inline-block;
 }
