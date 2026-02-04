@@ -9,6 +9,7 @@ from auth.dependencies import CurrentUser
 from common.enums import TransactionTypeEnum
 from db.database import get_session
 from schemas import CategoryRead, CategoryTreeRead
+from schemas.category import CategoryIndex
 from services.category_service import category_service
 
 router = APIRouter(prefix="/categories", tags=["Categories"])
@@ -29,9 +30,7 @@ def _dict_to_category_read(tree_dict: dict) -> CategoryRead:
 
 @router.get("/tree", response_model=CategoryTreeRead)
 async def get_category_tree(
-    transaction_type: TransactionTypeEnum = Query(
-        ..., description="Type of transactions (EXPENSES or REVENUE)"
-    ),
+    transaction_type: TransactionTypeEnum = Query(..., description="Type of transactions (EXPENSES or REVENUE)"),
     current_user: CurrentUser = None,
     session: AsyncSession = Depends(get_session),
 ) -> CategoryTreeRead:
@@ -64,19 +63,22 @@ async def get_category_tree(
     )
 
 
+@router.get("/category_index", response_model=CategoryIndex)
+async def get_category_index(current_user: CurrentUser = None, session: AsyncSession = Depends(get_session)):
+    tree = await category_service.get_category_tree(TransactionTypeEnum.BOTH, session)
+    index = CategoryIndex.from_tree(tree)
+    return index
+
+
 @router.get("", response_model=List[CategoryRead])
 async def list_categories(
-    transaction_type: TransactionTypeEnum | None = Query(
-        None, description="Filter by transaction type"
-    ),
+    transaction_type: TransactionTypeEnum | None = Query(None, description="Filter by transaction type"),
     current_user: CurrentUser = None,
     session: AsyncSession = Depends(get_session),
 ) -> List[CategoryRead]:
     """List all categories, optionally filtered by type."""
     if transaction_type:
-        categories = await category_service.get_categories_by_type(
-            transaction_type, session
-        )
+        categories = await category_service.get_categories_by_type(transaction_type, session)
     else:
         categories = await category_service.get_all_categories(session)
 
@@ -141,9 +143,7 @@ async def get_category_by_qualified_name(
     session: AsyncSession = Depends(get_session),
 ) -> CategoryRead:
     """Get a category by its qualified name."""
-    category = await category_service.get_category_by_qualified_name(
-        qualified_name, session
-    )
+    category = await category_service.get_category_by_qualified_name(qualified_name, session)
 
     if not category:
         raise HTTPException(

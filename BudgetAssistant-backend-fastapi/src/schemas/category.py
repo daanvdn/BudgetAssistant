@@ -31,5 +31,36 @@ class CategoryTreeRead(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class CategoryIndex(BaseModel):
+    id_to_category_index: dict[int, CategoryRead]
+    qualified_name_to_category_index: dict[str, CategoryRead]
+    qualified_name_to_id_index: dict[str, int]
+
+    @classmethod
+    def from_tree(cls, tree: CategoryTreeRead) -> "CategoryIndex":
+        id_to_category_index: dict[int, CategoryRead] = {}
+        qualified_name_to_category_index: dict[str, CategoryRead] = {}
+        qualified_name_to_id_index: dict[str, int] = {}
+
+        def populate_indexes(category: CategoryRead) -> None:
+            """Recursively populate indexes from a category and its children."""
+            id_to_category_index[category.id] = category
+            qualified_name_to_category_index[category.qualified_name] = category
+            qualified_name_to_id_index[category.qualified_name] = category.id
+
+            for child in category.children:
+                populate_indexes(child)
+
+        # Start from the root if it exists
+        if tree.root is not None:
+            populate_indexes(tree.root)
+
+        return cls(
+            id_to_category_index=id_to_category_index,
+            qualified_name_to_category_index=qualified_name_to_category_index,
+            qualified_name_to_id_index=qualified_name_to_id_index,
+        )
+
+
 # Required for recursive type reference
 CategoryRead.model_rebuild()
