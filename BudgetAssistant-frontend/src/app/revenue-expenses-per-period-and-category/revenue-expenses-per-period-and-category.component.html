@@ -41,7 +41,7 @@
       <!-- Chart Section -->
       <section class="chart-section">
         <div class="section-header">
-          <h2>Category Distribution</h2>
+          <span class="chart-title">Category Distribution</span>
           <span class="transaction-type-badge" [class.expenses]="criteria()?.transactionType === TransactionTypeEnum.EXPENSES"
                 [class.revenue]="criteria()?.transactionType === TransactionTypeEnum.REVENUE">
             {{ criteria()?.transactionType === TransactionTypeEnum.EXPENSES ? 'Expenses' : 

@@ -4,7 +4,7 @@ from datetime import date, datetime
 from enum import Enum
 from typing import Generic, List, Optional, TypeVar
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from common.enums import RecurrenceType, TransactionTypeEnum
 
@@ -131,8 +131,17 @@ class RevenueExpensesQuery(BaseModel):
     start: datetime
     end: datetime
     grouping: Grouping
-    revenue_recurrence: Optional[RecurrenceType] = None
-    expenses_recurrence: Optional[RecurrenceType] = None
+    revenue_recurrence: RecurrenceType | None = None
+    expenses_recurrence: RecurrenceType | None = None
+
+    @field_validator("start", "end", mode="before")
+    @classmethod
+    def strip_extra_quotes(cls, v):
+        """Strip extra quotes from datetime strings if present."""
+        if isinstance(v, str):
+            # Remove leading/trailing quotes that may be double-encoded
+            return v.strip('"')
+        return v
 
     def is_empty(self) -> bool:
         """Check if query is effectively empty."""

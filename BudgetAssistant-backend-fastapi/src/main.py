@@ -94,7 +94,9 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         f"Query params: {dict(request.query_params)}\n"
         f"Request body: {body}\n"
         f"Headers: {dict(request.headers)}\n"
-        f"Validation errors:\n" + "\n".join(error_details)
+        f"Validation errors:\n" + "\n".join(error_details),
+        exc_info=True,
+        stack_info=True,
     )
 
     return JSONResponse(
