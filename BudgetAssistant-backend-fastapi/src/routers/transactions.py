@@ -64,9 +64,7 @@ async def page_transactions_in_context(
     query = request.query
 
     # Check user access
-    if not await bank_account_service.user_has_access(
-        current_user, query.bank_account, session
-    ):
+    if not await bank_account_service.user_has_access(current_user, query.bank_account, session):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access denied to this bank account",
@@ -84,6 +82,8 @@ async def page_transactions_in_context(
         sort_order=request.sort_order.value,
         sort_property=request.sort_property.value,
         session=session,
+        start_date=None,
+        end_date=None,
     )
 
     content = [TransactionRead.model_validate(t) for t in transactions]
@@ -95,9 +95,7 @@ async def page_transactions_in_context(
     )
 
 
-@router.post(
-    "/page-to-manually-review", response_model=PaginatedResponse[TransactionRead]
-)
+@router.post("/page-to-manually-review", response_model=PaginatedResponse[TransactionRead])
 async def page_transactions_to_manually_review(
     request: PageTransactionsToManuallyReviewRequest,
     current_user: CurrentUser,
@@ -105,9 +103,7 @@ async def page_transactions_to_manually_review(
 ) -> PaginatedResponse[TransactionRead]:
     """Get paginated transactions that need manual review."""
     # Check user access
-    if not await bank_account_service.user_has_access(
-        current_user, request.bank_account, session
-    ):
+    if not await bank_account_service.user_has_access(current_user, request.bank_account, session):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access denied to this bank account",
@@ -143,9 +139,7 @@ async def count_transactions_to_manually_review(
 ) -> CountResponse:
     """Count transactions that need manual review for a bank account."""
     # Check user access
-    if not await bank_account_service.user_has_access(
-        current_user, bank_account, session
-    ):
+    if not await bank_account_service.user_has_access(current_user, bank_account, session):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access denied to this bank account",
@@ -159,9 +153,7 @@ async def count_transactions_to_manually_review(
     return CountResponse(count=count)
 
 
-@router.post(
-    "/save", response_model=SuccessResponse, responses={400: {"model": ErrorResponse}}
-)
+@router.post("/save", response_model=SuccessResponse, responses={400: {"model": ErrorResponse}})
 async def save_transaction(
     transaction_update: TransactionUpdate,
     transaction_id: str,
@@ -179,9 +171,7 @@ async def save_transaction(
         )
 
     # Check user access to the transaction's bank account
-    if not await bank_account_service.user_has_access(
-        current_user, transaction.bank_account_id, session
-    ):
+    if not await bank_account_service.user_has_access(current_user, transaction.bank_account_id, session):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access denied to this transaction",
@@ -189,9 +179,7 @@ async def save_transaction(
 
     # Verify category exists if provided
     if transaction_update.category_id is not None:
-        cat_result = await session.execute(
-            select(Category).where(Category.id == transaction_update.category_id)
-        )
+        cat_result = await session.execute(select(Category).where(Category.id == transaction_update.category_id))
         if not cat_result.scalar_one_or_none():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -268,9 +256,7 @@ async def get_distinct_counterparty_names(
 ) -> List[str]:
     """Get distinct counterparty names for a bank account."""
     # Check user access
-    if not await bank_account_service.user_has_access(
-        current_user, bank_account, session
-    ):
+    if not await bank_account_service.user_has_access(current_user, bank_account, session):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access denied to this bank account",
@@ -290,9 +276,7 @@ async def get_distinct_counterparty_accounts(
 ) -> List[str]:
     """Get distinct counterparty account numbers for a bank account."""
     # Check user access
-    if not await bank_account_service.user_has_access(
-        current_user, bank_account, session
-    ):
+    if not await bank_account_service.user_has_access(current_user, bank_account, session):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access denied to this bank account",

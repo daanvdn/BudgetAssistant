@@ -30,6 +30,7 @@ import {
     TransactionTypeEnum,
     BankAccountRead
 } from '@daanvdn/budget-assistant-client';
+import {DateUtilsService} from "../shared/date-utils.service";
 
 // Custom date format
 export const PICK_FORMATS = {
@@ -146,7 +147,7 @@ export class TransactionSearchDialogComponent implements OnInit, OnDestroy {
     constructor(
         public dialogRef: MatDialogRef<TransactionSearchDialogComponent>,
         @Inject(MAT_DIALOG_DATA) public data: TransactionQuery,
-        private appService: AppService
+        private appService: AppService, private dateUtilsService: DateUtilsService
     ) {
         // Subscribe to category index
         this.appService.categoryIndexObservable$
@@ -319,8 +320,8 @@ export class TransactionSearchDialogComponent implements OnInit, OnDestroy {
             transactionType: this.transactionTypeControl.value ?? undefined,
             minAmount: this.minAmountControl.value ?? undefined,
             maxAmount: this.maxAmountControl.value ?? undefined,
-            startDate: this.dateToString(startDate),
-            endDate: this.dateToString(endDate),
+            startDate: startDate? this.dateUtilsService.stringifyDateWithoutTime(startDate): undefined,
+            endDate: endDate? this.dateUtilsService.stringifyDateWithoutTime(endDate): undefined,
             counterpartyName: this.counterpartyNameControl.value || undefined,
             counterpartyAccountNumber: this.counterpartyAccountControl.value || undefined,
             transactionOrCommunication: this.communicationTextControl.value || undefined,

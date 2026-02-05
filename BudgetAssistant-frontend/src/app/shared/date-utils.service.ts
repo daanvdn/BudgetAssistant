@@ -27,4 +27,9 @@ export class DateUtilsService {
 
     return null;
   }
+
+  public stringifyDateWithoutTime(date: Date): string {
+
+    return JSON.stringify(date.toISOString().slice(0,10));
+  }
 }

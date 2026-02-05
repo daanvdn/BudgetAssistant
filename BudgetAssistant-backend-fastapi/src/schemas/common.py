@@ -81,24 +81,24 @@ class PaginationParams(BaseModel):
 class TransactionQuery(BaseModel):
     """Query parameters for filtering transactions."""
 
-    transaction_type: Optional[TransactionTypeEnum] = None
-    counterparty_name: Optional[str] = None
-    min_amount: Optional[float] = None
-    max_amount: Optional[float] = None
-    account_number: Optional[str] = None
-    category_id: Optional[int] = None
-    transaction_or_communication: Optional[str] = None
-    counterparty_account_number: Optional[str] = None
-    start_date: Optional[date] = None
-    end_date: Optional[date] = None
-    upload_timestamp: Optional[datetime] = None
+    transaction_type: TransactionTypeEnum | None = None
+    counterparty_name: str | None = None
+    min_amount: float | None = None
+    max_amount: float | None = None
+    account_number: str | None = None
+    category_id: int | None = None
+    transaction_or_communication: str | None = None
+    counterparty_account_number: str | None = None
+    start_date: date | None = None
+    end_date: date | None = None
+    upload_timestamp: datetime | None = None
     manually_assigned_category: bool = False
 
 
 class PageTransactionsRequest(PaginationParams):
     """Request schema for paginated transactions."""
 
-    query: Optional[TransactionQuery] = None
+    query: TransactionQuery | None = None
 
 
 class TransactionInContextQuery(BaseModel):
@@ -106,6 +106,8 @@ class TransactionInContextQuery(BaseModel):
 
     bank_account: str
     period: str
+    start_date: date
+    end_date: date
     transaction_type: TransactionTypeEnum
     category_id: int
 

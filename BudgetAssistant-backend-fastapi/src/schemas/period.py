@@ -62,8 +62,8 @@ class Period:
 
     def init_value(
         self,
-        start: Union[datetime, date],
-        end: Union[datetime, date],
+        start: date,
+        end: date,
         grouping: Grouping,
     ) -> str:
         """Initialize the formatted value string for this period."""

@@ -20,6 +20,7 @@ import {
   TransactionTypeEnum
 } from '@daanvdn/budget-assistant-client';
 import {Criteria} from '../model/criteria.model';
+import {DateUtilsService} from "../shared/date-utils.service";
 
 /**
  * Extended interface to include computed balance for display
@@ -49,6 +50,7 @@ export class ExpensesRevenueComponent implements OnInit {
   // Dependency injection
   private readonly apiService = inject(BudgetAssistantApiService);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly dateUtilsService = inject(DateUtilsService);
 
   // Input signal for criteria (optional since parent may not initialize immediately)
   readonly criteria = input<Criteria | undefined>(undefined);
@@ -225,17 +227,14 @@ export class ExpensesRevenueComponent implements OnInit {
       accountNumber: criteria.bankAccount.accountNumber,
       grouping: criteria.grouping,
       transactionType: TransactionTypeEnum.BOTH,
-      start: this.formatDate(criteria.startDate),
-      end: this.formatDate(criteria.endDate),
+      start:  this.dateUtilsService.stringifyDateWithoutTime(criteria.startDate),
+      end: this.dateUtilsService.stringifyDateWithoutTime(criteria.endDate),
       expensesRecurrence: RecurrenceType.BOTH,
       revenueRecurrence: RecurrenceType.BOTH
     };
   }
 
-  private formatDate(date: Date): string {
-    // Format as ISO date string (YYYY-MM-DD)
-    return date.toISOString().split('T')[0];
-  }
+
 
   private isValidCriteria(criteria: Criteria | undefined): boolean {
     return !!(

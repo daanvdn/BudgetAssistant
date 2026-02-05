@@ -30,6 +30,7 @@ import {
 } from '@daanvdn/budget-assistant-client';
 import { TransactionsInContextDialogComponent } from '../transaction-dialog/transactions-in-context-dialog.component';
 import { ErrorDialogService } from '../error-dialog/error-dialog.service';
+import {DateUtilsService} from "../shared/date-utils.service";
 
 /**
  * Represents a single row in the category breakdown table.
@@ -69,6 +70,7 @@ export class RevenueExpensesPerPeriodAndCategoryComponent {
   private readonly appService = inject(AppService);
   private readonly dialog = inject(MatDialog);
   private readonly errorDialogService = inject(ErrorDialogService);
+  private readonly dateUtilsService = inject(DateUtilsService);
 
   // Input
   readonly criteria = input<Criteria>();
@@ -167,8 +169,8 @@ export class RevenueExpensesPerPeriodAndCategoryComponent {
       accountNumber: c.bankAccount.accountNumber,
       grouping: c.grouping,
       transactionType: transactionType,
-      start: JSON.stringify(c.startDate),
-      end: JSON.stringify(c.endDate),
+      start: this.dateUtilsService.stringifyDateWithoutTime(c.startDate),
+      end: this.dateUtilsService.stringifyDateWithoutTime(c.endDate),
       expensesRecurrence: RecurrenceType.BOTH,
       revenueRecurrence: RecurrenceType.BOTH
     };
@@ -177,6 +179,7 @@ export class RevenueExpensesPerPeriodAndCategoryComponent {
       this.apiService.analysis.getRevenueAndExpensesPerPeriodAndCategoryApiAnalysisRevenueExpensesPerPeriodAndCategoryPost(query)
     );
   }
+
 
   /**
    * Initialize chart options for stacked horizontal bar chart
@@ -355,7 +358,8 @@ export class RevenueExpensesPerPeriodAndCategoryComponent {
   /**
    * Handle context menu open for a table cell
    */
-  openContextMenu(period: string, category: string, categoryId: number | undefined, event: MouseEvent): void {
+  openContextMenu(period: string, categoryId: number | undefined, startDate: Date, endDate: Date,
+                  event: MouseEvent): void {
     event.preventDefault();
 
     const c = this.criteria();
@@ -365,7 +369,9 @@ export class RevenueExpensesPerPeriodAndCategoryComponent {
       period: period,
       categoryId: categoryId ?? -1,
       bankAccount: c.bankAccount.accountNumber,
-      transactionType: c.transactionType as TransactionTypeEnum
+      transactionType: c.transactionType as TransactionTypeEnum,
+      startDate: this.dateUtilsService.stringifyDateWithoutTime(startDate),
+      endDate: this.dateUtilsService.stringifyDateWithoutTime(endDate)
     });
   }
 

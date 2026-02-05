@@ -1,6 +1,6 @@
 """Transaction service with async SQLModel operations."""
 
-from datetime import datetime
+from datetime import date, datetime
 from typing import List, Optional, Tuple
 
 from sqlalchemy import and_, func, or_, select
@@ -163,13 +163,26 @@ class TransactionService:
         sort_order: str,
         sort_property: str,
         session: AsyncSession,
+        start_date: date | None = None,
+        end_date: date | None = None,
     ) -> tuple[list[Transaction], int]:
-        """Get paginated transactions for a specific context (period, category)."""
+        """Get paginated transactions for a specific context (period, category).
+        :param start_date:
+        :param end_date:
+        """
         normalized = BankAccount.normalize_account_number(bank_account)
-
         conditions = [
             Transaction.bank_account_id == normalized,
         ]
+        if start_date is not None:
+            # ensure that end_date is also not None
+            if not end_date:
+                raise ValueError("When start_date is provided, end_date must also be provided!")
+
+            conditions.extend([Transaction.booking_date >= start_date, Transaction.booking_date <= end_date])
+        else:
+            if end_date:
+                raise ValueError("When end_date is provided, start_date must also be provided!")
 
         # If category_id is -1, find transactions with no category (null)
         if category_id == -1:

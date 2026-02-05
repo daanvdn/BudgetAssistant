@@ -26,6 +26,7 @@ import {
 } from "@daanvdn/budget-assistant-client";
 import {catchError, throwError} from "rxjs";
 import {NgFor, NgIf} from '@angular/common';
+import {DateUtilsService} from "../shared/date-utils.service";
 
 /** Local interface to replace PrimeNG TreeNode */
 interface TreeNode {
@@ -56,7 +57,7 @@ export class BudgetTrackingComponent implements OnInit, OnChanges {
     displayedColumns!: string[];
 
 
-    constructor(private appService: AppService, private apiService: BudgetAssistantApiService) {
+    constructor(private appService: AppService, private apiService: BudgetAssistantApiService, private dateUtilsService: DateUtilsService) {
 
 
     }
@@ -70,8 +71,8 @@ export class BudgetTrackingComponent implements OnInit, OnChanges {
             accountNumber: this.criteria.bankAccount.accountNumber,
             grouping: this.criteria.grouping,
             transactionType: TransactionTypeEnum.BOTH,
-            start: JSON.stringify(this.criteria.startDate),
-            end: JSON.stringify(this.criteria.endDate),
+            start: this.dateUtilsService.stringifyDateWithoutTime(this.criteria.startDate),
+            end: this.dateUtilsService.stringifyDateWithoutTime(this.criteria.endDate),
             expensesRecurrence: RecurrenceType.BOTH,
             revenueRecurrence: RecurrenceType.BOTH
 
