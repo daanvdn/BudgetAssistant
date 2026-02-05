@@ -11,7 +11,7 @@ import {
 import {MatDrawer, MatDrawerContainer, MatDrawerContent} from '@angular/material/sidenav';
 import {MatListItem, MatNavList} from '@angular/material/list';
 import {MatDivider} from '@angular/material/divider';
-import {RouterLink, RouterLinkActive, RouterOutlet} from '@angular/router';
+import {RouterLink, RouterLinkActive} from '@angular/router';
 import {FaIconComponent} from '@fortawesome/angular-fontawesome';
 
 @Component({
@@ -20,15 +20,14 @@ import {FaIconComponent} from '@fortawesome/angular-fontawesome';
     styleUrls: ['./navigation.component.scss'],
     standalone: true,
     imports: [
-        MatDrawerContainer, 
-        MatDrawer, 
-        MatNavList, 
+        MatDrawerContainer,
+        MatDrawer,
+        MatNavList,
         MatListItem,
         MatDivider,
-        MatDrawerContent, 
+        MatDrawerContent,
         RouterLink,
-        RouterLinkActive, 
-        RouterOutlet,
+        RouterLinkActive,
         FaIconComponent
     ]
 })

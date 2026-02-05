@@ -2,62 +2,62 @@
   <mat-drawer #drawer class="nav-drawer" mode="side" disableClose="true" opened="true">
     <mat-nav-list class="nav-list">
       <!-- Main navigation items -->
-      <a mat-list-item 
-         class="nav-item" 
-         routerLink="/profiel" 
-         routerLinkActive="activebutton" 
+      <a mat-list-item
+         class="nav-item"
+         routerLink="/profiel"
+         routerLinkActive="activebutton"
          ariaCurrentWhenActive="page"
          aria-label="Profiel">
         <fa-icon class="nav-icon" [icon]="faUser" [fixedWidth]="true"></fa-icon>
         <span class="nav-label">Profiel</span>
       </a>
-      
-      <a mat-list-item 
-         class="nav-item" 
-         routerLink="/transacties" 
-         routerLinkActive="activebutton" 
+
+      <a mat-list-item
+         class="nav-item"
+         routerLink="/transacties"
+         routerLinkActive="activebutton"
          ariaCurrentWhenActive="page"
          aria-label="Transacties">
         <fa-icon class="nav-icon" [icon]="faDollarSign" [fixedWidth]="true"></fa-icon>
         <span class="nav-label">Transacties</span>
       </a>
-      
-      <a mat-list-item 
-         class="nav-item" 
-         routerLink="/inzichten" 
-         routerLinkActive="activebutton" 
+
+      <a mat-list-item
+         class="nav-item"
+         routerLink="/inzichten"
+         routerLinkActive="activebutton"
          ariaCurrentWhenActive="page"
          aria-label="Inzichten">
         <fa-icon class="nav-icon" [icon]="faChartPie" [fixedWidth]="true"></fa-icon>
         <span class="nav-label">Inzichten</span>
       </a>
-      
-      <a mat-list-item 
-         class="nav-item" 
-         routerLink="/regels" 
-         routerLinkActive="activebutton" 
+
+      <a mat-list-item
+         class="nav-item"
+         routerLink="/regels"
+         routerLinkActive="activebutton"
          ariaCurrentWhenActive="page"
          aria-label="Regels">
         <fa-icon class="nav-icon" [icon]="faNetworkWired" [fixedWidth]="true"></fa-icon>
         <span class="nav-label">Regels</span>
       </a>
-      
-      <a mat-list-item 
-         class="nav-item" 
-         routerLink="/budget" 
-         routerLinkActive="activebutton" 
+
+      <a mat-list-item
+         class="nav-item"
+         routerLink="/budget"
+         routerLinkActive="activebutton"
          ariaCurrentWhenActive="page"
          aria-label="Budget">
         <fa-icon class="nav-icon" [icon]="faScaleBalanced" [fixedWidth]="true"></fa-icon>
         <span class="nav-label">Budget</span>
       </a>
-      
+
       <!-- Divider before logout -->
       <mat-divider class="nav-divider"></mat-divider>
-      
+
       <!-- Logout action -->
-      <a mat-list-item 
-         class="nav-item nav-item-logout" 
+      <a mat-list-item
+         class="nav-item nav-item-logout"
          (click)="onLogout()"
          (keydown.enter)="onLogout()"
          tabindex="0"
@@ -68,8 +68,8 @@
       </a>
     </mat-nav-list>
   </mat-drawer>
-  
+
   <mat-drawer-content class="nav-content">
-    <router-outlet></router-outlet>
+    <ng-content></ng-content>
   </mat-drawer-content>
 </mat-drawer-container>

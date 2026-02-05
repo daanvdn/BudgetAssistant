@@ -23,12 +23,13 @@ export class AuthInterceptor implements HttpInterceptor {
   ) {}
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    // DEV_AUTH_BYPASS: Add bypass header in development mode
+    // DEV_AUTH_BYPASS: Add bypass header in development mode and skip token validation
     if (!environment.production && environment.devBypassHeader) {
       req = req.clone({
         setHeaders: { [environment.devBypassHeader]: '1' }
       });
-      // Continue with the modified request - bypass header is added alongside any auth token
+      // In dev mode with bypass enabled, skip token validation - backend handles auth via bypass header
+      return next.handle(req);
     }
 
     // Skip auth header for excluded URLs (public endpoints)
