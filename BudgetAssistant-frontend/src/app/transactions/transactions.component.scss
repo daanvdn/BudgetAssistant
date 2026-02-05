@@ -264,6 +264,43 @@ $breakpoint-tablet: 1024px;
   }
 }
 
+// Compact properties cell - category dropdown and toggles in one row
+.properties-cell-compact {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+
+  app-category-tree-dropdown {
+    flex: 1;
+    min-width: 150px;
+    max-width: 200px;
+  }
+}
+
+// Compact toggles with icons
+.toggles-compact {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+
+  .toggle-icon {
+    font-size: 16px;
+    cursor: help;
+    user-select: none;
+  }
+
+  mat-slide-toggle {
+    margin-right: 8px;
+
+    // Hide the label area since we're using icons
+    ::ng-deep .mdc-form-field {
+      width: auto;
+    }
+  }
+}
+
 .properties-cell {
   display: flex;
   flex-direction: column;
@@ -306,11 +343,14 @@ $breakpoint-tablet: 1024px;
   }
 }
 
-// Radio buttons
-mat-radio-button {
-  margin-right: 8px;
+// Slide toggles row
+.toggles-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
 
-  ::ng-deep .mdc-label {
+  mat-slide-toggle {
     font-size: 13px;
   }
 }
@@ -398,28 +438,12 @@ mat-radio-button {
   padding-top: 12px;
   border-top: 1px solid $border-color;
 
-  .property-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-
-    &.inline {
-      flex-direction: row;
-      justify-content: space-between;
-
-      .inline-property {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 4px;
-      }
-    }
+  app-category-tree-dropdown {
+    width: 100%;
   }
 
-  .property-label {
-    min-width: 70px;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+  .toggles-compact {
+    justify-content: flex-start;
   }
 }
 

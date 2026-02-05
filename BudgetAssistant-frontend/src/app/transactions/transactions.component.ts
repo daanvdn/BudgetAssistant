@@ -3,7 +3,7 @@ import {Component, computed, DestroyRef, inject, OnInit, signal, ViewChild} from
 import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 import {MatDialog} from '@angular/material/dialog';
 import {MatPaginator, PageEvent} from '@angular/material/paginator';
-import {MatRadioButton, MatRadioChange, MatRadioGroup} from '@angular/material/radio';
+import {MatSlideToggle, MatSlideToggleChange} from '@angular/material/slide-toggle';
 import {MatSort, MatSortHeader, Sort} from '@angular/material/sort';
 import {
   MatCell,
@@ -95,8 +95,7 @@ interface PaginationState {
     MatCellDef,
     MatCell,
     CategoryTreeDropdownComponent,
-    MatRadioGroup,
-    MatRadioButton,
+    MatSlideToggle,
     MatHeaderRowDef,
     MatHeaderRow,
     MatRowDef,
@@ -166,11 +165,11 @@ export class TransactionsComponent implements OnInit {
   protected readonly viewTypeLabel = computed(() => {
     switch (this.viewType()) {
       case ViewType.RUN_QUERY:
-        return 'Search results';
+        return 'Zoekresultaten';
       case ViewType.SHOW_ALL:
-        return 'All transactions';
+        return 'Alle transacties';
       case ViewType.UPLOAD_TRANSACTIONS:
-        return 'Uploaded transactions';
+        return 'Geüploade transacties';
       default:
         return '';
     }
@@ -475,9 +474,9 @@ export class TransactionsComponent implements OnInit {
     });
   }
 
-  setIsRecurring(transaction: TransactionWithCategory, event: MatRadioChange): void {
+  setIsRecurring(transaction: TransactionWithCategory, event: MatSlideToggleChange): void {
     const update: TransactionUpdate = {
-      isRecurring: event.value
+      isRecurring: event.checked
     };
 
     this.saveTransactionMutation.mutate({
@@ -486,9 +485,9 @@ export class TransactionsComponent implements OnInit {
     });
   }
 
-  setIsAdvanceSharedAccount(transaction: TransactionWithCategory, event: MatRadioChange): void {
+  setIsAdvanceSharedAccount(transaction: TransactionWithCategory, event: MatSlideToggleChange): void {
     const update: TransactionUpdate = {
-      isAdvanceSharedAccount: event.value
+      isAdvanceSharedAccount: event.checked
     };
 
     this.saveTransactionMutation.mutate({
