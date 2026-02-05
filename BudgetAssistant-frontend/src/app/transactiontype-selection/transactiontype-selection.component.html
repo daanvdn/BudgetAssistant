@@ -22,7 +22,7 @@
 
 
 
-<ng-select style="font-size: larger;" [items]="transactionTypesObservable | async"
+<ng-select id="transactionTypeSelect" style="font-size: larger;" [items]="transactionTypesObservable | async"
            autofocus
            [(ngModel)]="selectedTransactionType"
            (change)="onSelectionChange()" 

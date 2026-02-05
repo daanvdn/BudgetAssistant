@@ -13,7 +13,7 @@
   </mat-form-field>
 </div>
 
-<div *ngIf="displayShortcutsAsDropdown===false"
+<div *ngIf="!displayShortcutsAsDropdown"
   style=" padding-top: 2px;padding-bottom: 30px; border-style: solid; border-width: 1px; border-color: lightgray;"
   class="inline_block">
   <p style="text-align: center; font-style: italic; text-decoration: underline;">shortcuts periode</p>
@@ -60,7 +60,7 @@
   </ng-select>
 </div> -->
 
-<div *ngIf="displayShortcutsAsDropdown===true" [formGroup]="formFieldGroup" class="inline_block">
+<div id="shortcuts" *ngIf="displayShortcutsAsDropdown" [formGroup]="formFieldGroup" class="inline_block">
   <mat-form-field appearance="fill" style="width: 100%;" >
     <mat-label>Snelkoppeling periode</mat-label>
     <mat-select placeholder="Rekening" name="rekening" [(value)]="periodShortcutDropDownSelection" (selectionChange)="onDropDownChange()">

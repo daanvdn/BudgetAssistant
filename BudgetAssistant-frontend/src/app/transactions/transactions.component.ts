@@ -39,7 +39,7 @@ import {
   TransactionUpdate,
   UploadTransactionsResponse
 } from '@daanvdn/budget-assistant-client';
-import {injectMutation, injectQuery, injectQueryClient} from '@tanstack/angular-query-experimental';
+import {injectMutation, injectQuery, injectQueryClient, QueryClient} from '@tanstack/angular-query-experimental';
 import {firstValueFrom} from 'rxjs';
 
 import {AppService} from '../app.service';
@@ -119,7 +119,7 @@ export class TransactionsComponent implements OnInit {
   private readonly errorDialogService = inject(ErrorDialogService);
   private readonly router = inject(Router);
   private readonly snackBar = inject(MatSnackBar);
-  private readonly queryClient = injectQueryClient();
+  private readonly queryClient = inject(QueryClient);
 
   // Icon
   protected readonly faTag = faTag;
@@ -406,8 +406,10 @@ export class TransactionsComponent implements OnInit {
   openSearchDialog(): void {
     const dialogRef = this.dialog.open(TransactionSearchDialogComponent, {
       restoreFocus: false,
-      width: '500px',
-      maxWidth: '95vw'
+      width: '700px',
+      maxWidth: '95vw',
+      maxHeight: '90vh',
+      panelClass: 'transaction-search-dialog-panel'
     });
 
     dialogRef.afterClosed()
