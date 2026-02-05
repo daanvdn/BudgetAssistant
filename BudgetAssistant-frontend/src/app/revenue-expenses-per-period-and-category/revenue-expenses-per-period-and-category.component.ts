@@ -6,6 +6,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
+import { MatButtonModule } from '@angular/material/button';
 import { CdkMenuModule } from '@angular/cdk/menu';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartData, ChartEvent, Plugin } from 'chart.js';
@@ -58,6 +59,7 @@ type BarChartData = ChartData<'bar', number[], string>;
     MatProgressSpinnerModule,
     MatIconModule,
     MatCardModule,
+    MatButtonModule,
     CdkMenuModule
   ]
 })
@@ -110,6 +112,7 @@ export class RevenueExpensesPerPeriodAndCategoryComponent {
   });
 
   readonly isLoading = computed(() => this.dataQuery.isPending());
+  readonly isRefreshing = computed(() => this.dataQuery.isFetching() && !this.dataQuery.isPending());
   readonly hasError = computed(() => this.dataQuery.isError());
   readonly isEmpty = computed(() => !this.isLoading() && this.tableData().length === 0);
   readonly hasData = computed(() => this.tableData().length > 0);
@@ -141,6 +144,13 @@ export class RevenueExpensesPerPeriodAndCategoryComponent {
   }
 
   /**
+   * Force refresh the data query, bypassing the stale time
+   */
+  refreshData(): void {
+    this.dataQuery.refetch();
+  }
+
+  /**
    * Fetch data from the API
    */
   private async fetchData(): Promise<RevenueAndExpensesPerPeriodAndCategory> {
@@ -148,11 +158,15 @@ export class RevenueExpensesPerPeriodAndCategoryComponent {
     if (!c) {
       throw new Error('Criteria is required');
     }
+    if (!c.transactionType || c.transactionType === TransactionTypeEnum.BOTH) {
+        throw new Error('Transaction type is required');
+    }
+    const transactionType = c.transactionType as TransactionTypeEnum;
 
     const query: RevenueExpensesQuery = {
       accountNumber: c.bankAccount.accountNumber,
       grouping: c.grouping,
-      transactionType: TransactionTypeEnum.BOTH,
+      transactionType: transactionType,
       start: JSON.stringify(c.startDate),
       end: JSON.stringify(c.endDate),
       expensesRecurrence: RecurrenceType.BOTH,

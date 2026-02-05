@@ -15,7 +15,7 @@
                 <expenses-revenue [criteria]="expensesRevenueCriteria"></expenses-revenue>
             </div>
         </mat-tab>
-        <mat-tab label="Category Overview">
+        <mat-tab label="Category Breakdown">
 
             <div *ngIf="showCriteriaToolbar" style="height: 10vh; padding-left:2px">
                 <criteria-toolbar (criteriaChange)="categoryOverviewCriteria = $event"  (closed)="onClosed()"></criteria-toolbar>

@@ -133,6 +133,22 @@ $breakpoint-tablet: 1024px;
     letter-spacing: 0.01em;
   }
 
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .refresh-button {
+    mat-icon {
+      transition: transform 0.3s ease;
+
+      &.spinning {
+        animation: spin 1s linear infinite;
+      }
+    }
+  }
+
   h2 {
     margin: 0;
     font-size: 18px;
@@ -149,6 +165,15 @@ $breakpoint-tablet: 1024px;
       color: $text-muted;
       cursor: help;
     }
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
   }
 }
 

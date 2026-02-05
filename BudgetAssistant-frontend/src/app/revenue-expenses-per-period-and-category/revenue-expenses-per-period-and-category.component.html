@@ -42,11 +42,20 @@
       <section class="chart-section">
         <div class="section-header">
           <span class="chart-title">Category Distribution</span>
-          <span class="transaction-type-badge" [class.expenses]="criteria()?.transactionType === TransactionTypeEnum.EXPENSES"
-                [class.revenue]="criteria()?.transactionType === TransactionTypeEnum.REVENUE">
-            {{ criteria()?.transactionType === TransactionTypeEnum.EXPENSES ? 'Expenses' : 
-               criteria()?.transactionType === TransactionTypeEnum.REVENUE ? 'Revenue' : 'All' }}
-          </span>
+          <div class="header-actions">
+            <button mat-icon-button
+                    (click)="refreshData()"
+                    [disabled]="isRefreshing()"
+                    matTooltip="Refresh data"
+                    class="refresh-button">
+              <mat-icon [class.spinning]="isRefreshing()">refresh</mat-icon>
+            </button>
+            <span class="transaction-type-badge" [class.expenses]="criteria()?.transactionType === TransactionTypeEnum.EXPENSES"
+                  [class.revenue]="criteria()?.transactionType === TransactionTypeEnum.REVENUE">
+              {{ criteria()?.transactionType === TransactionTypeEnum.EXPENSES ? 'Expenses' :
+                 criteria()?.transactionType === TransactionTypeEnum.REVENUE ? 'Revenue' : 'All' }}
+            </span>
+          </div>
         </div>
         <div class="chart-container">
           @if (chartData()) {
