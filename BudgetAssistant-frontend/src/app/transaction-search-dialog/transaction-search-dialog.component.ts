@@ -132,6 +132,9 @@ export class TransactionSearchDialogComponent implements OnInit, OnDestroy {
     // Signal for selected category
     selectedCategoryId = signal<number | undefined>(undefined);
 
+    // Validation state
+    showValidationError = false;
+
     // Autocomplete data
     counterpartyNames: string[] = [];
     counterpartyAccounts: string[] = [];
@@ -216,8 +219,10 @@ export class TransactionSearchDialogComponent implements OnInit, OnDestroy {
             .pipe(takeUntil(this.destroy$))
             .subscribe(resolved => {
                 // Parse dates - handle the resolved dates properly
-                const startDate = this.parseAndValidateDate(resolved.start);
-                const endDate = this.parseAndValidateDate(resolved.end);
+                // const startDate = this.parseAndValidateDate(resolved.start);
+                // const endDate = this.parseAndValidateDate(resolved.end);
+                const startDate = resolved.start;
+                const endDate = resolved.end;
 
                 this.range.controls.start.setValue(startDate);
                 this.range.controls.end.setValue(endDate);
@@ -271,8 +276,32 @@ export class TransactionSearchDialogComponent implements OnInit, OnDestroy {
     }
 
     onSearchClick(): void {
+        if (!this.hasAnyFilter()) {
+            this.showValidationError = true;
+            return;
+        }
+        this.showValidationError = false;
         const query = this.buildTransactionQuery();
         this.dialogRef.close(query);
+    }
+
+    /**
+     * Check if at least one filter is specified
+     */
+    hasAnyFilter(): boolean {
+        const hasTransactionType = this.transactionTypeControl.value !== null;
+        const hasMinAmount = this.minAmountControl.value !== null && this.minAmountControl.value !== undefined;
+        const hasMaxAmount = this.maxAmountControl.value !== null && this.maxAmountControl.value !== undefined;
+        const hasStartDate = this.range.controls.start.value !== null;
+        const hasEndDate = this.range.controls.end.value !== null;
+        const hasCounterpartyName = !!this.counterpartyNameControl.value?.trim();
+        const hasCounterpartyAccount = !!this.counterpartyAccountControl.value?.trim();
+        const hasCommunicationText = !!this.communicationTextControl.value?.trim();
+        const hasCategory = this.selectedCategoryId() !== undefined;
+
+        return hasTransactionType || hasMinAmount || hasMaxAmount ||
+               hasStartDate || hasEndDate || hasCounterpartyName ||
+               hasCounterpartyAccount || hasCommunicationText || hasCategory;
     }
 
     private dateToString(date: Date | null): string | undefined {

@@ -1,48 +1,53 @@
 // =============================================================================
 // Theme Variables - Based on Angular Theme & Styling Guide
+// Redesigned: Vibrant Teal/Cyan palette for professional financial apps
 // =============================================================================
 
 // -----------------------------------------------------------------------------
-// Primary Colors
+// Primary Colors (Teal/Cyan Theme - Trust & Stability)
 // -----------------------------------------------------------------------------
-$primary-blue: #0d6efd;
-$link-button-blue: #007bff;
-$button-hover-blue: #0056b3;
-$light-blue-hover: #f0f7ff;
+$primary-blue: #0891b2;           // Cyan 600 - Primary actions
+$link-button-blue: #06b6d4;       // Cyan 500 - Links, buttons
+$button-hover-blue: #0e7490;      // Cyan 700 - Hover states
+$light-blue-hover: #ecfeff;       // Cyan 50 - Light hover backgrounds
+
+// Secondary accent colors
+$accent-indigo: #6366f1;          // Indigo 500 - Secondary accent
+$accent-violet: #8b5cf6;          // Violet 500 - Tertiary accent
 
 // -----------------------------------------------------------------------------
-// Status/Semantic Colors
+// Status/Semantic Colors (Vibrant but Accessible)
 // -----------------------------------------------------------------------------
-$success-green: #28a745;
-$success-green-hover: #218838;
-$error-danger-red: #dc3545;
+$success-green: #059669;          // Emerald 600 - Income, success
+$success-green-hover: #047857;    // Emerald 700 - Hover
+$error-danger-red: #dc2626;       // Red 600 - Expenses, errors
 
 // Income/Expense backgrounds
-$income-green-bg: #d4edda;
-$income-green-border: #c3e6cb;
-$expense-red-bg: #f8d7da;
-$expense-red-border: #f5c6cb;
-$info-blue-bg: #d1ecf1;
-$info-blue-border: #bee5eb;
+$income-green-bg: #d1fae5;        // Emerald 100
+$income-green-border: #a7f3d0;    // Emerald 200
+$expense-red-bg: #fee2e2;         // Red 100
+$expense-red-border: #fecaca;     // Red 200
+$info-blue-bg: #e0f2fe;           // Sky 100
+$info-blue-border: #bae6fd;       // Sky 200
 
 // -----------------------------------------------------------------------------
-// Neutral Colors
+// Neutral Colors (Warm Slate Tones)
 // -----------------------------------------------------------------------------
-$page-background: #f5f5f5;
-$card-background: #ffffff;
-$filter-section-bg: #f8f9fa;
-$text-primary: #333333;
-$text-secondary: #555555;
-$text-muted: #666666;
-$text-muted-light: #888888;
-$border-gray: #dddddd;
-$hover-gray: #f9f9f9;
-$tag-background: #e9ecef;
+$page-background: #f8fafc;        // Slate 50 - Warm page background
+$card-background: #ffffff;        // White - Card surfaces
+$filter-section-bg: #f1f5f9;      // Slate 100 - Filter sections
+$text-primary: #1e293b;           // Slate 800 - Primary text
+$text-secondary: #64748b;         // Slate 500 - Secondary text
+$text-muted: #94a3b8;             // Slate 400 - Muted text
+$text-muted-light: #cbd5e1;       // Slate 300 - Very muted
+$border-gray: #e2e8f0;            // Slate 200 - Borders
+$hover-gray: #e0f2fe;             // Sky 100 - Row hover with color tint
+$tag-background: #dbeafe;         // Blue 100 - Tags, badges
 
 // Table styling
-$table-header-bg: #f2f2f2;
-$table-sticky-bg: #59abfd;
-$table-sticky-border: midnightblue;
+$table-header-bg: #f1f5f9;        // Slate 100 - Subtle header
+$table-sticky-bg: #0ea5e9;        // Sky 500 - Sticky elements
+$table-sticky-border: #0369a1;    // Sky 700 - Sticky border
 
 // -----------------------------------------------------------------------------
 // Box Shadows

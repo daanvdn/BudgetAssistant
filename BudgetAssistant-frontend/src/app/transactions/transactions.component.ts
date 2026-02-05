@@ -232,6 +232,10 @@ export class TransactionsComponent implements OnInit {
     return !this.isLoading() && this.transactions().length === 0 && this.selectedAccount();
   });
 
+  protected readonly isEmptyDueToSearch = computed(() => {
+    return this.isEmpty() && this.viewType() === ViewType.RUN_QUERY;
+  });
+
   // Save transaction mutation
   saveTransactionMutation = injectMutation(() => ({
     mutationFn: async (params: { transactionId: string; update: TransactionUpdate }) => {

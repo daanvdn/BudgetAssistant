@@ -9,6 +9,12 @@ $error-color: $error-danger-red;
 $border-color: $border-gray;
 $background-hover: $hover-gray;
 
+// Component-specific accent colors
+$action-bar-accent: $primary-blue;
+$row-hover-accent: $primary-blue;
+$amount-positive-bg: $income-green-bg;
+$amount-negative-bg: $expense-red-bg;
+
 // Breakpoints (using local ones until we standardize)
 $breakpoint-mobile: 768px;
 $breakpoint-tablet: 1024px;
@@ -46,9 +52,11 @@ $breakpoint-tablet: 1024px;
   padding: 16px;
   background-color: $card-background;
   border-bottom: 1px solid $border-color;
+  border-left: 4px solid $action-bar-accent;
   position: sticky;
   top: 0;
   z-index: 10;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
 
   @media (max-width: $breakpoint-mobile) {
     flex-direction: column;
@@ -104,9 +112,23 @@ $breakpoint-tablet: 1024px;
 .action-button {
   width: 48px;
   height: 48px;
+  transition: all 0.2s ease;
+  border-radius: 8px;
 
   &:hover {
-    background-color: $background-hover;
+    background-color: $light-blue-hover;
+    color: $primary-color;
+    transform: translateY(-1px);
+  }
+
+  mat-icon, fa-icon {
+    color: $text-secondary;
+    transition: color 0.2s ease;
+  }
+
+  &:hover mat-icon,
+  &:hover fa-icon {
+    color: $primary-color;
   }
 }
 
@@ -145,19 +167,36 @@ $breakpoint-tablet: 1024px;
     font-size: 14px;
     font-weight: 600;
     color: $text-primary;
-    background-color: $card-background;
+    background-color: $table-header-bg;
     padding: 16px 12px;
+    border-bottom: 2px solid $border-color;
   }
 
   td.mat-cell {
     padding: 12px;
     vertical-align: top;
     border-bottom: 1px solid $border-color;
+    transition: background-color 0.15s ease;
   }
 
   .transaction-row {
+    transition: all 0.15s ease;
+    position: relative;
+
     &:hover {
       background-color: $background-hover;
+
+      td:first-child {
+        box-shadow: inset 3px 0 0 0 $row-hover-accent;
+      }
+    }
+
+    &:nth-child(even) {
+      background-color: rgba($page-background, 0.5);
+
+      &:hover {
+        background-color: $background-hover;
+      }
     }
   }
 }
@@ -207,16 +246,21 @@ $breakpoint-tablet: 1024px;
 }
 
 .amount-cell {
-  font-weight: 500;
+  font-weight: 600;
   font-size: 14px;
   white-space: nowrap;
+  padding: 4px 10px;
+  border-radius: 6px;
+  display: inline-block;
 
   &.positive {
     color: $success-color;
+    background-color: $amount-positive-bg;
   }
 
   &.negative {
     color: $error-color;
+    background-color: $amount-negative-bg;
   }
 }
 
@@ -306,13 +350,17 @@ mat-radio-button {
 .card-amount {
   font-size: 16px;
   font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 6px;
 
   &.positive {
     color: $success-color;
+    background-color: $amount-positive-bg;
   }
 
   &.negative {
     color: $error-color;
+    background-color: $amount-negative-bg;
   }
 }
 
@@ -377,9 +425,13 @@ mat-radio-button {
 
 // Bottom paginator
 .bottom-paginator {
+  display: flex;
+  justify-content: flex-end;
   background-color: $card-background;
   border-top: 1px solid $border-color;
-  padding: 8px;
+  padding: 8px 16px;
+  // Add 4px to align with action-bar which has border-left: 4px
+  padding-left: 20px;
 
   @media (max-width: $breakpoint-mobile) {
     position: sticky;

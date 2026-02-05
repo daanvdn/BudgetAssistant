@@ -116,6 +116,14 @@
 </div>
 
 <div mat-dialog-actions class="dialog-actions">
-  <button mat-button class="cancel-button" (click)="onCancelClick()">Annuleer</button>
-  <button mat-flat-button color="primary" class="search-button" (click)="onSearchClick()">Zoek</button>
+  @if (showValidationError) {
+    <div class="validation-error">
+      <mat-icon class="error-icon">error_outline</mat-icon>
+      <span>Selecteer minimaal één zoekcriterium</span>
+    </div>
+  }
+  <div class="action-buttons">
+    <button mat-button class="cancel-button" (click)="onCancelClick()">Annuleer</button>
+    <button mat-flat-button color="primary" class="search-button" (click)="onSearchClick()">Zoek</button>
+  </div>
 </div>

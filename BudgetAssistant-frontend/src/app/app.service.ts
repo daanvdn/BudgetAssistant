@@ -174,19 +174,17 @@ export class AppService {
 
     }
 
+    /**
+     * Parses an ISO 8601 date string (YYYY-MM-DD) into a Date object.
+     * @param json The date string in ISO 8601 format (e.g., "2024-01-15")
+     * @returns A Date object representing the parsed date
+     */
     private parseDate(json: string): Date {
         let parts: string[] = json.split('-');
-        let day: number = parseInt(parts[0])
-        let month: number = parseInt(parts[1])
-        let year: number = parseInt(parts[2])
-        let dateObj = new Date();
-        dateObj.setDate(day);
-        dateObj.setMonth(month);
-        dateObj.setFullYear(year);
-
-
-        return dateObj;
-
+        let year: number = parseInt(parts[0]);
+        let month: number = parseInt(parts[1]) - 1; // JavaScript months are 0-indexed
+        let day: number = parseInt(parts[2]);
+        return new Date(year, month, day);
     }
 
     public saveTransaction(transaction: TransactionRead): void {

@@ -93,8 +93,12 @@
             } @else if (isEmpty()) {
                 <div class="empty-state">
                     <mat-icon class="empty-icon">receipt_long</mat-icon>
-                    <h3>No transactions found</h3>
-                    <p>Upload CSV files or select a different bank account to see transactions.</p>
+                    @if (isEmptyDueToSearch()) {
+                        <h3>Found no transactions that match your search criteria</h3>
+                    } @else {
+                        <h3>No transactions found</h3>
+                        <p>Upload CSV files or select a different bank account to see transactions.</p>
+                    }
                 </div>
             } @else {
                 <!-- Desktop Table View -->
