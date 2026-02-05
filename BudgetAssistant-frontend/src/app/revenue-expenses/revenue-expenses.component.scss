@@ -1,63 +1,389 @@
-.full-width-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 10px 0;
+// Import shared theme variables
+@import '../../styles/variables';
 
-}
-.course-thumbnail {
-    width: 150px;
-    margin: 20px auto 0 auto;
-    display: block;
-}
-.duration-cell {
-    text-align: center;
-}
+// Breakpoints
+$breakpoint-mobile: 768px;
+$breakpoint-tablet: 1024px;
 
-.duration-cell mat-icon {
-    display: inline-block;
-    vertical-align: middle;
-    font-size: 20px;
-}
+// Component container
+.revenue-expenses-container {
+  padding: 16px;
+  min-height: 300px;
+  background-color: $page-background;
 
-.spinner-container {
-    height: 360px;
-    width: 390px;
-    position: fixed;
-}
-
-
-
-/* TODO(mdc-migration): The following rule targets internal classes of paginator that may no longer apply for the MDC version. */
-mat-paginator {
-  width: 400px;
-  margin-bottom: 200px;
-}
-
-.spinner-container mat-spinner {
-    margin: 130px auto 0 auto;
-}
-
-.rotate-label {
-  display: inline-block;
-  transform: rotate(-45deg);
-  white-space: nowrap;
-}
-
-.move-legend-left {
-  .ngx-charts-legend-wrapper {
-    margin-left: 5px;
+  @media (max-width: $breakpoint-mobile) {
+    padding: 12px;
   }
 }
 
+// Loading state
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  gap: 16px;
 
-
-.color-red {
-  color: red;
-
+  p {
+    color: $text-secondary;
+    font-size: 14px;
+    margin: 0;
+  }
 }
 
-.color-green {
-  color: green;
+// Waiting for criteria state
+.waiting-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  gap: 12px;
+  text-align: center;
+  padding: 24px;
 
+  .waiting-icon {
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+    color: $text-muted-light;
+  }
+
+  h3 {
+    margin: 0;
+    color: $text-primary;
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  p {
+    margin: 0;
+    color: $text-secondary;
+    font-size: 14px;
+    max-width: 400px;
+    line-height: 1.5;
+  }
 }
 
+// Error state
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  gap: 12px;
+  text-align: center;
+  padding: 24px;
+
+  .error-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    color: $error-danger-red;
+  }
+
+  h3 {
+    margin: 0;
+    color: $text-primary;
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  p {
+    margin: 0;
+    color: $text-secondary;
+    font-size: 14px;
+    max-width: 400px;
+  }
+
+  button {
+    margin-top: 8px;
+  }
+}
+
+// Empty state
+.empty-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  gap: 12px;
+  text-align: center;
+  padding: 24px;
+
+  .empty-icon {
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+    color: $text-muted-light;
+  }
+
+  h3 {
+    margin: 0;
+    color: $text-primary;
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  p {
+    margin: 0;
+    color: $text-secondary;
+    font-size: 14px;
+    max-width: 400px;
+    line-height: 1.5;
+  }
+}
+
+// Content wrapper
+.content-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+// Chart section
+.chart-section {
+  background-color: $card-background;
+  border-radius: $radius-card;
+  padding: 20px;
+  box-shadow: $shadow-card;
+
+  @media (max-width: $breakpoint-mobile) {
+    padding: 16px;
+  }
+}
+
+.chart-header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  position: relative;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+
+  .chart-title {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 16px;
+    font-weight: 500;
+    color: $text-primary;
+    letter-spacing: 0.01em;
+  }
+
+  h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: $text-primary;
+  }
+
+  .toggle-table-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+
+    @media (max-width: $breakpoint-mobile) {
+      // Hide on mobile since we use cards instead
+      display: none;
+    }
+  }
+}
+
+.chart-container {
+  width: 100%;
+  min-height: 300px;
+  position: relative;
+
+  canvas {
+    width: 100% !important;
+  }
+}
+
+// Table section
+.table-section {
+  @media (max-width: $breakpoint-mobile) {
+    display: none;
+  }
+
+  mat-card {
+    background-color: $card-background;
+    border-radius: $radius-card;
+    box-shadow: $shadow-card;
+  }
+
+  mat-card-content {
+    padding: 0;
+  }
+}
+
+.table-wrapper {
+  overflow-x: auto;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.data-table {
+  width: 100%;
+  
+  th.mat-header-cell {
+    font-size: 14px;
+    font-weight: 600;
+    color: $text-primary;
+    background-color: $table-header-bg;
+    padding: 16px 12px;
+    border-bottom: 2px solid $border-gray;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+
+  td.mat-cell {
+    padding: 12px;
+    font-size: 14px;
+    border-bottom: 1px solid $border-gray;
+  }
+
+  tr.mat-row {
+    transition: background-color 0.15s ease;
+
+    &:hover {
+      background-color: $hover-gray;
+    }
+
+    &:nth-child(even) {
+      background-color: rgba($page-background, 0.5);
+
+      &:hover {
+        background-color: $hover-gray;
+      }
+    }
+  }
+
+  .amount-header {
+    text-align: right;
+  }
+
+  .amount-cell {
+    text-align: right;
+    font-weight: 500;
+    font-family: 'Roboto Mono', monospace;
+
+    &.positive {
+      color: $success-green;
+    }
+
+    &.negative {
+      color: $error-danger-red;
+    }
+
+    &.balance {
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 4px;
+
+      &.positive {
+        background-color: $income-green-bg;
+      }
+
+      &.negative {
+        background-color: $expense-red-bg;
+      }
+    }
+  }
+}
+
+// Mobile cards
+.mobile-cards {
+  display: none;
+
+  @media (max-width: $breakpoint-mobile) {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+
+.period-card {
+  background-color: $card-background;
+  border-radius: $radius-card;
+  box-shadow: $shadow-card;
+
+  mat-card-content {
+    padding: 16px;
+  }
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid $border-gray;
+
+  .period-label {
+    font-size: 16px;
+    font-weight: 600;
+    color: $text-primary;
+  }
+
+  .balance-badge {
+    font-size: 14px;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-family: 'Roboto Mono', monospace;
+
+    &.positive {
+      color: $success-green;
+      background-color: $income-green-bg;
+    }
+
+    &.negative {
+      color: $error-danger-red;
+      background-color: $expense-red-bg;
+    }
+  }
+}
+
+.card-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  .label {
+    font-size: 14px;
+    color: $text-secondary;
+  }
+
+  .value {
+    font-size: 14px;
+    font-weight: 500;
+    font-family: 'Roboto Mono', monospace;
+
+    &.positive {
+      color: $success-green;
+    }
+
+    &.negative {
+      color: $error-danger-red;
+    }
+  }
+}

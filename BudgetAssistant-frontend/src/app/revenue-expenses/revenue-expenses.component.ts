@@ -1,255 +1,254 @@
-import {Component, Input, OnChanges, OnInit, SimpleChanges, ViewChild} from '@angular/core';
-import {MatPaginator} from "@angular/material/paginator";
-import {MatSort} from "@angular/material/sort";
-import { MatTable, MatTableDataSource, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatCellDef, MatCell, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow } from "@angular/material/table";
+import {Component, computed, inject, input, OnInit, signal} from '@angular/core';
+import {CommonModule, DecimalPipe} from '@angular/common';
+import {MatTableModule} from '@angular/material/table';
+import {MatButtonModule} from '@angular/material/button';
+import {MatIconModule} from '@angular/material/icon';
+import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
+import {MatCardModule} from '@angular/material/card';
+import {MatSnackBar, MatSnackBarModule} from '@angular/material/snack-bar';
+import {BaseChartDirective} from 'ng2-charts';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
-import {parse} from 'date-fns';
-import {isNaN} from "lodash";
-import {AppService} from "../app.service";
-import {Criteria} from "../model/criteria.model";
-import {RecurrenceType, RevenueExpensesQuery, TransactionTypeEnum} from "@daanvdn/budget-assistant-client";
-import {ExpensesAndRevenueForPeriod} from "@daanvdn/budget-assistant-client";
-import { NgIf, NgClass, DecimalPipe } from '@angular/common';
-import { BaseChartDirective } from 'ng2-charts';
-import { MatButton } from '@angular/material/button';
+import {ChartConfiguration, ChartData} from 'chart.js';
+import {injectQuery} from '@tanstack/angular-query-experimental';
+import {firstValueFrom} from 'rxjs';
+
+import {
+  BudgetAssistantApiService,
+  ExpensesAndRevenueForPeriod,
+  RecurrenceType,
+  RevenueExpensesQuery,
+  TransactionTypeEnum
+} from '@daanvdn/budget-assistant-client';
+import {Criteria} from '../model/criteria.model';
+
+/**
+ * Extended interface to include computed balance for display
+ */
+interface ExpensesAndRevenueForPeriodWithBalance extends ExpensesAndRevenueForPeriod {
+  balance: number;
+}
 
 @Component({
-    selector: 'expenses-revenue',
-    templateUrl: './revenue-expenses.component.html',
-    styleUrls: ['./revenue-expenses.component.scss'],
-    animations: [],
-    standalone: true,
-    imports: [NgIf, BaseChartDirective, MatButton, MatTable, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatCellDef, MatCell, NgClass, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow, DecimalPipe]
+  selector: 'expenses-revenue',
+  templateUrl: './revenue-expenses.component.html',
+  styleUrls: ['./revenue-expenses.component.scss'],
+  standalone: true,
+  imports: [
+    CommonModule,
+    MatTableModule,
+    MatButtonModule,
+    MatIconModule,
+    MatProgressSpinnerModule,
+    MatCardModule,
+    MatSnackBarModule,
+    BaseChartDirective,
+    DecimalPipe
+  ]
 })
-export class ExpensesRevenueComponent  implements OnInit, OnChanges {
+export class ExpensesRevenueComponent implements OnInit {
+  // Dependency injection
+  private readonly apiService = inject(BudgetAssistantApiService);
+  private readonly snackBar = inject(MatSnackBar);
 
+  // Input signal for criteria (optional since parent may not initialize immediately)
+  readonly criteria = input<Criteria | undefined>(undefined);
 
-  //table stuff
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
-  @ViewChild(MatSort) sort!: MatSort;
-  @ViewChild(MatTable) table!: MatTable<ExpensesAndRevenueForPeriod>;
-  dataSource!: MatTableDataSource<ExpensesAndRevenueForPeriod>;
-  displayedColumns = ["period", "revenue", "expenses", "balance"];
+  // UI state signals
+  protected readonly tableIsVisible = signal(false);
 
-  tableIsHidden: boolean = true;
-  barIsSelected: boolean = false;
+  // Table configuration
+  protected readonly displayedColumns = ['period', 'revenue', 'expenses', 'balance'];
 
+  // Chart plugins
+  protected readonly chartPlugins = [ChartDataLabels];
 
-  //chart stuff
-  datatIsLoaded: Boolean = false;
-
-  data: any;
-  chartOptions: any;
-  plugins: any[] = [ChartDataLabels];
-  @Input() criteria!: Criteria;
-
-  constructor(private appService: AppService) {
-
-
-  }
-
-
-
-  doQuery(): void {
-    if (!this.criteria) {
-      throw new Error("Query parameters are not initialized!");
+  // Chart options
+  protected readonly chartOptions: ChartConfiguration['options'] = {
+    indexAxis: 'y',
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      datalabels: {
+        display: true,
+        align: 'end',
+        anchor: 'end',
+        formatter: (value: number) => value ? Math.round(value) : null,
+        font: {
+          weight: 'bold',
+          size: 11
+        }
+      },
+      tooltip: {
+        mode: 'index',
+        intersect: false,
+        callbacks: {
+          label: (context) => {
+            const label = context.dataset.label || '';
+            const value = context.raw as number;
+            return `${label}: €${value.toLocaleString('nl-NL', {minimumFractionDigits: 2})}`;
+          }
+        }
+      },
+      legend: {
+        position: 'top',
+        labels: {
+          usePointStyle: true,
+          padding: 20
+        }
+      }
+    },
+    scales: {
+      x: {
+        beginAtZero: true,
+        ticks: {
+          callback: (value) => `€${value.toLocaleString('nl-NL')}`
+        }
+      },
+      y: {
+        ticks: {
+          font: {
+            size: 12
+          }
+        }
+      }
     }
-    this.datatIsLoaded = false;
-    let query: RevenueExpensesQuery = {
-      accountNumber: this.criteria.bankAccount.accountNumber,
-      grouping: this.criteria.grouping,
-      transactionType: TransactionTypeEnum.BOTH,
-      start: JSON.stringify(this.criteria.startDate),
-      end: JSON.stringify(this.criteria.endDate),
-      expensesRecurrence: RecurrenceType.BOTH,
-      revenueRecurrence: RecurrenceType.BOTH
+  };
 
+  // TanStack Query for revenue/expenses data
+  revenueExpensesQuery = injectQuery(() => {
+    const currentCriteria = this.criteria();
+    
+    return {
+      queryKey: ['revenueExpenses', currentCriteria?.bankAccount?.accountNumber, currentCriteria?.grouping, currentCriteria?.startDate?.toISOString(), currentCriteria?.endDate?.toISOString()],
+      queryFn: async () => {
+        // Safe to assert non-null since query is only enabled when criteria is valid
+        const query = this.buildQuery(currentCriteria!);
+        const response = await firstValueFrom(
+          this.apiService.analysis.getRevenueAndExpensesPerPeriodApiAnalysisRevenueExpensesPerPeriodPost(query)
+        );
+        return response.content;
+      },
+      enabled: this.isValidCriteria(currentCriteria),
+      staleTime: 30000, // 30 seconds
+      refetchOnWindowFocus: false
     };
+  });
 
+  // Computed signals for template
+  protected readonly isWaitingForCriteria = computed(() => !this.isValidCriteria(this.criteria()));
+  
+  protected readonly isLoading = computed(() => this.revenueExpensesQuery.isPending() && !this.isWaitingForCriteria());
+  
+  protected readonly hasError = computed(() => this.revenueExpensesQuery.isError());
+  
+  protected readonly errorMessage = computed(() => {
+    const error = this.revenueExpensesQuery.error();
+    return error instanceof Error ? error.message : 'An error occurred while loading data';
+  });
 
-     this.appService.getRevenueAndExpensesByYear(query).subscribe(result => {
-      let content: Array<ExpensesAndRevenueForPeriod> = result.content;
-      
-      if (content.length === 0) {
-        // No data found - show the noDataFound template
-        this.datatIsLoaded = false;
-        this.data = null;
-        return;
-      }
-      
-      this.dataSource = new MatTableDataSource(content);
-      this.dataSource.sort = this.sort;
-      this.dataSource.paginator = this.paginator;
-      // this.table.dataSource = this.dataSource;
-      this.handleChart(content);
-      this.datatIsLoaded = true;
-    });
+  protected readonly data = computed<ExpensesAndRevenueForPeriodWithBalance[]>(() => {
+    const rawData = this.revenueExpensesQuery.data();
+    if (!rawData) return [];
+    
+    return rawData.map(item => ({
+      ...item,
+      balance: (item.revenue ?? 0) - Math.abs(item.expenses ?? 0)
+    }));
+  });
 
+  protected readonly hasData = computed(() => this.data().length > 0);
+  
+  protected readonly isEmpty = computed(() => !this.isLoading() && !this.hasError() && !this.hasData());
 
-  }
-
-  handleChart(content: Array<ExpensesAndRevenueForPeriod>) {
-
-    let chartData: any[] = []
-
-
-    content.forEach(item => {
-      let entry = {
-        "name": item.period, "series": [{
-          "name": "inkomsten", "value": item.revenue ?? 0, "extra": item
-
-        }, {
-          "name": "uitgaven", "value": Math.abs(item.expenses ?? 0), "extra": item
-
-        }]
-
-      }
-
-      chartData.push(entry)
-    })
-
-    if (chartData.length > 0) {
-      this.data = this.transformChartDataToChartJSFormat(chartData);
-      this.chartOptions = this.initChartOptions();
-    }
-
-
-  }
-
-  transformChartDataToChartJSFormat(chartData: any[]):
-      any {
-    let transformedData: any = {
-      labels: [],
+  // Chart data computed from API response
+  protected readonly chartData = computed<ChartData<'bar'>>(() => {
+    const items = this.data();
+    
+    return {
+      labels: items.map(item => item.period),
       datasets: [
         {
-          type: 'bar',
-          label: 'Inkomsten',
-          backgroundColor: '#66BB6A',
-          data: []
+          type: 'bar' as const,
+          label: 'Revenue',
+          backgroundColor: '#059669', // emerald-600
+          borderColor: '#047857', // emerald-700
+          borderWidth: 1,
+          borderRadius: 4,
+          data: items.map(item => item.revenue ?? 0)
         },
         {
-          type: 'bar',
-          label: 'Uitgaven',
-          backgroundColor: '#EF5350',
-          data: []
+          type: 'bar' as const,
+          label: 'Expenses',
+          backgroundColor: '#dc2626', // red-600
+          borderColor: '#b91c1c', // red-700
+          borderWidth: 1,
+          borderRadius: 4,
+          data: items.map(item => Math.abs(item.expenses ?? 0))
         }
       ]
     };
+  });
 
-    chartData.forEach(item => {
-      transformedData.labels.push(item.name);
-      item.series.forEach((seriesItem: any) => {
-        if (seriesItem.name === 'inkomsten') {
-          transformedData.datasets[0].data.push(seriesItem.value);
-        }
-        else if (seriesItem.name === 'uitgaven') {
-          transformedData.datasets[1].data.push(seriesItem.value);
-        }
-      });
-    });
-
-    return transformedData;
-  }
-
-
-  initChartOptions(): any {
-    return {
-      plugins: {
-        datalabels: {
-          display: true,
-          align: 'end',
-          anchor: 'end',
-          formatter: function (value:any, context:any) { return Math.round(value) || null;  }
-        }
-      },
-      indexAxis: 'y',
-      tooltips: {
-        mode: 'index',
-        intersect: false
-      },
-      responsive: true,
-      scales: {
-        x: {
-          stacked: false
-
-        },
-        y: {
-          stacked: false
-
-
-        }
-      }
-    };
-
-  }
-
-
-  toggleTable() {
-    this.tableIsHidden = !this.tableIsHidden;
-  }
-
-
-  getToggleTableMessage() {
-
-    if (!this.tableIsHidden) {
-      return "verberg tabel";
-    }
-
-    return "toon tabel"
-
-  }
-
-  /*handleBarIsSelected($event: any): void {
-    //check if event is an object
-    if (typeof $event !== 'object'
-    ) {
-      return;
-    }
-
-    let period: Period = $event.extra.period;
-    let start = this.stringToDate(period.start);
-    let end = this.stringToDate(period.end);
-
-
-    let query: RevenueExpensesQuery = {
-      accountNumber: this.criteria.bankAccount.accountNumber,
-      grouping: this.criteria.grouping,
-      transactionType: TransactionType.BOTH,
-      start: start,
-      end: end,
-      expensesRecurrence: 'both',
-      revenueRecurrence: 'both'
-    }
-
-    this.appService.setCategoryQueryForSelectedPeriod$(query);
-    this.barIsSelected = true;
-
-
-  }*/
-
-  private stringToDate(string: string): Date {
-
-    const dateObject = parse(string, 'yyyy-MM-dd', new Date());
-
-    if (!isNaN(dateObject.getTime())) {
-      return dateObject;
-    }
-    else {
-      throw new Error("Invalid error")
-    }
-
-  }
+  // Computed dynamic chart height based on data
+  protected readonly chartHeight = computed(() => {
+    const itemCount = this.data().length;
+    const minHeight = 300;
+    const heightPerItem = 50;
+    return Math.max(minHeight, itemCount * heightPerItem);
+  });
 
   ngOnInit(): void {
-
+    // Query is automatically triggered when criteria input changes
   }
 
-  ngOnChanges(changes: SimpleChanges): void {
-
-    if (changes['criteria']?.currentValue) {
-      this.doQuery();
-    }
-
+  // UI actions
+  toggleTable(): void {
+    this.tableIsVisible.update(visible => !visible);
   }
 
+  protected get toggleTableLabel(): string {
+    return this.tableIsVisible() ? 'Hide Table' : 'Show Table';
+  }
+
+  protected get toggleTableIcon(): string {
+    return this.tableIsVisible() ? 'visibility_off' : 'visibility';
+  }
+
+  // Retry on error
+  retry(): void {
+    this.revenueExpensesQuery.refetch();
+  }
+
+  // Helper methods
+  private buildQuery(criteria: Criteria): RevenueExpensesQuery {
+    return {
+      accountNumber: criteria.bankAccount.accountNumber,
+      grouping: criteria.grouping,
+      transactionType: TransactionTypeEnum.BOTH,
+      start: this.formatDate(criteria.startDate),
+      end: this.formatDate(criteria.endDate),
+      expensesRecurrence: RecurrenceType.BOTH,
+      revenueRecurrence: RecurrenceType.BOTH
+    };
+  }
+
+  private formatDate(date: Date): string {
+    // Format as ISO date string (YYYY-MM-DD)
+    return date.toISOString().split('T')[0];
+  }
+
+  private isValidCriteria(criteria: Criteria | undefined): boolean {
+    return !!(
+      criteria &&
+      criteria.bankAccount?.accountNumber &&
+      criteria.grouping &&
+      criteria.startDate &&
+      criteria.endDate
+    );
+  }
+
+  // Balance formatting helper for template
+  getBalanceClass(balance: number): string {
+    return balance >= 0 ? 'positive' : 'negative';
+  }
 }
