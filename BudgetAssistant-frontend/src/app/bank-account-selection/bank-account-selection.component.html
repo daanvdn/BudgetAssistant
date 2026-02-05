@@ -1,10 +1,8 @@
-<div [formGroup]="bankAccountFormFieldGroup" class="inline_block">
-  <mat-form-field appearance="fill" [style.width]="formFieldWidth">
-    <mat-label>Selecteer rekening</mat-label>
-    <mat-select placeholder="Rekening" name="rekening" [(value)]="selectedBankAccount" (selectionChange)="ngOnChanges()">
-      <mat-option *ngFor="let bankAccount of bankAccounts" [value]="bankAccount">
-        {{bankAccount.accountNumber | uppercase | iban}}
-      </mat-option>
-    </mat-select>
-  </mat-form-field>
-</div>
+<mat-form-field appearance="outline" class="bank-account-field" [style.width]="formFieldWidth">
+  <mat-label>Account</mat-label>
+  <mat-select placeholder="Account" [(value)]="selectedBankAccount" (selectionChange)="ngOnChanges()">
+    <mat-option *ngFor="let bankAccount of bankAccounts" [value]="bankAccount">
+      {{bankAccount.accountNumber | uppercase | iban}}
+    </mat-option>
+  </mat-select>
+</mat-form-field>

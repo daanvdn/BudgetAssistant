@@ -1,14 +1,88 @@
-<div class="toolbar-container">
-    <div style="display: flex; justify-content: flex-start">
-        <bank-account-selection (change)="onBankAccountChange($event)" *ngIf="enableBankAccountSelection" style="width: fit-content;"></bank-account-selection>
-        <grouping-type-selection (change)="onGroupingChange($event)" *ngIf="enableGroupingTypeSelection"
-                                 style="width: fit-content"></grouping-type-selection>
-        <period-selection (change)="onPeriodChange($event)" *ngIf="enablePeriodSelection"></period-selection>
-        <expenses-revenue-toggle (change)="onExpensesRevenueChange($event)" *ngIf="enableExpensesRevenueToggle"></expenses-revenue-toggle>
+<div class="criteria-toolbar">
+    <!-- Left section: Filter controls -->
+    <div class="toolbar-filters">
+        <!-- Bank Account Selection -->
+        <bank-account-selection 
+            *ngIf="enableBankAccountSelection"
+            (change)="onBankAccountChange($event)"
+            class="filter-item bank-account-selector">
+        </bank-account-selection>
+
+        <!-- Grouping Type Dropdown -->
+        <mat-form-field id="grouping" *ngIf="enableGroupingTypeSelection" appearance="outline" class="filter-item grouping-field">
+            <mat-label>Grouping</mat-label>
+            <mat-select 
+                [value]="grouping()"
+                (selectionChange)="onGroupingChange($event.value)">
+                @for (option of groupingOptions; track option.value) {
+                    <mat-option [value]="option.value">
+                        <mat-icon class="grouping-icon">{{option.icon}}</mat-icon>
+                        {{option.tooltip}}
+                    </mat-option>
+                }
+            </mat-select>
+        </mat-form-field>
+
+        <!-- Period Selection -->
+        <div  *ngIf="enablePeriodSelection" class="filter-item period-section">
+            <!-- Date Range Picker -->
+            <mat-form-field id="period-selection" appearance="outline" class="date-range-field">
+                <mat-label>Period</mat-label>
+                <mat-date-range-input [formGroup]="dateRange" [rangePicker]="picker" [dateFilter]="dateFilter">
+                    <input matStartDate formControlName="start" placeholder="Start" (dateChange)="onDateRangeChange()">
+                    <input matEndDate formControlName="end" placeholder="End" (dateChange)="onDateRangeChange()">
+                </mat-date-range-input>
+                <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+                <mat-date-range-picker #picker></mat-date-range-picker>
+            </mat-form-field>
+
+            <!-- Period Shortcuts Dropdown -->
+            <mat-form-field id="quick-period" appearance="outline" class="period-shortcut-field">
+                <mat-label>Quick Period</mat-label>
+                <mat-select 
+                    [value]="selectedPeriodShortcut()"
+                    (selectionChange)="onPeriodShortcutSelect($event.value)">
+                    @for (shortcut of periodShortcuts; track shortcut.value) {
+                        <mat-option [value]="shortcut.value">
+                            <mat-icon class="shortcut-icon">{{shortcut.icon}}</mat-icon>
+                            {{shortcut.label}}
+                        </mat-option>
+                    }
+                </mat-select>
+            </mat-form-field>
+        </div>
+
+        <!-- Transaction Type Toggle -->
+        <div *ngIf="enableExpensesRevenueToggle" class="filter-item transaction-type-toggle">
+            <mat-button-toggle-group 
+                [value]="transactionType() === 'EXPENSES' ? 'expenses' : 'revenue'"
+                (change)="onTransactionTypeChange($event)"
+                aria-label="Transaction type">
+                <mat-button-toggle 
+                    value="expenses" 
+                    matTooltip="Expenses"
+                    matTooltipPosition="above">
+                    <mat-icon>trending_down</mat-icon>
+                </mat-button-toggle>
+                <mat-button-toggle 
+                    value="revenue"
+                    matTooltip="Revenue"
+                    matTooltipPosition="above">
+                    <mat-icon>trending_up</mat-icon>
+                </mat-button-toggle>
+            </mat-button-toggle-group>
+        </div>
     </div>
-    <div class="button-container" style="width: 50px; height: 50px; ">
-        <button (click)="onClickClose()"  mat-raised-button>
-            <fa-icon size="lg" [icon]="faXmark" [fixedWidth]="true"></fa-icon>
+
+    <!-- Right section: Close button -->
+    <div class="toolbar-actions" *ngIf="enableCloseButton">
+        <button 
+            mat-icon-button 
+            (click)="onClickClose()"
+            matTooltip="Close"
+            matTooltipPosition="above"
+            aria-label="Close toolbar">
+            <mat-icon>close</mat-icon>
         </button>
     </div>
 </div>

@@ -16,9 +16,10 @@ import {BudgetTrackingComponent} from '../budget-tracking/budget-tracking.compon
 import {Criteria} from '../model/criteria.model';
 
 
-
 @Component({
-    selector: 'insights', templateUrl: './insights.component.html', styleUrls: ['./insights.component.scss'],
+    selector: 'insights',
+    templateUrl: './insights.component.html',
+    styleUrls: ['./insights.component.scss'],
     standalone: true,
     imports: [MatToolbar, MatIconButton, FaIconComponent, MatTabGroup, MatTab, NgIf, CriteriaToolbarComponent, ExpensesRevenueComponent, RevenueExpensesPerPeriodAndCategoryComponent, CategoryDetailsComponent, BudgetTrackingComponent]
 })

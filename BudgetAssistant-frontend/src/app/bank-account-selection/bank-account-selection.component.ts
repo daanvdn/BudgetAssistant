@@ -1,5 +1,4 @@
 import {Component, EventEmitter, OnDestroy, OnInit, Output} from '@angular/core';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {AppService} from '../app.service';
 import {Subject, takeUntil} from "rxjs";
 import {BankAccountRead} from "@daanvdn/budget-assistant-client";
@@ -15,13 +14,12 @@ import {MatIconModule} from "@angular/material/icon";
     templateUrl: './bank-account-selection.component.html',
     styleUrls: ['./bank-account-selection.component.scss'],
     standalone: true,
-    imports: [FormsModule, ReactiveFormsModule, MatFormField, MatLabel, MatSelect, NgFor, MatOption, UpperCasePipe, IbanPipe, MatIconModule]
+    imports: [MatFormField, MatLabel, MatSelect, NgFor, MatOption, UpperCasePipe, IbanPipe, MatIconModule]
 })
 export class BankAccountSelectionComponent implements OnInit, OnDestroy {
 
   private ibanPipe = new IbanPipe();
 
-  bankAccountFormFieldGroup: FormGroup;
   selectedBankAccount!: BankAccountRead;
   bankAccounts: BankAccountRead[] = [];
   
@@ -31,9 +29,8 @@ export class BankAccountSelectionComponent implements OnInit, OnDestroy {
   @Output() change: EventEmitter<BankAccountRead> = new EventEmitter<BankAccountRead>(true);
   private destroy$ = new Subject<void>();
 
-  constructor(private appService: AppService, private formBuilder: FormBuilder) {
+  constructor(private appService: AppService) {
     this.appService.triggerRefreshBankAccounts();
-    this.bankAccountFormFieldGroup = formBuilder.group({queryForm: ""});
     this.appService.refreshBankAccountsObservable$.pipe(takeUntil(this.destroy$)).subscribe(result => {
         if (result && result) {
             this.appService.fetchBankAccountsForUser()
