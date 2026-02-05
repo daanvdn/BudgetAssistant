@@ -60,8 +60,8 @@ class PeriodService:
             end = period.end
 
         return ResolvedDateRange(
-            start=start,
-            end=end,
+            start=start.date() if hasattr(start, "date") and callable(start.date) else start,
+            end=end.date() if hasattr(end, "date") and callable(end.date) else end,
             shortcut=shortcut.value,
         )
 

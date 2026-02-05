@@ -3,6 +3,7 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -55,6 +56,51 @@ app.include_router(categories_router, prefix="/api")
 app.include_router(analysis_router, prefix="/api")
 app.include_router(budget_router, prefix="/api")
 app.include_router(rules_router, prefix="/api")
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """
+    Handler for validation errors (422 Unprocessable Entity).
+
+    Logs detailed information about:
+    1. The request method and URL
+    2. Query parameters
+    3. Request body (if available)
+    4. Request headers
+    5. Detailed validation errors with field locations and messages
+    """
+    # Get request body if available
+    body = None
+    try:
+        body = await request.body()
+        body = body.decode("utf-8") if body else None
+    except Exception:
+        body = "<unable to read body>"
+
+    # Format validation errors for logging
+    error_details = []
+    for error in exc.errors():
+        loc = " -> ".join(str(loc_part) for loc_part in error.get("loc", []))
+        error_details.append(
+            f"  - Field: {loc}\n"
+            f"    Type: {error.get('type', 'unknown')}\n"
+            f"    Message: {error.get('msg', 'No message')}\n"
+            f"    Input: {error.get('input', 'N/A')}"
+        )
+
+    logger.error(
+        f"Validation error on {request.method} {request.url}\n"
+        f"Query params: {dict(request.query_params)}\n"
+        f"Request body: {body}\n"
+        f"Headers: {dict(request.headers)}\n"
+        f"Validation errors:\n" + "\n".join(error_details)
+    )
+
+    return JSONResponse(
+        status_code=422,
+        content={"detail": exc.errors()},
+    )
 
 
 @app.exception_handler(Exception)

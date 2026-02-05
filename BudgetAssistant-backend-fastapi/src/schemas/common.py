@@ -263,8 +263,14 @@ class DateRangeShortcut(str, Enum):
 
 
 class ResolvedDateRange(BaseModel):
-    """Resolved date range from shortcut."""
+    """Resolved date range from shortcut.
 
-    start: datetime
-    end: datetime
+    Attributes:
+        start: Start date of the range. Serialized as ISO 8601 format (YYYY-MM-DD).
+        end: End date of the range. Serialized as ISO 8601 format (YYYY-MM-DD).
+        shortcut: The original shortcut string that was resolved.
+    """
+
+    start: date
+    end: date
     shortcut: str

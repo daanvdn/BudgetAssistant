@@ -315,8 +315,8 @@ class TestResolvedDateRange:
 
     def test_resolved_date_range(self):
         """Test ResolvedDateRange."""
-        start = datetime(2023, 1, 1)
-        end = datetime(2023, 12, 31)
+        start = date(2023, 1, 1)
+        end = date(2023, 12, 31)
         resolved = ResolvedDateRange(
             start=start,
             end=end,

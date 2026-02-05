@@ -146,6 +146,187 @@ if (-not (Test-Path ..\generated-api\api.module.ts))
     exit 1
 }
 
+# Fix double-encoding issue in query.params.ts
+# The OpenAPI Generator generates code that encodes query parameters twice:
+# 1. Once in toRecord() using CustomHttpParameterCodec
+# 2. Again when Angular's HttpParams builds the URL
+# This fix removes the pre-encoding in toRecord() and uses CustomHttpParameterCodec in toHttpParams()
+Write-Output "Fixing query parameter encoding in query.params.ts"
+$queryParamsContent = @"
+import { HttpParams, HttpParameterCodec } from '@angular/common/http';
+import { CustomHttpParameterCodec } from './encoder';
+
+export enum QueryParamStyle {
+    Json,
+    Form,
+    DeepObject,
+    SpaceDelimited,
+    PipeDelimited,
+}
+
+export type Delimiter = "," | " " | "|" | "\t";
+
+export interface ParamOptions {
+    /** When true, serialized as multiple repeated key=value pairs. When false, serialized as a single key with joined values using ``delimiter``. */
+    explode?: boolean;
+    /** Delimiter used when explode=false. The delimiter itself is inserted unencoded between encoded values. */
+    delimiter?: Delimiter;
+}
+
+interface ParamEntry {
+    values: string[];
+    options: Required<ParamOptions>;
+}
+
+export class OpenApiHttpParams {
+    private params: Map<string, ParamEntry> = new Map();
+    private defaults: Required<ParamOptions>;
+    private encoder: HttpParameterCodec;
+
+    /**
+     * @param encoder  Parameter serializer (used for toString() method only)
+     * @param defaults Global defaults used when a specific parameter has no explicit options.
+     *                 By OpenAPI default, explode is true for query params with style=form.
+     */
+    constructor(encoder?: HttpParameterCodec, defaults?: { explode?: boolean; delimiter?: Delimiter }) {
+        this.encoder = encoder || new CustomHttpParameterCodec();
+        this.defaults = {
+            explode: defaults?.explode ?? true,
+            delimiter: defaults?.delimiter ?? ",",
+        };
+    }
+
+    private resolveOptions(local?: ParamOptions): Required<ParamOptions> {
+        return {
+            explode: local?.explode ?? this.defaults.explode,
+            delimiter: local?.delimiter ?? this.defaults.delimiter,
+        };
+    }
+
+    /**
+     * Replace the parameter's values and (optionally) its options.
+     * Options are stored per-parameter (not global).
+     */
+    set(key: string, values: string[] | string, options?: ParamOptions): this {
+        const arr = Array.isArray(values) ? values.slice() : [values];
+        const opts = this.resolveOptions(options);
+        this.params.set(key, {values: arr, options: opts});
+        return this;
+    }
+
+    /**
+     * Append a single value to the parameter. If the parameter didn't exist it will be created
+     * and use resolved options (global defaults merged with any provided options).
+     */
+    append(key: string, value: string, options?: ParamOptions): this {
+        const entry = this.params.get(key);
+        if (entry) {
+            // If new options provided, override the stored options for subsequent serialization
+            if (options) {
+                entry.options = this.resolveOptions({...entry.options, ...options});
+            }
+            entry.values.push(value);
+        } else {
+            this.set(key, [value], options);
+        }
+        return this;
+    }
+
+    /**
+     * Serialize to a query string according to per-parameter OpenAPI options.
+     * - If explode=true for that parameter -> repeated key=value pairs (each value encoded).
+     * - If explode=false for that parameter -> single key=value where values are individually encoded
+     *   and joined using the configured delimiter. The delimiter character is inserted AS-IS
+     *   (not percent-encoded).
+     */
+    toString(): string {
+        const parts: string[] = [];
+
+        for (const [key, entry] of this.params.entries()) {
+            const encodedKey = this.encoder.encodeKey(key);
+
+            if (entry.options.explode) {
+                for (const v of entry.values) {
+                    parts.push(encodedKey + "=" + this.encoder.encodeValue(v));
+                }
+            } else {
+                const encodedValues = entry.values.map((v) => this.encoder.encodeValue(v));
+                parts.push(encodedKey + "=" + encodedValues.join(entry.options.delimiter));
+            }
+        }
+
+        return parts.join("&");
+    }
+
+    /**
+     * Return parameters as a plain record (raw, unencoded values).
+     * - If a parameter has exactly one value, returns that value directly.
+     * - If a parameter has multiple values, returns a readonly array of values.
+     *
+     * NOTE: Values are NOT encoded here. Encoding is handled by HttpParams with CustomHttpParameterCodec.
+     */
+    toRecord(): Record<string, string | number | boolean | ReadonlyArray<string | number | boolean>> {
+        const parts: Record<string, string | number | boolean | ReadonlyArray<string | number | boolean>> = {};
+
+        for (const [key, entry] of this.params.entries()) {
+            // Don't encode here - let HttpParams handle encoding to avoid double-encoding
+            if (entry.options.explode) {
+                parts[key] = entry.values;
+            } else {
+                // join with the delimiter *unencoded*
+                parts[key] = entry.values.join(entry.options.delimiter);
+            }
+        }
+
+        return parts;
+    }
+
+    /**
+     * Return an Angular's HttpParams that will encode parameters when building the URL.
+     * Uses CustomHttpParameterCodec to properly encode values (spaces become %20, etc.).
+     */
+    toHttpParams(): HttpParams {
+        const records = this.toRecord();
+
+        // Use CustomHttpParameterCodec to properly encode values when HttpParams serializes to URL
+        let httpParams = new HttpParams({encoder: new CustomHttpParameterCodec()});
+
+        return httpParams.appendAll(records);
+    }
+}
+
+export function concatHttpParamsObject(httpParams: OpenApiHttpParams, key: string, item: {
+    [index: string]: any
+}, delimiter: Delimiter): OpenApiHttpParams {
+    let keyAndValues: string[] = [];
+
+    for (const k in item) {
+        keyAndValues.push(k);
+
+        const value = item[k];
+
+        if (Array.isArray(value)) {
+            keyAndValues.push(...value.map(convertToString));
+        } else {
+            keyAndValues.push(convertToString(value));
+        }
+    }
+
+    return httpParams.set(key, keyAndValues, {explode: false, delimiter: delimiter});
+}
+
+function convertToString(value: any): string {
+    if (value instanceof Date) {
+        return value.toISOString();
+    } else {
+        return value.toString();
+    }
+}
+"@
+
+Set-Content -Path ..\generated-api\query.params.ts -Value $queryParamsContent -Encoding utf8
+Write-Output "Fixed query.params.ts to prevent double-encoding of query parameters"
+
 # Create or restore the case converter interceptor
 $caseConverterContent = @"
 import { Injectable } from '@angular/core';
