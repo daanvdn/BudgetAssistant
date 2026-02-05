@@ -4,9 +4,11 @@ from datetime import datetime
 from typing import List, Optional, Tuple
 
 from sqlalchemy import and_, func, or_, select
+from sqlalchemy.dialects import sqlite  # or sqlite, mysql depending on your DB
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from common.enums import TransactionTypeEnum
+from common.logging_utils import LoggerFactory
 from models import BankAccount, Counterparty, Transaction, User
 from models.associations import UserBankAccountLink
 from schemas import (
@@ -17,7 +19,21 @@ from schemas import (
 
 
 class TransactionService:
+    def __init__(self):
+        self.logger = LoggerFactory.for_class(TransactionService)
+
     """Service for transaction operations."""
+
+    def _log_query(self, stmt, label: str = "SQL Query"):
+        """Log the compiled SQL query for debugging."""
+        try:
+            # Compile the query to see the raw SQL with literal values
+            compiled = stmt.compile(dialect=sqlite.dialect(), compile_kwargs={"literal_binds": True})
+            self.logger.info(f"[{label}] {compiled}")
+        except Exception:
+            # Fallback without literal binds if parameters can't be inlined
+            compiled = stmt.compile(dialect=sqlite.dialect())
+            self.logger.info(f"[{label}] {compiled} | Params: {compiled.params}")
 
     def _build_base_filter(self, user_account_numbers: List[str]):
         """Build base filter for user's accessible transactions."""
@@ -108,7 +124,7 @@ class TransactionService:
         sort_property: str,
         user: User,
         session: AsyncSession,
-    ) -> Tuple[List[Transaction], int]:
+    ) -> tuple[list[Transaction], int]:
         """Get paginated transactions with filtering."""
         # Get user's accessible account numbers
         account_result = await session.execute(
@@ -147,14 +163,19 @@ class TransactionService:
         sort_order: str,
         sort_property: str,
         session: AsyncSession,
-    ) -> Tuple[List[Transaction], int]:
+    ) -> tuple[list[Transaction], int]:
         """Get paginated transactions for a specific context (period, category)."""
         normalized = BankAccount.normalize_account_number(bank_account)
 
         conditions = [
             Transaction.bank_account_id == normalized,
-            Transaction.category_id == category_id,
         ]
+
+        # If category_id is -1, find transactions with no category (null)
+        if category_id == -1:
+            conditions.append(Transaction.category_id.is_(None))
+        else:
+            conditions.append(Transaction.category_id == category_id)
 
         if transaction_type == TransactionTypeEnum.REVENUE:
             conditions.append(Transaction.amount >= 0)
@@ -168,6 +189,7 @@ class TransactionService:
 
         # Count total
         count_query = select(func.count()).select_from(Transaction).where(filter_condition)
+        self._log_query(count_query, "page_transactions_in_context COUNT")
         total_result = await session.execute(count_query)
         total_elements = total_result.scalar() or 0
 
@@ -176,6 +198,7 @@ class TransactionService:
         offset = page * size
 
         stmt = select(Transaction).where(filter_condition).order_by(sort_column).offset(offset).limit(size)
+        self._log_query(stmt, "page_transactions_in_context SELECT")
         result = await session.execute(stmt)
         transactions = list(result.scalars().all())
 
@@ -190,7 +213,7 @@ class TransactionService:
         sort_property: str,
         transaction_type: TransactionTypeEnum,
         session: AsyncSession,
-    ) -> Tuple[List[Transaction], int]:
+    ) -> tuple[list[Transaction], int]:
         """Get paginated transactions that need manual review."""
         normalized = BankAccount.normalize_account_number(bank_account)
 

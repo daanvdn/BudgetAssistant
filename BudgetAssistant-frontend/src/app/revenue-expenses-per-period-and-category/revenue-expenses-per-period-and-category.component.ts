@@ -363,7 +363,7 @@ export class RevenueExpensesPerPeriodAndCategoryComponent {
 
     this.currentContextQuery.set({
       period: period,
-      categoryId: categoryId ?? 0,
+      categoryId: categoryId ?? -1,
       bankAccount: c.bankAccount.accountNumber,
       transactionType: c.transactionType as TransactionTypeEnum
     });
