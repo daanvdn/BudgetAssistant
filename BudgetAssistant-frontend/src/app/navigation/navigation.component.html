@@ -1,35 +1,75 @@
-<mat-drawer-container class="example-container mat-typography mat-app-background">
-  <mat-drawer #drawer mode="side" disableClose="true" opened="true">
-    <mat-nav-list>
-      <a mat-list-item routerLink="/profiel" routerLinkActive="activebutton" ariaCurrentWhenActive="page">
-        <fa-icon [icon]="faUser" [fixedWidth]="true"></fa-icon>
-        <span>Profiel</span>
+<mat-drawer-container class="nav-drawer-container mat-typography mat-app-background">
+  <mat-drawer #drawer class="nav-drawer" mode="side" disableClose="true" opened="true">
+    <mat-nav-list class="nav-list">
+      <!-- Main navigation items -->
+      <a mat-list-item 
+         class="nav-item" 
+         routerLink="/profiel" 
+         routerLinkActive="activebutton" 
+         ariaCurrentWhenActive="page"
+         aria-label="Profiel">
+        <fa-icon class="nav-icon" [icon]="faUser" [fixedWidth]="true"></fa-icon>
+        <span class="nav-label">Profiel</span>
       </a>
-      <a mat-list-item routerLink="/transacties" routerLinkActive="activebutton" ariaCurrentWhenActive="page">
-        <fa-icon [icon]="faDollarSign" [fixedWidth]="true"></fa-icon>
-        <span>Transacties</span>
+      
+      <a mat-list-item 
+         class="nav-item" 
+         routerLink="/transacties" 
+         routerLinkActive="activebutton" 
+         ariaCurrentWhenActive="page"
+         aria-label="Transacties">
+        <fa-icon class="nav-icon" [icon]="faDollarSign" [fixedWidth]="true"></fa-icon>
+        <span class="nav-label">Transacties</span>
       </a>
-      <a mat-list-item routerLink="/inzichten" routerLinkActive="activebutton" ariaCurrentWhenActive="page">
-        <fa-icon [icon]="faChartPie" [fixedWidth]="true"></fa-icon>
-        <span>Inzichten</span>
+      
+      <a mat-list-item 
+         class="nav-item" 
+         routerLink="/inzichten" 
+         routerLinkActive="activebutton" 
+         ariaCurrentWhenActive="page"
+         aria-label="Inzichten">
+        <fa-icon class="nav-icon" [icon]="faChartPie" [fixedWidth]="true"></fa-icon>
+        <span class="nav-label">Inzichten</span>
       </a>
-      <a mat-list-item routerLink="/regels" routerLinkActive="activebutton" ariaCurrentWhenActive="page">
-        <fa-icon [icon]="faNetworkWired" [fixedWidth]="true"></fa-icon>
-        <span>Regels</span>
+      
+      <a mat-list-item 
+         class="nav-item" 
+         routerLink="/regels" 
+         routerLinkActive="activebutton" 
+         ariaCurrentWhenActive="page"
+         aria-label="Regels">
+        <fa-icon class="nav-icon" [icon]="faNetworkWired" [fixedWidth]="true"></fa-icon>
+        <span class="nav-label">Regels</span>
       </a>
-      <a mat-list-item routerLink="/budget" routerLinkActive="activebutton" ariaCurrentWhenActive="page">
-        <fa-icon [icon]="faScaleBalanced" [fixedWidth]="true"></fa-icon>
-        <span>Budget</span>
+      
+      <a mat-list-item 
+         class="nav-item" 
+         routerLink="/budget" 
+         routerLinkActive="activebutton" 
+         ariaCurrentWhenActive="page"
+         aria-label="Budget">
+        <fa-icon class="nav-icon" [icon]="faScaleBalanced" [fixedWidth]="true"></fa-icon>
+        <span class="nav-label">Budget</span>
       </a>
-      <a mat-list-item (click)="onLogout()">
-        <fa-icon [icon]="faRightFromBracket" [fixedWidth]="true"></fa-icon>
-        <span>Logout</span>
+      
+      <!-- Divider before logout -->
+      <mat-divider class="nav-divider"></mat-divider>
+      
+      <!-- Logout action -->
+      <a mat-list-item 
+         class="nav-item nav-item-logout" 
+         (click)="onLogout()"
+         (keydown.enter)="onLogout()"
+         tabindex="0"
+         role="button"
+         aria-label="Uitloggen">
+        <fa-icon class="nav-icon" [icon]="faRightFromBracket" [fixedWidth]="true"></fa-icon>
+        <span class="nav-label">Uitloggen</span>
       </a>
-
     </mat-nav-list>
-      <button mat-icon-button></button>
   </mat-drawer>
-  <mat-drawer-content style="overflow-y: hidden; overflow-x: hidden; padding-left:5px">
+  
+  <mat-drawer-content class="nav-content">
     <router-outlet></router-outlet>
   </mat-drawer-content>
 </mat-drawer-container>

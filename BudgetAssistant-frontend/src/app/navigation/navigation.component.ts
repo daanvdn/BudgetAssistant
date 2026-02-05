@@ -1,52 +1,50 @@
-import { Component, OnInit } from '@angular/core';
+import {Component} from '@angular/core';
 import {AuthService} from "../auth/auth.service";
-import {Observable} from "rxjs";
 import {
-  faChartPie,
-  faDollarSign,
-  faNetworkWired,
-  faRightFromBracket,
-  faScaleBalanced,
-  faUser,
-  faTag
+    faChartPie,
+    faDollarSign,
+    faNetworkWired,
+    faRightFromBracket,
+    faScaleBalanced,
+    faUser
 } from "@fortawesome/free-solid-svg-icons";
-import { MatDrawerContainer, MatDrawer, MatDrawerContent } from '@angular/material/sidenav';
-import { MatNavList, MatListItem } from '@angular/material/list';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { MatIconButton } from '@angular/material/button';
+import {MatDrawer, MatDrawerContainer, MatDrawerContent} from '@angular/material/sidenav';
+import {MatListItem, MatNavList} from '@angular/material/list';
+import {MatDivider} from '@angular/material/divider';
+import {RouterLink, RouterLinkActive, RouterOutlet} from '@angular/router';
+import {FaIconComponent} from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'app-navigation',
     templateUrl: './navigation.component.html',
     styleUrls: ['./navigation.component.scss'],
     standalone: true,
-    imports: [MatDrawerContainer, MatDrawer, MatNavList, RouterLink, RouterLinkActive, MatListItem, FaIconComponent, MatIconButton, MatDrawerContent, RouterOutlet]
+    imports: [
+        MatDrawerContainer, 
+        MatDrawer, 
+        MatNavList, 
+        MatListItem,
+        MatDivider,
+        MatDrawerContent, 
+        RouterLink,
+        RouterLinkActive, 
+        RouterOutlet,
+        FaIconComponent
+    ]
 })
-export class NavigationComponent implements OnInit {
+export class NavigationComponent {
 
+    constructor(private authService: AuthService) {}
 
+    onLogout(): void {
+        this.authService.logout();
+    }
 
-  // isLoggedIn$: Observable<boolean>;
-
-  constructor(public authService: AuthService) {
-    // this.isLoggedIn$ = this.authService.isLoggedIn;
-  }
-
-  ngOnInit() {
-    // this.isLoggedIn$ = this.authService.isLoggedIn;
-  }
-
-  onLogout() {
-    this.authService.logout();
-  }
-
-
-  protected readonly faNetworkWired = faNetworkWired;
-  protected readonly faUser = faUser;
-  protected readonly faDollarSign = faDollarSign;
-  protected readonly faChartPie = faChartPie;
-  protected readonly faScaleBalanced = faScaleBalanced;
-  protected readonly faRightFromBracket = faRightFromBracket;
-  protected readonly faTag = faTag;
+    // Font Awesome icons
+    protected readonly faUser = faUser;
+    protected readonly faDollarSign = faDollarSign;
+    protected readonly faChartPie = faChartPie;
+    protected readonly faNetworkWired = faNetworkWired;
+    protected readonly faScaleBalanced = faScaleBalanced;
+    protected readonly faRightFromBracket = faRightFromBracket;
 }

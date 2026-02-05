@@ -1,52 +1,146 @@
+@use '../../styles/variables' as v;
+
 :host {
   display: block;
   height: 100%;
+}
 
-  mat-drawer-container {
-    height: 100%;
-    min-height: 400px; /* Fallback for Storybook */
+// Container
+.nav-drawer-container {
+  height: 100%;
+  min-height: 400px;
+}
 
+// Drawer sidebar
+.nav-drawer {
+  background: linear-gradient(180deg, v.$card-background 0%, v.$filter-section-bg 100%);
+  border-right: 1px solid v.$border-gray;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.04);
+}
 
-    mat-nav-list {
-      width: 65px;
-      overflow: hidden;
-      transition: width 0.3s;
+// Navigation list
+.nav-list {
+  width: 64px;
+  padding: 8px !important;
+  overflow: hidden;
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 
-      a[mat-list-item] {
-        text-decoration: none;
-        color: inherit;
+  .nav-drawer:hover & {
+    width: 200px;
+  }
+}
 
-        ::ng-deep .mdc-list-item__content {
-          display: flex !important;
-          flex-direction: row !important;
-          align-items: center !important;
-        }
-      }
+// Navigation item
+.nav-item {
+  text-decoration: none;
+  color: v.$text-secondary;
+  border-radius: 8px !important;
+  margin-bottom: 4px !important;
+  height: 48px !important;
+  transition: all 0.2s ease;
 
-      fa-icon {
-        font-size: 18px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      span {
-        opacity: 0;
-        margin-left: 12px;
-        white-space: nowrap;
-        transition: opacity 0.2s;
-      }
+  // Fix Material's default ellipsis/text-overflow
+  ::ng-deep {
+    .mdc-list-item__content {
+      display: flex !important;
+      flex-direction: row !important;
+      align-items: center !important;
+      overflow: visible !important;
+      text-overflow: clip !important;
     }
 
-    mat-drawer:hover {
-      mat-nav-list {
-        width: 180px;
-
-        span {
-          opacity: 1;
-          transition: opacity 0.1s ease-in 0.2s;
-        }
-      }
+    .mdc-list-item__primary-text {
+      overflow: visible !important;
+      text-overflow: clip !important;
+      white-space: nowrap !important;
     }
   }
+
+  &:hover {
+    background-color: v.$light-blue-hover !important;
+    color: v.$primary-blue;
+  }
+
+  &.activebutton {
+    background-color: rgba(v.$primary-blue, 0.1) !important;
+    color: v.$primary-blue;
+
+    .nav-icon {
+      color: v.$primary-blue;
+    }
+
+    // Active indicator
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 3px;
+      height: 24px;
+      background-color: v.$primary-blue;
+      border-radius: 0 3px 3px 0;
+    }
+  }
+}
+
+// Icon styling
+.nav-icon {
+  font-size: 20px;
+  width: 24px;
+  min-width: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: v.$text-secondary;
+  transition: color 0.2s ease;
+
+  .nav-item:hover & {
+    color: v.$primary-blue;
+  }
+}
+
+// Label text
+.nav-label {
+  opacity: 0;
+  margin-left: 16px;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 500;
+  transition: opacity 0.15s ease;
+  visibility: hidden;
+
+  .nav-drawer:hover & {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.2s ease 0.1s, visibility 0s 0s;
+  }
+}
+
+// Divider before logout
+.nav-divider {
+  margin: 8px 12px !important;
+  border-color: v.$border-gray !important;
+}
+
+// Logout item - special styling
+.nav-item-logout {
+  margin-top: auto;
+
+  &:hover {
+    background-color: rgba(v.$error-danger-red, 0.08) !important;
+    color: v.$error-danger-red;
+
+    .nav-icon {
+      color: v.$error-danger-red;
+    }
+  }
+}
+
+// Main content area
+.nav-content {
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-left: 8px;
+  background-color: v.$page-background;
 }
