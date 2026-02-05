@@ -16,7 +16,7 @@ import {
 
 import {Criteria} from "../model/criteria.model";
 import {NgFor, NgIf} from '@angular/common';
-import {ChartModule} from 'primeng/chart';
+import {BaseChartDirective} from 'ng2-charts';
 
 
 interface Category {
@@ -29,7 +29,7 @@ interface Category {
     templateUrl: './category-details.component.html',
     styleUrls: ['./category-details.component.scss'],
     standalone: true,
-    imports: [NgIf, MatSelectionList, NgFor, MatListOption, ChartModule]
+    imports: [NgIf, MatSelectionList, NgFor, MatListOption, BaseChartDirective]
 })
 export class CategoryDetailsComponent implements OnInit, OnChanges {
 

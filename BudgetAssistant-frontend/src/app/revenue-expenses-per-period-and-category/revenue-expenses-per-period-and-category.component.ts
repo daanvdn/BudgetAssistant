@@ -7,7 +7,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
 import { CdkMenuModule } from '@angular/cdk/menu';
-import { ChartModule } from 'primeng/chart';
+import { BaseChartDirective } from 'ng2-charts';
+import { ChartData, ChartEvent, Plugin } from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 // @ts-ignore
 import autocolors from 'chartjs-plugin-autocolors';
@@ -40,16 +41,9 @@ interface TableRow {
 }
 
 /**
- * Chart data structure for Chart.js
+ * Chart data structure for Chart.js bar charts
  */
-interface ChartData {
-  labels: string[];
-  datasets: {
-    label: string;
-    data: number[];
-    maxBarThickness?: number;
-  }[];
-}
+type BarChartData = ChartData<'bar', number[], string>;
 
 @Component({
   selector: 'revenue-expenses-per-period-and-category',
@@ -58,7 +52,7 @@ interface ChartData {
   standalone: true,
   imports: [
     CommonModule,
-    ChartModule,
+    BaseChartDirective,
     MatTableModule,
     MatTooltipModule,
     MatProgressSpinnerModule,
@@ -78,7 +72,7 @@ export class RevenueExpensesPerPeriodAndCategoryComponent {
   readonly criteria = input<Criteria>();
 
   // Chart configuration
-  readonly chartPlugins = [ChartDataLabels, autocolors];
+  readonly chartPlugins: Plugin<'bar'>[] = [ChartDataLabels as Plugin<'bar'>, autocolors as Plugin<'bar'>];
   readonly chartOptions = this.initChartOptions();
 
   // State signals
@@ -93,9 +87,9 @@ export class RevenueExpensesPerPeriodAndCategoryComponent {
   }));
 
   // Computed values from query result
-  readonly chartData = computed<ChartData | null>(() => {
+  readonly chartData = computed<BarChartData | undefined>(() => {
     const data = this.dataQuery.data();
-    if (!data) return null;
+    if (!data) return undefined;
     return this.transformToChartData(data.periods ?? [], data.allCategories ?? []);
   });
 
@@ -232,7 +226,7 @@ export class RevenueExpensesPerPeriodAndCategoryComponent {
   /**
    * Transform API response to chart data format
    */
-  private transformToChartData(periods: PeriodCategoryBreakdown[], allCategories: string[]): ChartData {
+  private transformToChartData(periods: PeriodCategoryBreakdown[], allCategories: string[]): BarChartData {
     const labels = periods.map(p => p.period);
     const datasets = allCategories.map(category => ({
       label: category,
@@ -377,10 +371,15 @@ export class RevenueExpensesPerPeriodAndCategoryComponent {
   }
 
   /**
-   * Handle chart data point selection
+   * Handle chart data point selection (ng2-charts format)
    */
-  handleDataSelect(event: any): void {
-    console.log('Chart data selected:', event);
-    // Future enhancement: could open transaction dialog for selected data point
+  handleChartClick(event: { event?: ChartEvent; active?: object[] }): void {
+    if (event.active && event.active.length > 0) {
+      const activeElement = event.active[0] as any;
+      const datasetIndex = activeElement.datasetIndex;
+      const index = activeElement.index;
+      console.log('Chart data selected:', { datasetIndex, index, event });
+      // Future enhancement: could open transaction dialog for selected data point
+    }
   }
 }

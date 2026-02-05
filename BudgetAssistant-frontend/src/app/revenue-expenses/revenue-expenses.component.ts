@@ -10,7 +10,7 @@ import {Criteria} from "../model/criteria.model";
 import {RecurrenceType, RevenueExpensesQuery, TransactionTypeEnum} from "@daanvdn/budget-assistant-client";
 import {ExpensesAndRevenueForPeriod} from "@daanvdn/budget-assistant-client";
 import { NgIf, NgClass, DecimalPipe } from '@angular/common';
-import { ChartModule } from 'primeng/chart';
+import { BaseChartDirective } from 'ng2-charts';
 import { MatButton } from '@angular/material/button';
 
 @Component({
@@ -19,7 +19,7 @@ import { MatButton } from '@angular/material/button';
     styleUrls: ['./revenue-expenses.component.scss'],
     animations: [],
     standalone: true,
-    imports: [NgIf, ChartModule, MatButton, MatTable, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatCellDef, MatCell, NgClass, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow, DecimalPipe]
+    imports: [NgIf, BaseChartDirective, MatButton, MatTable, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatCellDef, MatCell, NgClass, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow, DecimalPipe]
 })
 export class ExpensesRevenueComponent  implements OnInit, OnChanges {
 
@@ -67,8 +67,16 @@ export class ExpensesRevenueComponent  implements OnInit, OnChanges {
     };
 
 
-    this.appService.getRevenueAndExpensesByYear(query).subscribe(result => {
+     this.appService.getRevenueAndExpensesByYear(query).subscribe(result => {
       let content: Array<ExpensesAndRevenueForPeriod> = result.content;
+      
+      if (content.length === 0) {
+        // No data found - show the noDataFound template
+        this.datatIsLoaded = false;
+        this.data = null;
+        return;
+      }
+      
       this.dataSource = new MatTableDataSource(content);
       this.dataSource.sort = this.sort;
       this.dataSource.paginator = this.paginator;
@@ -85,7 +93,6 @@ export class ExpensesRevenueComponent  implements OnInit, OnChanges {
     let chartData: any[] = []
 
 
-    this.datatIsLoaded = content.length > 0;
     content.forEach(item => {
       let entry = {
         "name": item.period, "series": [{
@@ -102,14 +109,14 @@ export class ExpensesRevenueComponent  implements OnInit, OnChanges {
     })
 
     if (chartData.length > 0) {
-      this.data = this.transformChartDataToPrimeNgFormat(chartData);
+      this.data = this.transformChartDataToChartJSFormat(chartData);
       this.chartOptions = this.initChartOptions();
     }
 
 
   }
 
-  transformChartDataToPrimeNgFormat(chartData: any[]):
+  transformChartDataToChartJSFormat(chartData: any[]):
       any {
     let transformedData: any = {
       labels: [],

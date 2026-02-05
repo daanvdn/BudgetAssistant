@@ -1,7 +1,12 @@
 <div *ngIf="datatIsLoaded; else noDataFound">
     <div style="display: flex; justify-content: space-between; overflow-x: auto; padding: 16px; margin: 20px">
         <div style="width: 900px; height: fit-content">
-            <p-chart type="bar" [data]="data" [options]="chartOptions" [plugins]="plugins"></p-chart>
+            <canvas baseChart
+                    [type]="'bar'"
+                    [data]="data"
+                    [options]="chartOptions"
+                    [plugins]="plugins">
+            </canvas>
         </div>
         <button mat-raised-button style="max-width: 120px; max-height: 50px; margin-right:5px"
                 (click)="toggleTable()"> {{ this.getToggleTableMessage() }}

@@ -17,7 +17,6 @@ import {
     MatTable,
     MatTableDataSource
 } from "@angular/material/table";
-import {TreeNode} from "primeng/api";
 import {
     BudgetAssistantApiService,
     BudgetTrackerResult,
@@ -27,6 +26,16 @@ import {
 } from "@daanvdn/budget-assistant-client";
 import {catchError, throwError} from "rxjs";
 import {NgFor, NgIf} from '@angular/common';
+
+/** Local interface to replace PrimeNG TreeNode */
+interface TreeNode {
+  data?: any;
+  children?: TreeNode[];
+  label?: string;
+  expandedIcon?: string;
+  collapsedIcon?: string;
+  expanded?: boolean;
+}
 
 @Component({
     selector: 'budget-tracking',

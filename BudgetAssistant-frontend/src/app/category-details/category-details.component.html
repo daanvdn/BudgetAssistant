@@ -16,7 +16,12 @@
 
     </ng-template>
     <div *ngIf="datatIsLoaded" style="width: 100%; height: 80vh">
-        <p-chart type="bar" [data]="chartData" [options]="chartOptions" [plugins]="plugins"></p-chart>
+        <canvas baseChart
+                [type]="'bar'"
+                [data]="chartData"
+                [options]="chartOptions"
+                [plugins]="plugins">
+        </canvas>
 
     </div>
 </div>

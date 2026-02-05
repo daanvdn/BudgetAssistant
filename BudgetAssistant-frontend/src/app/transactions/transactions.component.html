@@ -210,8 +210,8 @@
                                 </div>
 
                                 <div class="card-counterparty">
-                                    <span class="counterparty-name">{{ item.counterparty?.name | titlecase }}</span>
-                                    @if (item.counterparty?.accountNumber) {
+                                    <span class="counterparty-name">{{ item.counterparty.name | titlecase }}</span>
+                                    @if (item.counterparty.accountNumber) {
                                         <span class="counterparty-account">{{ item.counterparty.accountNumber }}</span>
                                     }
                                 </div>

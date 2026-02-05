@@ -50,13 +50,13 @@
         </div>
         <div class="chart-container">
           @if (chartData()) {
-            <p-chart 
-              type="bar" 
-              [data]="chartData()" 
-              [options]="chartOptions" 
-              [plugins]="chartPlugins"
-              (onDataSelect)="handleDataSelect($event)">
-            </p-chart>
+            <canvas baseChart
+                    [type]="'bar'"
+                    [data]="chartData()!"
+                    [options]="chartOptions"
+                    [plugins]="chartPlugins"
+                    (chartClick)="handleChartClick($event)">
+            </canvas>
           }
         </div>
       </section>

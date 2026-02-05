@@ -21,7 +21,6 @@ import {MatSortModule} from '@angular/material/sort';
 import {MatTreeModule} from '@angular/material/tree';
 import {MatAutocompleteModule} from '@angular/material/autocomplete';
 import {MatFormFieldModule} from '@angular/material/form-field';
-import {NgxChartsModule} from '@swimlane/ngx-charts';
 import {bootstrapApplication, BrowserModule} from '@angular/platform-browser';
 import {AppRoutingModule} from './app/app-routing.module';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
@@ -29,6 +28,10 @@ import {MatNativeDateModule} from '@angular/material/core';
 import {MatToolbarModule} from '@angular/material/toolbar';
 import {MatButtonModule} from '@angular/material/button';
 import {MatDialogModule} from '@angular/material/dialog';
+
+// Register Chart.js components globally
+import { Chart, BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend, PieController, ArcElement } from 'chart.js';
+Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend, PieController, ArcElement);
 import {MatInputModule} from '@angular/material/input';
 import {MatSelectModule} from '@angular/material/select';
 import {MatTableModule} from '@angular/material/table';
@@ -47,8 +50,6 @@ import {MatTabsModule} from '@angular/material/tabs';
 import {MatButtonToggleModule} from '@angular/material/button-toggle';
 import {MatExpansionModule} from '@angular/material/expansion';
 import {MatBadgeModule} from '@angular/material/badge';
-import {ChartModule} from 'primeng/chart';
-import {TreeTableModule} from 'primeng/treetable';
 import {AppComponent} from './app/app.component';
 import {
     provideTanStackQuery,
@@ -62,13 +63,13 @@ if (environment.production) {
 bootstrapApplication(AppComponent, {
     providers: [
         importProvidersFrom(CdkMenuModule, NgSelectModule, MatTooltipModule, MatSortModule, MatTreeModule,
-            MatAutocompleteModule, MatFormFieldModule, NgxChartsModule, BrowserModule, AppRoutingModule,
+            MatAutocompleteModule, MatFormFieldModule, BrowserModule, AppRoutingModule,
             FormsModule, MatNativeDateModule, ReactiveFormsModule, MatToolbarModule, MatButtonModule, MatDialogModule,
             MatInputModule, MatSelectModule, MatTableModule, MatSortModule, MatPaginatorModule, MatNativeDateModule,
             MatDatepickerModule, MatCardModule, MatCheckboxModule, MatRadioModule, MatSidenavModule, MatListModule,
             MatIconModule, MatGridListModule, MatProgressSpinnerModule,
             FontAwesomeModule, MatTabsModule, MatButtonToggleModule, MatExpansionModule,
-            MatBadgeModule, ChartModule, TreeTableModule,
+            MatBadgeModule,
             ApiModule.forRoot(() => {
             return new Configuration({
                 basePath: environment.API_BASE_PATH,

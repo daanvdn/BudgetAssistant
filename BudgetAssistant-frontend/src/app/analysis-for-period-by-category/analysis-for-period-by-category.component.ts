@@ -1,6 +1,7 @@
 import {Component, OnInit} from '@angular/core';
 import {AppService} from "../app.service";
-import { LegendPosition, PieChartModule } from "@swimlane/ngx-charts";
+import {BaseChartDirective} from 'ng2-charts';
+import {ChartData, ChartOptions} from 'chart.js';
 import {DistributionByCategoryForPeriodChartData, Period} from "../model";
 import { NgIf, NgFor } from '@angular/common';
 import { MatCard, MatCardHeader, MatCardContent } from '@angular/material/card';
@@ -18,7 +19,7 @@ import { MatCard, MatCardHeader, MatCardContent } from '@angular/material/card';
         MatCard,
         MatCardHeader,
         MatCardContent,
-        PieChartModule,
+        BaseChartDirective,
     ],
 })
 export class AnalysisForPeriodByCategoryComponent implements OnInit {
@@ -31,15 +32,17 @@ export class AnalysisForPeriodByCategoryComponent implements OnInit {
   //
   isLoaded: boolean = false;
 
-  // options
-  view: [number, number] = [700, 400];
-  gradient: boolean = true;
-  showLegend: boolean = false;
-  showLabels: boolean = true;
-  isDoughnut: boolean = false;
-  legendPosition: LegendPosition = LegendPosition.Below;
-
-  customColors: any[] = [];
+  // Chart.js options
+  pieChartOptions: ChartOptions<'pie'> = {
+    responsive: true,
+    maintainAspectRatio: true,
+    plugins: {
+      legend: {
+        display: true,
+        position: 'bottom'
+      }
+    }
+  };
 
 
   constructor(public appService: AppService) {
@@ -66,10 +69,6 @@ export class AnalysisForPeriodByCategoryComponent implements OnInit {
         }
 
         this.isLoaded = true;
-        for (const label of labelColors.keys()) {
-          let color = labelColors.get(label);
-          this.customColors.push({"name": label,"value": color})
-        }
 
 
       })
@@ -82,28 +81,35 @@ export class AnalysisForPeriodByCategoryComponent implements OnInit {
 }
 
 export class PieChartData {
-  nameValuePairs: any[];
+  chartData: ChartData<'pie', number[], string>;
   period: Period;
 
 
-  constructor(nameValuePairs: any[], period: Period) {
-    this.nameValuePairs = nameValuePairs;
+  constructor(chartData: ChartData<'pie', number[], string>, period: Period) {
+    this.chartData = chartData;
     this.period = period;
   }
 
   static fromDistributionByCategoryForPeriodChartData(obj: DistributionByCategoryForPeriodChartData, labelColors: Map<string, string>): PieChartData {
-    let arr: any[] = [];
+    const labels: string[] = [];
+    const data: number[] = [];
+    const backgroundColors: string[] = [];
+
     obj.entries.forEach((categoryAndAmount => {
-      let result = {
-        "name": categoryAndAmount.category,
-        "value": Math.abs(categoryAndAmount.amount)
-      };
-      arr.push(result);
-      getColorForLabel(result.name, labelColors)
+      labels.push(categoryAndAmount.category);
+      data.push(Math.abs(categoryAndAmount.amount));
+      backgroundColors.push(getColorForLabel(categoryAndAmount.category, labelColors));
+    }));
 
+    const chartData: ChartData<'pie', number[], string> = {
+      labels: labels,
+      datasets: [{
+        data: data,
+        backgroundColor: backgroundColors
+      }]
+    };
 
-    }))
-    return new PieChartData(arr, obj.period as Period);
+    return new PieChartData(chartData, obj.period as Period);
 
   }
 }
@@ -122,7 +128,3 @@ function getColorForLabel(label: string, labelColors: Map<string, string>): stri
 
   return labelColors.get(label) as string;
 }
-
-
-
-
