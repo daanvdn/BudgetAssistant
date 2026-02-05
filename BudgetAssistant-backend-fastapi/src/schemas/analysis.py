@@ -1,6 +1,6 @@
 """Pydantic schemas for analysis API operations."""
 
-from datetime import datetime
+from datetime import date
 from typing import List
 
 from pydantic import BaseModel
@@ -14,8 +14,8 @@ class ExpensesAndRevenueForPeriod(BaseModel):
     period: str
     expenses: float = 0.0
     revenue: float = 0.0
-    start_date: datetime
-    end_date: datetime
+    start_date: date
+    end_date: date
 
 
 class RevenueAndExpensesPerPeriodResponse(BaseModel):
@@ -39,8 +39,8 @@ class PeriodCategoryBreakdown(BaseModel):
     """Category breakdown for a single period."""
 
     period: str
-    start_date: datetime
-    end_date: datetime
+    start_date: date
+    end_date: date
     categories: List[CategoryAmount] = []
     total: float = 0.0
 
@@ -76,8 +76,8 @@ class CategoryDetailsForPeriodResponse(BaseModel):
     """Response for category details for a period."""
 
     period: str
-    start_date: datetime
-    end_date: datetime
+    start_date: date
+    end_date: date
     categories: List[CategoryDetailsForPeriodResult] = []
     total_amount: float = 0.0
 
@@ -97,8 +97,8 @@ class BudgetTrackerResult(BaseModel):
     """Budget tracking result."""
 
     period: str
-    start_date: datetime
-    end_date: datetime
+    start_date: date
+    end_date: date
     entries: List[BudgetEntryResult] = []
     total_budgeted: float = 0.0
     total_actual: float = 0.0

@@ -176,8 +176,8 @@ class TestRevenueExpensesQuery:
         query = RevenueExpensesQuery(
             account_number="",
             transaction_type=TransactionTypeEnum.EXPENSES,
-            start=datetime.now(),
-            end=datetime.now(),
+            start=date.today(),
+            end=date.today(),
             grouping=Grouping.MONTH,
         )
         assert query.is_empty() is True
@@ -187,8 +187,8 @@ class TestRevenueExpensesQuery:
         query = RevenueExpensesQuery(
             account_number="12345",
             transaction_type=TransactionTypeEnum.EXPENSES,
-            start=datetime(2023, 1, 1),
-            end=datetime(2023, 12, 31),
+            start=date(2023, 1, 1),
+            end=date(2023, 12, 31),
             grouping=Grouping.MONTH,
         )
         assert query.is_empty() is False
@@ -198,8 +198,8 @@ class TestRevenueExpensesQuery:
         query = RevenueExpensesQuery(
             account_number="12345",
             transaction_type=TransactionTypeEnum.BOTH,
-            start=datetime(2023, 1, 1),
-            end=datetime(2023, 12, 31),
+            start=date(2023, 1, 1),
+            end=date(2023, 12, 31),
             grouping=Grouping.QUARTER,
             revenue_recurrence=RecurrenceType.RECURRENT,
             expenses_recurrence=RecurrenceType.NON_RECURRENT,

@@ -8,7 +8,7 @@ These tests cover:
 
 import io
 from collections import namedtuple
-from datetime import date, datetime
+from datetime import date
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -31,9 +31,7 @@ from schemas.period import Month, Period, Quarter, Year
 from services.analysis_service import AnalysisService
 
 # Named tuple to hold parsed transaction data
-TransactionData = namedtuple(
-    "TransactionData", ["account", "start_date", "end_date", "df", "categories"]
-)
+TransactionData = namedtuple("TransactionData", ["account", "start_date", "end_date", "df", "categories"])
 
 
 class Resources:
@@ -54,42 +52,22 @@ class Resources:
         dfs: Dict[str, Any] = self._load_blocks_from_xml()
 
         self.transactions_df = dfs["transactions"]
-        self.distributions_per_period: Dict[
-            Grouping, List[ExpensesAndRevenueForPeriod]
-        ] = {}
-        self.distributions_per_period[Grouping.MONTH] = self._init_months_distribution(
-            dfs["month"]
-        )
-        self.distributions_per_period[Grouping.QUARTER] = (
-            self._init_quarters_distribution(dfs["quarter"])
-        )
-        self.distributions_per_period[Grouping.YEAR] = self._init_years_distribution(
-            dfs["year"]
-        )
+        self.distributions_per_period: Dict[Grouping, List[ExpensesAndRevenueForPeriod]] = {}
+        self.distributions_per_period[Grouping.MONTH] = self._init_months_distribution(dfs["month"])
+        self.distributions_per_period[Grouping.QUARTER] = self._init_quarters_distribution(dfs["quarter"])
+        self.distributions_per_period[Grouping.YEAR] = self._init_years_distribution(dfs["year"])
 
         # Category distributions - only loaded if category_lookup is provided
-        self.distributions_per_period_and_category: Dict[
-            Grouping, RevenueAndExpensesPerPeriodAndCategory
-        ] = {}
+        self.distributions_per_period_and_category: Dict[Grouping, RevenueAndExpensesPerPeriodAndCategory] = {}
         if self.category_lookup:
-            self.distributions_per_period_and_category[Grouping.MONTH] = dfs[
-                "month_categories"
-            ]
-            self.distributions_per_period_and_category[Grouping.QUARTER] = dfs[
-                "quarter_categories"
-            ]
-            self.distributions_per_period_and_category[Grouping.YEAR] = dfs[
-                "year_categories"
-            ]
+            self.distributions_per_period_and_category[Grouping.MONTH] = dfs["month_categories"]
+            self.distributions_per_period_and_category[Grouping.QUARTER] = dfs["quarter_categories"]
+            self.distributions_per_period_and_category[Grouping.YEAR] = dfs["year_categories"]
 
     @staticmethod
     def _get_resource_path() -> Path:
         """Get the path to the XML resource file."""
-        return (
-            Path(__file__).parent.parent
-            / "resources"
-            / "test_get_expenses_and_revenue_per_period_pivot_tables.xml"
-        )
+        return Path(__file__).parent.parent / "resources" / "test_get_expenses_and_revenue_per_period_pivot_tables.xml"
 
     def _load_blocks_from_xml(self) -> Dict[str, Any]:
         """Load and parse all data blocks from the XML file."""
@@ -103,9 +81,7 @@ class Resources:
                 text = tree.xpath(tag_name)[0].text.strip()
                 lines = text.splitlines()
                 lines = [line.strip() for line in lines if line.strip()]
-                return pd.read_csv(
-                    io.StringIO("\n".join(lines)), delimiter=";", header=0
-                )
+                return pd.read_csv(io.StringIO("\n".join(lines)), delimiter=";", header=0)
 
             blocks["transactions"] = get_csv_data_in_tag("/root/transactions")
             blocks["year"] = get_csv_data_in_tag("/root/year")
@@ -114,15 +90,9 @@ class Resources:
 
             # Load category distributions if category_lookup is available
             if self.category_lookup:
-                blocks["year_categories"] = (
-                    self._get_category_distribution_for_grouping(tree, Grouping.YEAR)
-                )
-                blocks["month_categories"] = (
-                    self._get_category_distribution_for_grouping(tree, Grouping.MONTH)
-                )
-                blocks["quarter_categories"] = (
-                    self._get_category_distribution_for_grouping(tree, Grouping.QUARTER)
-                )
+                blocks["year_categories"] = self._get_category_distribution_for_grouping(tree, Grouping.YEAR)
+                blocks["month_categories"] = self._get_category_distribution_for_grouping(tree, Grouping.MONTH)
+                blocks["quarter_categories"] = self._get_category_distribution_for_grouping(tree, Grouping.QUARTER)
             else:
                 blocks["year_categories"] = None
                 blocks["month_categories"] = None
@@ -164,9 +134,7 @@ class Resources:
             ValueError: If category not found in lookup.
         """
         if category_name not in self.category_lookup:
-            raise ValueError(
-                f"Category with name {category_name} not found in category lookup"
-            )
+            raise ValueError(f"Category with name {category_name} not found in category lookup")
         return self.category_lookup[category_name]
 
     def _get_category_distribution_for_grouping(
@@ -193,19 +161,12 @@ class Resources:
             """Validate that the DataFrame has expected structure."""
             type_name = "expenses" if is_expenses else "revenue"
             if len(df.columns) != 2:
-                raise ValueError(
-                    f"Expected 2 columns in {type_name} dataframe for grouping {grouping_name}"
-                )
+                raise ValueError(f"Expected 2 columns in {type_name} dataframe for grouping {grouping_name}")
             # Check that category and amount columns have valid values
-            has_valid_categories = (
-                df["category"].notnull().all()
-                and (df["category"].str.strip() != "").all()
-            )
+            has_valid_categories = df["category"].notnull().all() and (df["category"].str.strip() != "").all()
             has_valid_amounts = df["amount"].notnull().all()
             if not (has_valid_categories and has_valid_amounts):
-                raise ValueError(
-                    f"Expected non-empty values in {type_name} dataframe for grouping {grouping_name}"
-                )
+                raise ValueError(f"Expected non-empty values in {type_name} dataframe for grouping {grouping_name}")
 
         # Parse chart data to get periods with their category breakdowns
         chart = tree.xpath(f"/root/{grouping_name}_categories/chart")[0]
@@ -217,9 +178,7 @@ class Resources:
         all_revenue_categories: set[str] = set()
 
         for entry in entries:
-            period = self._parse_period(
-                entry.xpath(f"{grouping_name}")[0].text.strip(), grouping
-            )
+            period = self._parse_period(entry.xpath(f"{grouping_name}")[0].text.strip(), grouping)
 
             # Parse expenses
             expenses_element = entry.xpath("expenses")
@@ -295,9 +254,7 @@ class Resources:
             transaction_type=TransactionTypeEnum.EXPENSES,
         )
 
-    def _init_months_distribution(
-        self, df: pd.DataFrame
-    ) -> List[ExpensesAndRevenueForPeriod]:
+    def _init_months_distribution(self, df: pd.DataFrame) -> List[ExpensesAndRevenueForPeriod]:
         """Initialize month distribution from DataFrame.
 
         Args:
@@ -322,9 +279,7 @@ class Resources:
             )
         return expected
 
-    def _init_quarters_distribution(
-        self, df: pd.DataFrame
-    ) -> List[ExpensesAndRevenueForPeriod]:
+    def _init_quarters_distribution(self, df: pd.DataFrame) -> List[ExpensesAndRevenueForPeriod]:
         """Initialize quarter distribution from DataFrame.
 
         Args:
@@ -349,9 +304,7 @@ class Resources:
             )
         return expected
 
-    def _init_years_distribution(
-        self, df: pd.DataFrame
-    ) -> List[ExpensesAndRevenueForPeriod]:
+    def _init_years_distribution(self, df: pd.DataFrame) -> List[ExpensesAndRevenueForPeriod]:
         """Initialize year distribution from DataFrame.
 
         Args:
@@ -416,11 +369,7 @@ async def create_test_data(
     category_dict: Dict[str, Category] = {}
     for category_name in resources.get_unique_categories():
         cat_type = category_name.split("_")[1].upper()
-        transaction_type = (
-            TransactionTypeEnum.EXPENSES
-            if cat_type == "EXPENSES"
-            else TransactionTypeEnum.REVENUE
-        )
+        transaction_type = TransactionTypeEnum.EXPENSES if cat_type == "EXPENSES" else TransactionTypeEnum.REVENUE
         category = Category(
             name=category_name,
             qualified_name=category_name,
@@ -551,11 +500,7 @@ class TestResourcesHelper:
         quarter_dist = resources.distributions_per_period[Grouping.QUARTER]
         # Find Q1 2022
         q1_2022 = next(
-            (
-                d
-                for d in quarter_dist
-                if "01/2022" in d.period and "03/2022" in d.period
-            ),
+            (d for d in quarter_dist if "01/2022" in d.period and "03/2022" in d.period),
             None,
         )
 
@@ -606,9 +551,7 @@ class TestSeedTestTransactions:
 
     async def test_seed_creates_bank_account(
         self,
-        seed_test_transactions: Tuple[
-            BankAccount, Dict[str, Category], List[Transaction], Resources
-        ],
+        seed_test_transactions: Tuple[BankAccount, Dict[str, Category], List[Transaction], Resources],
     ):
         """Test that fixture creates a bank account."""
         bank_account, category_dict, transactions, resources = seed_test_transactions
@@ -618,9 +561,7 @@ class TestSeedTestTransactions:
 
     async def test_seed_creates_categories(
         self,
-        seed_test_transactions: Tuple[
-            BankAccount, Dict[str, Category], List[Transaction], Resources
-        ],
+        seed_test_transactions: Tuple[BankAccount, Dict[str, Category], List[Transaction], Resources],
     ):
         """Test that fixture creates all required categories."""
         bank_account, category_dict, transactions, resources = seed_test_transactions
@@ -637,9 +578,7 @@ class TestSeedTestTransactions:
 
     async def test_seed_creates_transactions(
         self,
-        seed_test_transactions: Tuple[
-            BankAccount, Dict[str, Category], List[Transaction], Resources
-        ],
+        seed_test_transactions: Tuple[BankAccount, Dict[str, Category], List[Transaction], Resources],
     ):
         """Test that fixture creates all transactions from XML."""
         bank_account, category_dict, transactions, resources = seed_test_transactions
@@ -656,9 +595,7 @@ class TestSeedTestTransactions:
 
     async def test_seed_resources_has_category_lookup(
         self,
-        seed_test_transactions: Tuple[
-            BankAccount, Dict[str, Category], List[Transaction], Resources
-        ],
+        seed_test_transactions: Tuple[BankAccount, Dict[str, Category], List[Transaction], Resources],
     ):
         """Test that Resources is initialized with category lookup."""
         bank_account, category_dict, transactions, resources = seed_test_transactions
@@ -675,9 +612,7 @@ class TestGetRevenueAndExpensesPerPeriod:
     async def test_get_revenue_and_expenses_per_period_year(
         self,
         async_session: AsyncSession,
-        seed_test_transactions: Tuple[
-            BankAccount, Dict[str, Category], List[Transaction], Resources
-        ],
+        seed_test_transactions: Tuple[BankAccount, Dict[str, Category], List[Transaction], Resources],
     ):
         """Test aggregation by year grouping."""
         bank_account, category_dict, transactions, resources = seed_test_transactions
@@ -686,8 +621,8 @@ class TestGetRevenueAndExpensesPerPeriod:
         query = RevenueExpensesQuery(
             account_number=bank_account.account_number,
             transaction_type=TransactionTypeEnum.BOTH,
-            start=datetime.combine(start_date, datetime.min.time()),
-            end=datetime.combine(end_date, datetime.max.time()),
+            start=start_date,
+            end=end_date,
             grouping=Grouping.YEAR,
         )
 
@@ -713,9 +648,7 @@ class TestGetRevenueAndExpensesPerPeriod:
     async def test_get_revenue_and_expenses_per_period_quarter(
         self,
         async_session: AsyncSession,
-        seed_test_transactions: Tuple[
-            BankAccount, Dict[str, Category], List[Transaction], Resources
-        ],
+        seed_test_transactions: Tuple[BankAccount, Dict[str, Category], List[Transaction], Resources],
     ):
         """Test aggregation by quarter grouping."""
         bank_account, category_dict, transactions, resources = seed_test_transactions
@@ -724,8 +657,8 @@ class TestGetRevenueAndExpensesPerPeriod:
         query = RevenueExpensesQuery(
             account_number=bank_account.account_number,
             transaction_type=TransactionTypeEnum.BOTH,
-            start=datetime.combine(start_date, datetime.min.time()),
-            end=datetime.combine(end_date, datetime.max.time()),
+            start=start_date,
+            end=end_date,
             grouping=Grouping.QUARTER,
         )
 
@@ -751,9 +684,7 @@ class TestGetRevenueAndExpensesPerPeriod:
     async def test_get_revenue_and_expenses_per_period_month(
         self,
         async_session: AsyncSession,
-        seed_test_transactions: Tuple[
-            BankAccount, Dict[str, Category], List[Transaction], Resources
-        ],
+        seed_test_transactions: Tuple[BankAccount, Dict[str, Category], List[Transaction], Resources],
     ):
         """Test aggregation by month grouping."""
         bank_account, category_dict, transactions, resources = seed_test_transactions
@@ -762,8 +693,8 @@ class TestGetRevenueAndExpensesPerPeriod:
         query = RevenueExpensesQuery(
             account_number=bank_account.account_number,
             transaction_type=TransactionTypeEnum.BOTH,
-            start=datetime.combine(start_date, datetime.min.time()),
-            end=datetime.combine(end_date, datetime.max.time()),
+            start=start_date,
+            end=end_date,
             grouping=Grouping.MONTH,
         )
 
@@ -799,8 +730,8 @@ class TestGetRevenueAndExpensesPerPeriod:
         query = RevenueExpensesQuery(
             account_number=bank_account.account_number,
             transaction_type=TransactionTypeEnum.BOTH,
-            start=datetime(2020, 1, 1),
-            end=datetime(2025, 12, 31),
+            start=date(2020, 1, 1),
+            end=date(2025, 12, 31),
             grouping=Grouping.YEAR,
         )
 
@@ -819,8 +750,8 @@ class TestGetRevenueAndExpensesPerPeriod:
         query = RevenueExpensesQuery(
             account_number="",  # Empty account number makes query empty
             transaction_type=TransactionTypeEnum.BOTH,
-            start=datetime(2020, 1, 1),
-            end=datetime(2025, 12, 31),
+            start=date(2020, 1, 1),
+            end=date(2025, 12, 31),
             grouping=Grouping.YEAR,
         )
 
@@ -838,9 +769,7 @@ class TestGetRevenueAndExpensesPerPeriodAndCategory:
     async def test_get_expenses_per_period_and_category_year(
         self,
         async_session: AsyncSession,
-        seed_test_transactions: Tuple[
-            BankAccount, Dict[str, Category], List[Transaction], Resources
-        ],
+        seed_test_transactions: Tuple[BankAccount, Dict[str, Category], List[Transaction], Resources],
     ):
         """Test category breakdown by year grouping for expenses."""
         bank_account, category_dict, transactions, resources = seed_test_transactions
@@ -849,15 +778,13 @@ class TestGetRevenueAndExpensesPerPeriodAndCategory:
         query = RevenueExpensesQuery(
             account_number=bank_account.account_number,
             transaction_type=TransactionTypeEnum.EXPENSES,
-            start=datetime.combine(start_date, datetime.min.time()),
-            end=datetime.combine(end_date, datetime.max.time()),
+            start=start_date,
+            end=end_date,
             grouping=Grouping.YEAR,
         )
 
         service = AnalysisService()
-        result = await service.get_revenue_and_expenses_per_period_and_category(
-            query, async_session
-        )
+        result = await service.get_revenue_and_expenses_per_period_and_category(query, async_session)
 
         assert result is not None
         assert len(result.periods) > 0
@@ -873,9 +800,7 @@ class TestGetRevenueAndExpensesPerPeriodAndCategory:
     async def test_get_revenue_per_period_and_category_year(
         self,
         async_session: AsyncSession,
-        seed_test_transactions: Tuple[
-            BankAccount, Dict[str, Category], List[Transaction], Resources
-        ],
+        seed_test_transactions: Tuple[BankAccount, Dict[str, Category], List[Transaction], Resources],
     ):
         """Test category breakdown by year grouping for revenue."""
         bank_account, category_dict, transactions, resources = seed_test_transactions
@@ -884,15 +809,13 @@ class TestGetRevenueAndExpensesPerPeriodAndCategory:
         query = RevenueExpensesQuery(
             account_number=bank_account.account_number,
             transaction_type=TransactionTypeEnum.REVENUE,
-            start=datetime.combine(start_date, datetime.min.time()),
-            end=datetime.combine(end_date, datetime.max.time()),
+            start=start_date,
+            end=end_date,
             grouping=Grouping.YEAR,
         )
 
         service = AnalysisService()
-        result = await service.get_revenue_and_expenses_per_period_and_category(
-            query, async_session
-        )
+        result = await service.get_revenue_and_expenses_per_period_and_category(query, async_session)
 
         assert result is not None
         assert len(result.periods) > 0
@@ -908,9 +831,7 @@ class TestGetRevenueAndExpensesPerPeriodAndCategory:
     async def test_get_expenses_per_period_and_category_quarter(
         self,
         async_session: AsyncSession,
-        seed_test_transactions: Tuple[
-            BankAccount, Dict[str, Category], List[Transaction], Resources
-        ],
+        seed_test_transactions: Tuple[BankAccount, Dict[str, Category], List[Transaction], Resources],
     ):
         """Test category breakdown by quarter grouping for expenses."""
         bank_account, category_dict, transactions, resources = seed_test_transactions
@@ -919,15 +840,13 @@ class TestGetRevenueAndExpensesPerPeriodAndCategory:
         query = RevenueExpensesQuery(
             account_number=bank_account.account_number,
             transaction_type=TransactionTypeEnum.EXPENSES,
-            start=datetime.combine(start_date, datetime.min.time()),
-            end=datetime.combine(end_date, datetime.max.time()),
+            start=start_date,
+            end=end_date,
             grouping=Grouping.QUARTER,
         )
 
         service = AnalysisService()
-        result = await service.get_revenue_and_expenses_per_period_and_category(
-            query, async_session
-        )
+        result = await service.get_revenue_and_expenses_per_period_and_category(query, async_session)
 
         assert result is not None
         assert len(result.periods) > 0
@@ -940,9 +859,7 @@ class TestGetRevenueAndExpensesPerPeriodAndCategory:
     async def test_get_expenses_per_period_and_category_month(
         self,
         async_session: AsyncSession,
-        seed_test_transactions: Tuple[
-            BankAccount, Dict[str, Category], List[Transaction], Resources
-        ],
+        seed_test_transactions: Tuple[BankAccount, Dict[str, Category], List[Transaction], Resources],
     ):
         """Test category breakdown by month grouping for expenses."""
         bank_account, category_dict, transactions, resources = seed_test_transactions
@@ -951,15 +868,13 @@ class TestGetRevenueAndExpensesPerPeriodAndCategory:
         query = RevenueExpensesQuery(
             account_number=bank_account.account_number,
             transaction_type=TransactionTypeEnum.EXPENSES,
-            start=datetime.combine(start_date, datetime.min.time()),
-            end=datetime.combine(end_date, datetime.max.time()),
+            start=start_date,
+            end=end_date,
             grouping=Grouping.MONTH,
         )
 
         service = AnalysisService()
-        result = await service.get_revenue_and_expenses_per_period_and_category(
-            query, async_session
-        )
+        result = await service.get_revenue_and_expenses_per_period_and_category(query, async_session)
 
         assert result is not None
         assert len(result.periods) > 0
@@ -971,24 +886,20 @@ class TestGetRevenueAndExpensesPerPeriodAndCategory:
     ):
         """Test that empty results are returned when no transactions exist."""
         # Create a bank account without any transactions
-        bank_account = BankAccount(
-            account_number="EMPTYCAT123", alias="Empty Category Account"
-        )
+        bank_account = BankAccount(account_number="EMPTYCAT123", alias="Empty Category Account")
         async_session.add(bank_account)
         await async_session.flush()
 
         query = RevenueExpensesQuery(
             account_number=bank_account.account_number,
             transaction_type=TransactionTypeEnum.EXPENSES,
-            start=datetime(2020, 1, 1),
-            end=datetime(2025, 12, 31),
+            start=date(2020, 1, 1),
+            end=date(2025, 12, 31),
             grouping=Grouping.YEAR,
         )
 
         service = AnalysisService()
-        result = await service.get_revenue_and_expenses_per_period_and_category(
-            query, async_session
-        )
+        result = await service.get_revenue_and_expenses_per_period_and_category(query, async_session)
 
         assert result is not None
         assert len(result.periods) == 0
@@ -1002,15 +913,13 @@ class TestGetRevenueAndExpensesPerPeriodAndCategory:
         query = RevenueExpensesQuery(
             account_number="",  # Empty account number makes query empty
             transaction_type=TransactionTypeEnum.EXPENSES,
-            start=datetime(2020, 1, 1),
-            end=datetime(2025, 12, 31),
+            start=date(2020, 1, 1),
+            end=date(2025, 12, 31),
             grouping=Grouping.YEAR,
         )
 
         service = AnalysisService()
-        result = await service.get_revenue_and_expenses_per_period_and_category(
-            query, async_session
-        )
+        result = await service.get_revenue_and_expenses_per_period_and_category(query, async_session)
 
         assert result is not None
         assert len(result.periods) == 0
@@ -1018,9 +927,7 @@ class TestGetRevenueAndExpensesPerPeriodAndCategory:
     async def test_all_categories_tracked_across_periods(
         self,
         async_session: AsyncSession,
-        seed_test_transactions: Tuple[
-            BankAccount, Dict[str, Category], List[Transaction], Resources
-        ],
+        seed_test_transactions: Tuple[BankAccount, Dict[str, Category], List[Transaction], Resources],
     ):
         """Test that all_categories contains all unique categories across periods."""
         bank_account, category_dict, transactions, resources = seed_test_transactions
@@ -1029,15 +936,13 @@ class TestGetRevenueAndExpensesPerPeriodAndCategory:
         query = RevenueExpensesQuery(
             account_number=bank_account.account_number,
             transaction_type=TransactionTypeEnum.EXPENSES,
-            start=datetime.combine(start_date, datetime.min.time()),
-            end=datetime.combine(end_date, datetime.max.time()),
+            start=start_date,
+            end=end_date,
             grouping=Grouping.YEAR,
         )
 
         service = AnalysisService()
-        result = await service.get_revenue_and_expenses_per_period_and_category(
-            query, async_session
-        )
+        result = await service.get_revenue_and_expenses_per_period_and_category(query, async_session)
 
         # Collect all categories from all periods
         categories_in_periods = set()

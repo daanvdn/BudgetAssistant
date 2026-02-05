@@ -128,8 +128,8 @@ class RevenueExpensesQuery(BaseModel):
 
     account_number: str
     transaction_type: TransactionTypeEnum
-    start: datetime
-    end: datetime
+    start: date
+    end: date
     grouping: Grouping
     revenue_recurrence: RecurrenceType | None = None
     expenses_recurrence: RecurrenceType | None = None
@@ -137,7 +137,7 @@ class RevenueExpensesQuery(BaseModel):
     @field_validator("start", "end", mode="before")
     @classmethod
     def strip_extra_quotes(cls, v):
-        """Strip extra quotes from datetime strings if present."""
+        """Strip extra quotes from date strings if present."""
         if isinstance(v, str):
             # Remove leading/trailing quotes that may be double-encoded
             return v.strip('"')

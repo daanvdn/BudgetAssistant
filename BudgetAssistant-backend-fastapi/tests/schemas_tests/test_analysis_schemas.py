@@ -1,6 +1,6 @@
 """Tests for analysis schemas."""
 
-from datetime import datetime
+from datetime import date
 
 from common.enums import TransactionTypeEnum
 from schemas.analysis import (
@@ -22,8 +22,8 @@ class TestExpensesAndRevenueForPeriod:
 
     def test_create_with_all_fields(self):
         """Test creating with all fields."""
-        start = datetime(2023, 1, 1)
-        end = datetime(2023, 1, 31)
+        start = date(2023, 1, 1)
+        end = date(2023, 1, 31)
 
         data = ExpensesAndRevenueForPeriod(
             period="2023-01",
@@ -41,8 +41,8 @@ class TestExpensesAndRevenueForPeriod:
 
     def test_default_values(self):
         """Test default values for expenses and revenue."""
-        start = datetime(2023, 1, 1)
-        end = datetime(2023, 1, 31)
+        start = date(2023, 1, 1)
+        end = date(2023, 1, 31)
 
         data = ExpensesAndRevenueForPeriod(
             period="2023-01",
@@ -71,8 +71,8 @@ class TestRevenueAndExpensesPerPeriodResponse:
 
     def test_with_content(self):
         """Test response with content."""
-        start = datetime(2023, 1, 1)
-        end = datetime(2023, 1, 31)
+        start = date(2023, 1, 1)
+        end = date(2023, 1, 31)
 
         content = [
             ExpensesAndRevenueForPeriod(
@@ -125,8 +125,8 @@ class TestPeriodCategoryBreakdown:
 
     def test_with_categories(self):
         """Test with category breakdown."""
-        start = datetime(2023, 1, 1)
-        end = datetime(2023, 1, 31)
+        start = date(2023, 1, 1)
+        end = date(2023, 1, 31)
 
         categories = [
             CategoryAmount(
@@ -167,8 +167,8 @@ class TestRevenueAndExpensesPerPeriodAndCategory:
 
     def test_with_data(self):
         """Test with actual data."""
-        start = datetime(2023, 1, 1)
-        end = datetime(2023, 1, 31)
+        start = date(2023, 1, 1)
+        end = date(2023, 1, 31)
 
         periods = [
             PeriodCategoryBreakdown(
@@ -196,8 +196,8 @@ class TestCategoryDetailsForPeriodResponse:
 
     def test_with_categories(self):
         """Test response with category details."""
-        start = datetime(2023, 1, 1)
-        end = datetime(2023, 1, 31)
+        start = date(2023, 1, 1)
+        end = date(2023, 1, 31)
 
         categories = [
             CategoryDetailsForPeriodResult(
@@ -228,8 +228,8 @@ class TestBudgetTrackerResult:
 
     def test_with_entries(self):
         """Test budget tracker result with entries."""
-        start = datetime(2023, 1, 1)
-        end = datetime(2023, 1, 31)
+        start = date(2023, 1, 1)
+        end = date(2023, 1, 31)
 
         entries = [
             BudgetEntryResult(

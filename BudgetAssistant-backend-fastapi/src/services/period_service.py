@@ -1,6 +1,6 @@
 """Period service for date range utilities."""
 
-from datetime import datetime
+from datetime import date
 
 from schemas import DateRangeShortcut, Grouping, ResolvedDateRange
 from schemas.period import Month, Period, Quarter, Year
@@ -14,7 +14,7 @@ class PeriodService:
         shortcut: DateRangeShortcut,
     ) -> ResolvedDateRange:
         """Resolve a date range shortcut to actual start and end dates."""
-        now = datetime.now()
+        now = date.today()
 
         if shortcut == DateRangeShortcut.CURRENT_MONTH:
             period = Month.from_month_and_year(now.month, now.year)
@@ -50,8 +50,8 @@ class PeriodService:
 
         elif shortcut == DateRangeShortcut.ALL:
             # Return a very wide range
-            start = datetime(2000, 1, 1)
-            end = now.replace(hour=23, minute=59, second=59, microsecond=999999)
+            start = date(2000, 1, 1)
+            end = now
 
         else:
             # Default to current month
@@ -60,32 +60,32 @@ class PeriodService:
             end = period.end
 
         return ResolvedDateRange(
-            start=start.date() if hasattr(start, "date") and callable(start.date) else start,
-            end=end.date() if hasattr(end, "date") and callable(end.date) else end,
+            start=start,
+            end=end,
             shortcut=shortcut.value,
         )
 
     def get_period_for_date(
         self,
-        date: datetime,
+        d: date,
         grouping: Grouping,
     ) -> Period:
         """Get a Period instance for a date based on grouping."""
         if grouping == Grouping.MONTH:
-            return Month.from_month_and_year(date.month, date.year)
+            return Month.from_month_and_year(d.month, d.year)
         elif grouping == Grouping.QUARTER:
-            return Quarter.from_date(date)
+            return Quarter.from_date(d)
         elif grouping == Grouping.YEAR:
-            return Year.from_year(date.year)
+            return Year.from_year(d.year)
         else:
             # Default to month
-            return Month.from_month_and_year(date.month, date.year)
+            return Month.from_month_and_year(d.month, d.year)
 
     def get_period_boundaries(
         self,
-        date: datetime,
+        d: date,
         grouping: str,
-    ) -> tuple[datetime, datetime]:
+    ) -> tuple[date, date]:
         """Get the start and end of a period containing the given date.
 
         Uses Period classes for consistent period calculation.
@@ -96,12 +96,12 @@ class PeriodService:
         except ValueError:
             grouping_enum = Grouping.MONTH
 
-        period = self.get_period_for_date(date, grouping_enum)
+        period = self.get_period_for_date(d, grouping_enum)
         return period.start, period.end
 
     def format_period(
         self,
-        date: datetime,
+        d: date,
         grouping: str,
     ) -> str:
         """Format a period as a string.
@@ -114,7 +114,7 @@ class PeriodService:
         except ValueError:
             grouping_enum = Grouping.MONTH
 
-        period = self.get_period_for_date(date, grouping_enum)
+        period = self.get_period_for_date(d, grouping_enum)
         return period.value
 
 

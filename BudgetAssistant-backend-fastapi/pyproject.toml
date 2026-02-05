@@ -36,7 +36,8 @@ dev = [
     "pandas>=2.0.0",
     "lxml>=5.0.0",
     "openapi-generator-cli[jdk4py]",
-    "factory-boy>=3.3.3"
+    "factory-boy>=3.3.3",
+    "anyio"
 ]
 
 [build-system]

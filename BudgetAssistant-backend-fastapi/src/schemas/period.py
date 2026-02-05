@@ -44,33 +44,16 @@ class Period:
             end: The end datetime/date of the period.
             grouping: The grouping type (MONTH, QUARTER, YEAR).
         """
-        # Convert date to datetime if necessary
-        if isinstance(start, date) and not isinstance(start, datetime):
-            start = datetime(start.year, start.month, start.day)
-        if isinstance(end, date) and not isinstance(end, datetime):
-            end = datetime(end.year, end.month, end.day)
+        # Convert to date if datetime is passed
+        if isinstance(start, datetime):
+            start = start.date()
+        if isinstance(end, datetime):
+            end = end.date()
 
-        self.start = arrow.get(start.year, start.month, start.day).floor("day").datetime
-        # Remove timezone info
-        self.start = self.start.replace(tzinfo=None)
-        self.end = arrow.get(end.year, end.month, end.day).ceil("day").datetime
-        self.end = self.end.replace(tzinfo=None)
+        self.start: date = arrow.get(start.year, start.month, start.day).floor("day").date()
+        self.end: date = arrow.get(end.year, end.month, end.day).ceil("day").date()
         self.grouping = grouping
         self.value = self.init_value(start, end, grouping)
-
-    @staticmethod
-    def at_start_of_day(dt: Union[datetime, date]) -> datetime:
-        """Get the start of the day for a given date."""
-        if isinstance(dt, datetime):
-            return datetime.combine(dt.date(), datetime.min.time())
-        return datetime.combine(dt, datetime.min.time())
-
-    @staticmethod
-    def at_end_of_day(dt: Union[datetime, date]) -> datetime:
-        """Get the end of the day for a given date."""
-        if isinstance(dt, datetime):
-            return datetime.combine(dt.date(), datetime.max.time())
-        return datetime.combine(dt, datetime.max.time())
 
     @staticmethod
     def from_transaction(transaction: "Transaction", grouping: Grouping) -> "Period":
@@ -100,8 +83,8 @@ class Period:
     def from_json(json_str: str) -> "Period":
         """Deserialize a Period from a JSON string."""
         data = json.loads(json_str)
-        start = datetime.fromisoformat(data["start"])
-        end = datetime.fromisoformat(data["end"])
+        start = date.fromisoformat(data["start"])
+        end = date.fromisoformat(data["end"])
         grouping = Grouping(data["grouping"].upper())
         return Period(start, end, grouping)
 
@@ -126,12 +109,7 @@ class Period:
         if not isinstance(other, Period):
             return NotImplemented
         # Check if all attributes are not None, else raise ValueError
-        if (
-            self.start is None
-            or self.end is None
-            or self.grouping is None
-            or self.value is None
-        ):
+        if self.start is None or self.end is None or self.grouping is None or self.value is None:
             raise ValueError("Attributes of Period should not be None")
         return (
             self.start == other.start
@@ -143,12 +121,7 @@ class Period:
     def __hash__(self) -> int:
         """Hash based on all attributes."""
         # Check if all attributes are not None, else raise ValueError
-        if (
-            self.start is None
-            or self.end is None
-            or self.grouping is None
-            or self.value is None
-        ):
+        if self.start is None or self.end is None or self.grouping is None or self.value is None:
             raise ValueError("Attributes of Period should not be None")
         return hash((self.start, self.end, self.grouping, self.value))
 
@@ -189,9 +162,7 @@ class PeriodFromTransactionFactory:
         """Create a Month period from the transaction."""
         bookingdate = self.transaction.booking_date
         start_of_month = bookingdate.replace(day=1)
-        last_day_of_month = (start_of_month + timedelta(days=32)).replace(
-            day=1
-        ) - timedelta(days=1)
+        last_day_of_month = (start_of_month + timedelta(days=32)).replace(day=1) - timedelta(days=1)
         return Month(start_of_month, last_day_of_month)
 
     def with_grouping_is_quarter(self) -> "Quarter":
@@ -222,22 +193,14 @@ class Quarter(Period):
             """Convert to a Quarter instance for a specific year."""
             return Quarter(
                 self.quarter_nr,
-                datetime(year, self.start_month, self.start_day),
-                datetime(year, self.end_month, self.end_day),
+                date(year, self.start_month, self.start_day),
+                date(year, self.end_month, self.end_day),
             )
 
-    Q1 = QuarterConstant(
-        quarter_nr=1, start_day=1, start_month=1, end_day=31, end_month=3
-    )
-    Q2 = QuarterConstant(
-        quarter_nr=2, start_day=1, start_month=4, end_day=30, end_month=6
-    )
-    Q3 = QuarterConstant(
-        quarter_nr=3, start_day=1, start_month=7, end_day=30, end_month=9
-    )
-    Q4 = QuarterConstant(
-        quarter_nr=4, start_day=1, start_month=10, end_day=31, end_month=12
-    )
+    Q1 = QuarterConstant(quarter_nr=1, start_day=1, start_month=1, end_day=31, end_month=3)
+    Q2 = QuarterConstant(quarter_nr=2, start_day=1, start_month=4, end_day=30, end_month=6)
+    Q3 = QuarterConstant(quarter_nr=3, start_day=1, start_month=7, end_day=30, end_month=9)
+    Q4 = QuarterConstant(quarter_nr=4, start_day=1, start_month=10, end_day=31, end_month=12)
 
     MONTH_TO_QUARTER_DICT: ClassVar[Optional[Dict[int, QuarterConstant]]] = None
     QUARTER_NR_TO_QUARTER_DICT: ClassVar[Dict[int, QuarterConstant]] = {
@@ -252,17 +215,11 @@ class Quarter(Period):
             const: "Quarter.QuarterConstant",
         ) -> Dict[int, "Quarter.QuarterConstant"]:
             # Range of months from const.start_month to const.end_month
-            return {
-                month: const for month in range(const.start_month, const.end_month + 1)
-            }
+            return {month: const for month in range(const.start_month, const.end_month + 1)}
 
         quarters = [cls.Q1, cls.Q2, cls.Q3, cls.Q4]
         # Create a dict for every quarter constant and merge them
-        result = {
-            month: const
-            for quarter in quarters
-            for month, const in create_dict(quarter).items()
-        }
+        result = {month: const for quarter in quarters for month, const in create_dict(quarter).items()}
         # Ensure that the len of result is 12
         if len(result) != 12:
             raise ValueError("The length of the result should be 12")
@@ -271,13 +228,13 @@ class Quarter(Period):
             raise ValueError("The keys of the result should be the months from 1 to 12")
         cls.MONTH_TO_QUARTER_DICT = result
 
-    def __init__(self, quarter_nr: int, start: datetime, end: datetime):
+    def __init__(self, quarter_nr: int, start: Union[datetime, date], end: Union[datetime, date]):
         """Initialize a Quarter.
 
         Args:
             quarter_nr: The quarter number (1-4).
-            start: The start datetime of the quarter.
-            end: The end datetime of the quarter.
+            start: The start date of the quarter.
+            end: The end date of the quarter.
         """
         if Quarter.MONTH_TO_QUARTER_DICT is None:
             Quarter._create_month_to_quarter_dict()
@@ -294,18 +251,14 @@ class Quarter(Period):
     def get_previous(self) -> "Quarter":
         """Get the previous quarter."""
         if self.quarter_nr > 1:
-            return Quarter.QUARTER_NR_TO_QUARTER_DICT[self.quarter_nr - 1].to_quarter(
-                self.start.year
-            )
+            return Quarter.QUARTER_NR_TO_QUARTER_DICT[self.quarter_nr - 1].to_quarter(self.start.year)
         else:
             return Quarter.QUARTER_NR_TO_QUARTER_DICT[4].to_quarter(self.start.year - 1)
 
     def get_next(self) -> "Quarter":
         """Get the next quarter."""
         if self.quarter_nr < 4:
-            return Quarter.QUARTER_NR_TO_QUARTER_DICT[self.quarter_nr + 1].to_quarter(
-                self.start.year
-            )
+            return Quarter.QUARTER_NR_TO_QUARTER_DICT[self.quarter_nr + 1].to_quarter(self.start.year)
         else:
             return Quarter.QUARTER_NR_TO_QUARTER_DICT[1].to_quarter(self.start.year + 1)
 
@@ -334,37 +287,37 @@ class Month(Period):
     def next(self) -> "Month":
         """Get the next month."""
         arr = get_arrow(self.start).shift(months=1)
-        next_start = arr.floor("month").datetime
-        next_end = arr.ceil("month").datetime
+        next_start = arr.floor("month").date()
+        next_end = arr.ceil("month").date()
         return Month(next_start, next_end)
 
     def previous(self) -> "Month":
         """Get the previous month."""
         arr = get_arrow(self.start).shift(months=-1)
-        previous_start = arr.floor("month").datetime
-        previous_end = arr.ceil("month").datetime
+        previous_start = arr.floor("month").date()
+        previous_end = arr.ceil("month").date()
         return Month(previous_start, previous_end)
 
-    def _get_previous(self, date: datetime) -> datetime:
+    def _get_previous(self, d: date) -> date:
         """Get the previous month's equivalent date."""
-        if date.month == 1:
-            return date.replace(month=12, year=date.year - 1)
+        if d.month == 1:
+            return d.replace(month=12, year=d.year - 1)
         else:
-            return date.replace(month=date.month - 1)
+            return d.replace(month=d.month - 1)
 
-    def _get_next(self, date: datetime) -> datetime:
+    def _get_next(self, d: date) -> date:
         """Get the next month's equivalent date."""
-        if date.month == 12:
-            return date.replace(month=1, year=date.year + 1)
+        if d.month == 12:
+            return d.replace(month=1, year=d.year + 1)
         else:
-            return date.replace(month=date.month + 1)
+            return d.replace(month=d.month + 1)
 
     @staticmethod
     def from_month_and_year(month: int, year: int) -> "Month":
         """Create a Month from a month number and year."""
-        start = datetime(year, month, 1)
-        end = (start + timedelta(days=32)).replace(day=1) - timedelta(days=1)
-        return Month(start, end)
+        start = date(year, month, 1)
+        end = (datetime(year, month, 1) + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+        return Month(start, end.date() if isinstance(end, datetime) else end)
 
 
 class Year(Period):
@@ -391,19 +344,19 @@ class Year(Period):
         previous_end = self._get_previous(self.end)
         return Year(previous_start, previous_end)
 
-    def _get_previous(self, date: datetime) -> datetime:
+    def _get_previous(self, d: date) -> date:
         """Get the previous year's equivalent date."""
-        return date.replace(year=date.year - 1)
+        return d.replace(year=d.year - 1)
 
-    def _get_next(self, date: datetime) -> datetime:
+    def _get_next(self, d: date) -> date:
         """Get the next year's equivalent date."""
-        return date.replace(year=date.year + 1)
+        return d.replace(year=d.year + 1)
 
     @staticmethod
     def from_year(year: int) -> "Year":
         """Create a Year from a year number."""
-        start = datetime(year, 1, 1)
-        end = datetime(year, 12, 31)
+        start = date(year, 1, 1)
+        end = date(year, 12, 31)
         return Year(start, end)
 
 
@@ -441,8 +394,8 @@ class PeriodSchema(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-    start: datetime
-    end: datetime
+    start: date
+    end: date
     grouping: Grouping
     value: str
 

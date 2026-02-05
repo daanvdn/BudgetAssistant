@@ -1,7 +1,6 @@
 """Analysis service with async SQLModel operations."""
 
-from datetime import datetime
-from typing import List, Optional, Tuple
+from datetime import date
 
 from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -36,8 +35,8 @@ class AnalysisService:
 
         conditions = [
             Transaction.bank_account_id == normalized,
-            Transaction.booking_date >= query.start.date(),
-            Transaction.booking_date <= query.end.date(),
+            Transaction.booking_date >= query.start,
+            Transaction.booking_date <= query.end,
         ]
 
         # Transaction type filter
@@ -63,7 +62,7 @@ class AnalysisService:
 
     def _get_period_for_date(
         self,
-        booking_date: datetime,
+        booking_date: date,
         grouping: Grouping,
     ) -> Period:
         """Get a Period instance for a booking date based on grouping.
@@ -83,9 +82,9 @@ class AnalysisService:
 
     def _get_period_key(
         self,
-        booking_date: datetime,
+        booking_date: date,
         grouping: Grouping,
-    ) -> Tuple[str, datetime, datetime]:
+    ) -> tuple[str, date, date]:
         """Get period key, start, and end dates for a booking date.
 
         Uses Period classes for consistent period calculation.
@@ -237,7 +236,7 @@ class AnalysisService:
         self,
         query: RevenueExpensesQuery,
         session: AsyncSession,
-    ) -> Optional[BudgetTrackerResult]:
+    ) -> BudgetTrackerResult | None:
         """Track budget vs actual spending."""
         if query.is_empty():
             return None
@@ -295,7 +294,7 @@ class AnalysisService:
         self,
         node_id: int,
         actual_by_category: dict,
-        entries: List[BudgetEntryResult],
+        entries: list[BudgetEntryResult],
         session: AsyncSession,
     ) -> None:
         """Recursively collect budget entries from tree nodes."""
@@ -411,7 +410,7 @@ class AnalysisService:
         self,
         category_id: int,
         session: AsyncSession,
-    ) -> List[int]:
+    ) -> list[int]:
         """Recursively get all child category IDs."""
         result = await session.execute(select(Category.id).where(Category.parent_id == category_id))
         child_ids = list(result.scalars().all())
@@ -428,7 +427,7 @@ class AnalysisService:
         bank_account: str,
         transaction_type: TransactionTypeEnum,
         session: AsyncSession,
-    ) -> List[str]:
+    ) -> list[str]:
         """Get categories used in transactions for a bank account and transaction type.
 
         Returns a sorted list of category qualified names.

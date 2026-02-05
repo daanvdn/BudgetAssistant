@@ -1,6 +1,6 @@
 """Tests for analysis router."""
 
-from datetime import datetime
+from datetime import date
 from unittest.mock import patch
 
 import pytest
@@ -22,8 +22,8 @@ class TestAnalysisEndpoints:
                 json={
                     "account_number": "BE12345",
                     "transaction_type": "EXPENSES",
-                    "start": "2023-01-01T00:00:00",
-                    "end": "2023-12-31T23:59:59",
+                    "start": "2023-01-01",
+                    "end": "2023-12-31",
                     "grouping": "MONTH",
                 },
             )
@@ -40,8 +40,8 @@ class TestAnalysisEndpoints:
                 json={
                     "account_number": "BE12345",
                     "transaction_type": "EXPENSES",
-                    "start": "2023-01-01T00:00:00",
-                    "end": "2023-12-31T23:59:59",
+                    "start": "2023-01-01",
+                    "end": "2023-12-31",
                     "grouping": "MONTH",
                 },
             )
@@ -58,8 +58,8 @@ class TestAnalysisEndpoints:
                 json={
                     "account_number": "BE12345",
                     "transaction_type": "EXPENSES",
-                    "start": "2023-01-01T00:00:00",
-                    "end": "2023-12-31T23:59:59",
+                    "start": "2023-01-01",
+                    "end": "2023-12-31",
                     "grouping": "MONTH",
                     "category_qualified_name": "expenses/groceries",
                 },
@@ -92,8 +92,8 @@ class TestAnalysisEndpoints:
                 json={
                     "account_number": "BE12345",
                     "transaction_type": "EXPENSES",
-                    "start": "2023-01-01T00:00:00",
-                    "end": "2023-12-31T23:59:59",
+                    "start": "2023-01-01",
+                    "end": "2023-12-31",
                     "grouping": "MONTH",
                 },
             )
@@ -155,8 +155,8 @@ class TestAnalysisQueryValidation:
                 json={
                     "account_number": "BE12345",
                     "transaction_type": "EXPENSES",
-                    "start": "2023-01-01T00:00:00",
-                    "end": "2023-12-31T23:59:59",
+                    "start": "2023-01-01",
+                    "end": "2023-12-31",
                     "grouping": "INVALID",  # Invalid grouping
                 },
             )
@@ -169,9 +169,7 @@ class TestAnalysisEndpointsAuthenticated:
     """Tests for analysis endpoints with authentication."""
 
     @pytest.mark.asyncio
-    async def test_revenue_expenses_per_period_with_auth(
-        self, authenticated_client, seed_bank_account
-    ):
+    async def test_revenue_expenses_per_period_with_auth(self, authenticated_client, seed_bank_account):
         """Test getting revenue/expenses per period with authentication."""
         client, access_token = authenticated_client
         headers = {"Authorization": f"Bearer {access_token}"}
@@ -182,8 +180,8 @@ class TestAnalysisEndpointsAuthenticated:
             json={
                 "account_number": bank_account,
                 "transaction_type": "EXPENSES",
-                "start": "2023-01-01T00:00:00",
-                "end": "2023-12-31T23:59:59",
+                "start": "2023-01-01",
+                "end": "2023-12-31",
                 "grouping": "MONTH",
             },
             headers=headers,
@@ -194,9 +192,7 @@ class TestAnalysisEndpointsAuthenticated:
         assert "content" in data
 
     @pytest.mark.asyncio
-    async def test_revenue_expenses_per_period_and_category_with_auth(
-        self, authenticated_client, seed_bank_account
-    ):
+    async def test_revenue_expenses_per_period_and_category_with_auth(self, authenticated_client, seed_bank_account):
         """Test getting revenue/expenses per period and category with authentication."""
         client, access_token = authenticated_client
         headers = {"Authorization": f"Bearer {access_token}"}
@@ -207,8 +203,8 @@ class TestAnalysisEndpointsAuthenticated:
             json={
                 "account_number": bank_account,
                 "transaction_type": "EXPENSES",
-                "start": "2023-01-01T00:00:00",
-                "end": "2023-12-31T23:59:59",
+                "start": "2023-01-01",
+                "end": "2023-12-31",
                 "grouping": "MONTH",
             },
             headers=headers,
@@ -219,9 +215,7 @@ class TestAnalysisEndpointsAuthenticated:
         assert "periods" in data
 
     @pytest.mark.asyncio
-    async def test_category_details_for_period_with_auth(
-        self, authenticated_client, seed_bank_account
-    ):
+    async def test_category_details_for_period_with_auth(self, authenticated_client, seed_bank_account):
         """Test getting category details with authentication."""
         client, access_token = authenticated_client
         headers = {"Authorization": f"Bearer {access_token}"}
@@ -232,8 +226,8 @@ class TestAnalysisEndpointsAuthenticated:
             json={
                 "account_number": bank_account,
                 "transaction_type": "EXPENSES",
-                "start": "2023-01-01T00:00:00",
-                "end": "2023-12-31T23:59:59",
+                "start": "2023-01-01",
+                "end": "2023-12-31",
                 "grouping": "MONTH",
                 "category_qualified_name": "expenses",
             },
@@ -244,9 +238,7 @@ class TestAnalysisEndpointsAuthenticated:
         assert response.status_code in [200, 404]
 
     @pytest.mark.asyncio
-    async def test_categories_for_account_with_auth(
-        self, authenticated_client, seed_bank_account
-    ):
+    async def test_categories_for_account_with_auth(self, authenticated_client, seed_bank_account):
         """Test getting categories for account with authentication."""
         client, access_token = authenticated_client
         headers = {"Authorization": f"Bearer {access_token}"}
@@ -266,9 +258,7 @@ class TestAnalysisEndpointsAuthenticated:
         assert "categories" in data
 
     @pytest.mark.asyncio
-    async def test_track_budget_with_auth(
-        self, authenticated_client, seed_bank_account
-    ):
+    async def test_track_budget_with_auth(self, authenticated_client, seed_bank_account):
         """Test tracking budget with authentication."""
         client, access_token = authenticated_client
         headers = {"Authorization": f"Bearer {access_token}"}
@@ -279,8 +269,8 @@ class TestAnalysisEndpointsAuthenticated:
             json={
                 "account_number": bank_account,
                 "transaction_type": "EXPENSES",
-                "start": "2023-01-01T00:00:00",
-                "end": "2023-12-31T23:59:59",
+                "start": "2023-01-01",
+                "end": "2023-12-31",
                 "grouping": "MONTH",
             },
             headers=headers,
@@ -342,8 +332,8 @@ class TestAnalysisEndpointsAuthenticated:
 class TestResolveDateShortcutEndpoint:
     """Tests for the resolve_start_end_date_shortcut endpoint with all DateRangeShortcut values."""
 
-    # Fixed datetime for consistent test results: January 15, 2026 at 14:30:00
-    MOCK_NOW = datetime(2026, 1, 15, 14, 30, 0)
+    # Fixed date for consistent test results: January 15, 2026
+    MOCK_TODAY = date(2026, 1, 15)
 
     @pytest.mark.asyncio
     async def test_resolve_current_month(self, authenticated_client):
@@ -351,11 +341,9 @@ class TestResolveDateShortcutEndpoint:
         client, access_token = authenticated_client
         headers = {"Authorization": f"Bearer {access_token}"}
 
-        with patch("services.period_service.datetime") as mock_datetime:
-            mock_datetime.now.return_value = self.MOCK_NOW
-            mock_datetime.side_effect = lambda *args, **kwargs: datetime(
-                *args, **kwargs
-            )
+        with patch("services.period_service.date") as mock_date:
+            mock_date.today.return_value = self.MOCK_TODAY
+            mock_date.side_effect = lambda *args, **kwargs: date(*args, **kwargs)
 
             response = await client.get(
                 "/api/analysis/resolve-date-shortcut",
@@ -370,12 +358,8 @@ class TestResolveDateShortcutEndpoint:
         assert data["shortcut"] == "current month"
 
         # Parse the dates and verify they are in January 2026
-        start = datetime.fromisoformat(
-            data["start"].replace("Z", "+00:00").replace("+00:00", "")
-        )
-        end = datetime.fromisoformat(
-            data["end"].replace("Z", "+00:00").replace("+00:00", "")
-        )
+        start = date.fromisoformat(data["start"].replace("Z", "+00:00").replace("+00:00", ""))
+        end = date.fromisoformat(data["end"].replace("Z", "+00:00").replace("+00:00", ""))
 
         # Start should be January 1, 2026 at start of day
         assert start.year == 2026
@@ -392,11 +376,9 @@ class TestResolveDateShortcutEndpoint:
         client, access_token = authenticated_client
         headers = {"Authorization": f"Bearer {access_token}"}
 
-        with patch("services.period_service.datetime") as mock_datetime:
-            mock_datetime.now.return_value = self.MOCK_NOW
-            mock_datetime.side_effect = lambda *args, **kwargs: datetime(
-                *args, **kwargs
-            )
+        with patch("services.period_service.date") as mock_date:
+            mock_date.today.return_value = self.MOCK_TODAY
+            mock_date.side_effect = lambda *args, **kwargs: date(*args, **kwargs)
 
             response = await client.get(
                 "/api/analysis/resolve-date-shortcut",
@@ -408,12 +390,8 @@ class TestResolveDateShortcutEndpoint:
         data = response.json()
         assert data["shortcut"] == "previous month"
 
-        start = datetime.fromisoformat(
-            data["start"].replace("Z", "+00:00").replace("+00:00", "")
-        )
-        end = datetime.fromisoformat(
-            data["end"].replace("Z", "+00:00").replace("+00:00", "")
-        )
+        start = date.fromisoformat(data["start"].replace("Z", "+00:00").replace("+00:00", ""))
+        end = date.fromisoformat(data["end"].replace("Z", "+00:00").replace("+00:00", ""))
 
         # Previous month (December 2025)
         assert start.year == 2025
@@ -429,11 +407,9 @@ class TestResolveDateShortcutEndpoint:
         client, access_token = authenticated_client
         headers = {"Authorization": f"Bearer {access_token}"}
 
-        with patch("services.period_service.datetime") as mock_datetime:
-            mock_datetime.now.return_value = self.MOCK_NOW
-            mock_datetime.side_effect = lambda *args, **kwargs: datetime(
-                *args, **kwargs
-            )
+        with patch("services.period_service.date") as mock_date:
+            mock_date.today.return_value = self.MOCK_TODAY
+            mock_date.side_effect = lambda *args, **kwargs: date(*args, **kwargs)
 
             response = await client.get(
                 "/api/analysis/resolve-date-shortcut",
@@ -445,12 +421,8 @@ class TestResolveDateShortcutEndpoint:
         data = response.json()
         assert data["shortcut"] == "current quarter"
 
-        start = datetime.fromisoformat(
-            data["start"].replace("Z", "+00:00").replace("+00:00", "")
-        )
-        end = datetime.fromisoformat(
-            data["end"].replace("Z", "+00:00").replace("+00:00", "")
-        )
+        start = date.fromisoformat(data["start"].replace("Z", "+00:00").replace("+00:00", ""))
+        end = date.fromisoformat(data["end"].replace("Z", "+00:00").replace("+00:00", ""))
 
         # Q1 2026 (January - March)
         assert start.year == 2026
@@ -466,11 +438,9 @@ class TestResolveDateShortcutEndpoint:
         client, access_token = authenticated_client
         headers = {"Authorization": f"Bearer {access_token}"}
 
-        with patch("services.period_service.datetime") as mock_datetime:
-            mock_datetime.now.return_value = self.MOCK_NOW
-            mock_datetime.side_effect = lambda *args, **kwargs: datetime(
-                *args, **kwargs
-            )
+        with patch("services.period_service.date") as mock_date:
+            mock_date.today.return_value = self.MOCK_TODAY
+            mock_date.side_effect = lambda *args, **kwargs: date(*args, **kwargs)
 
             response = await client.get(
                 "/api/analysis/resolve-date-shortcut",
@@ -482,12 +452,8 @@ class TestResolveDateShortcutEndpoint:
         data = response.json()
         assert data["shortcut"] == "previous quarter"
 
-        start = datetime.fromisoformat(
-            data["start"].replace("Z", "+00:00").replace("+00:00", "")
-        )
-        end = datetime.fromisoformat(
-            data["end"].replace("Z", "+00:00").replace("+00:00", "")
-        )
+        start = date.fromisoformat(data["start"].replace("Z", "+00:00").replace("+00:00", ""))
+        end = date.fromisoformat(data["end"].replace("Z", "+00:00").replace("+00:00", ""))
 
         # Q4 2025 (October - December)
         assert start.year == 2025
@@ -503,11 +469,9 @@ class TestResolveDateShortcutEndpoint:
         client, access_token = authenticated_client
         headers = {"Authorization": f"Bearer {access_token}"}
 
-        with patch("services.period_service.datetime") as mock_datetime:
-            mock_datetime.now.return_value = self.MOCK_NOW
-            mock_datetime.side_effect = lambda *args, **kwargs: datetime(
-                *args, **kwargs
-            )
+        with patch("services.period_service.date") as mock_date:
+            mock_date.today.return_value = self.MOCK_TODAY
+            mock_date.side_effect = lambda *args, **kwargs: date(*args, **kwargs)
 
             response = await client.get(
                 "/api/analysis/resolve-date-shortcut",
@@ -519,12 +483,8 @@ class TestResolveDateShortcutEndpoint:
         data = response.json()
         assert data["shortcut"] == "current year"
 
-        start = datetime.fromisoformat(
-            data["start"].replace("Z", "+00:00").replace("+00:00", "")
-        )
-        end = datetime.fromisoformat(
-            data["end"].replace("Z", "+00:00").replace("+00:00", "")
-        )
+        start = date.fromisoformat(data["start"].replace("Z", "+00:00").replace("+00:00", ""))
+        end = date.fromisoformat(data["end"].replace("Z", "+00:00").replace("+00:00", ""))
 
         # Year 2026
         assert start.year == 2026
@@ -540,11 +500,9 @@ class TestResolveDateShortcutEndpoint:
         client, access_token = authenticated_client
         headers = {"Authorization": f"Bearer {access_token}"}
 
-        with patch("services.period_service.datetime") as mock_datetime:
-            mock_datetime.now.return_value = self.MOCK_NOW
-            mock_datetime.side_effect = lambda *args, **kwargs: datetime(
-                *args, **kwargs
-            )
+        with patch("services.period_service.date") as mock_date:
+            mock_date.today.return_value = self.MOCK_TODAY
+            mock_date.side_effect = lambda *args, **kwargs: date(*args, **kwargs)
 
             response = await client.get(
                 "/api/analysis/resolve-date-shortcut",
@@ -556,12 +514,8 @@ class TestResolveDateShortcutEndpoint:
         data = response.json()
         assert data["shortcut"] == "previous year"
 
-        start = datetime.fromisoformat(
-            data["start"].replace("Z", "+00:00").replace("+00:00", "")
-        )
-        end = datetime.fromisoformat(
-            data["end"].replace("Z", "+00:00").replace("+00:00", "")
-        )
+        start = date.fromisoformat(data["start"].replace("Z", "+00:00").replace("+00:00", ""))
+        end = date.fromisoformat(data["end"].replace("Z", "+00:00").replace("+00:00", ""))
 
         # Year 2025
         assert start.year == 2025
@@ -587,12 +541,8 @@ class TestResolveDateShortcutEndpoint:
         data = response.json()
         assert data["shortcut"] == "all"
 
-        start = datetime.fromisoformat(
-            data["start"].replace("Z", "+00:00").replace("+00:00", "")
-        )
-        end = datetime.fromisoformat(
-            data["end"].replace("Z", "+00:00").replace("+00:00", "")
-        )
+        start = date.fromisoformat(data["start"].replace("Z", "+00:00").replace("+00:00", ""))
+        end = date.fromisoformat(data["end"].replace("Z", "+00:00").replace("+00:00", ""))
 
         # 'all' should return a very wide range starting from 2000
         assert start.year == 2000
@@ -602,9 +552,7 @@ class TestResolveDateShortcutEndpoint:
         assert end.year >= 2026
 
     @pytest.mark.asyncio
-    async def test_resolve_date_shortcut_returns_correct_structure(
-        self, authenticated_client
-    ):
+    async def test_resolve_date_shortcut_returns_correct_structure(self, authenticated_client):
         """Test that the response structure matches ResolvedDateRange schema."""
         client, access_token = authenticated_client
         headers = {"Authorization": f"Bearer {access_token}"}
@@ -624,10 +572,8 @@ class TestResolveDateShortcutEndpoint:
         assert "shortcut" in data
 
         # Verify dates are in ISO format
-        datetime.fromisoformat(
-            data["start"].replace("Z", "+00:00").replace("+00:00", "")
-        )
-        datetime.fromisoformat(data["end"].replace("Z", "+00:00").replace("+00:00", ""))
+        date.fromisoformat(data["start"].replace("Z", "+00:00").replace("+00:00", ""))
+        date.fromisoformat(data["end"].replace("Z", "+00:00").replace("+00:00", ""))
 
     @pytest.mark.asyncio
     async def test_start_is_before_end(self, authenticated_client):
@@ -655,11 +601,7 @@ class TestResolveDateShortcutEndpoint:
             assert response.status_code == 200, f"Failed for shortcut: {shortcut}"
             data = response.json()
 
-            start = datetime.fromisoformat(
-                data["start"].replace("Z", "+00:00").replace("+00:00", "")
-            )
-            end = datetime.fromisoformat(
-                data["end"].replace("Z", "+00:00").replace("+00:00", "")
-            )
+            start = date.fromisoformat(data["start"].replace("Z", "+00:00").replace("+00:00", ""))
+            end = date.fromisoformat(data["end"].replace("Z", "+00:00").replace("+00:00", ""))
 
             assert start < end, f"Start should be before end for shortcut: {shortcut}"

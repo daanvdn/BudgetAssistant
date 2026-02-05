@@ -6,7 +6,7 @@ These tests cover:
 - Edge cases like missing budget trees, empty queries
 """
 
-from datetime import date, datetime
+from datetime import date
 from typing import Dict, List, Tuple
 
 import pytest
@@ -332,8 +332,8 @@ class TestTrackBudget:
         query = RevenueExpensesQuery(
             account_number=bank_account.account_number,
             transaction_type=TransactionTypeEnum.EXPENSES,
-            start=datetime(2024, 1, 1),
-            end=datetime(2024, 1, 31, 23, 59, 59),
+            start=date(2024, 1, 1),
+            end=date(2024, 1, 31),
             grouping=Grouping.MONTH,
         )
 
@@ -373,8 +373,8 @@ class TestTrackBudget:
         query = RevenueExpensesQuery(
             account_number=bank_account.account_number,
             transaction_type=TransactionTypeEnum.EXPENSES,
-            start=datetime(2024, 1, 1),
-            end=datetime(2024, 1, 31, 23, 59, 59),
+            start=date(2024, 1, 1),
+            end=date(2024, 1, 31),
             grouping=Grouping.MONTH,
         )
 
@@ -413,8 +413,8 @@ class TestTrackBudget:
         query = RevenueExpensesQuery(
             account_number=bank_account.account_number,
             transaction_type=TransactionTypeEnum.EXPENSES,
-            start=datetime(2024, 1, 1),
-            end=datetime(2024, 1, 31, 23, 59, 59),
+            start=date(2024, 1, 1),
+            end=date(2024, 1, 31),
             grouping=Grouping.MONTH,
         )
 
@@ -443,8 +443,8 @@ class TestTrackBudget:
         query = RevenueExpensesQuery(
             account_number=bank_account.account_number,
             transaction_type=TransactionTypeEnum.EXPENSES,
-            start=datetime(2024, 1, 1),
-            end=datetime(2024, 1, 31),
+            start=date(2024, 1, 1),
+            end=date(2024, 1, 31),
             grouping=Grouping.MONTH,
         )
 
@@ -461,8 +461,8 @@ class TestTrackBudget:
         query = RevenueExpensesQuery(
             account_number="",  # Empty account makes query empty
             transaction_type=TransactionTypeEnum.EXPENSES,
-            start=datetime(2024, 1, 1),
-            end=datetime(2024, 1, 31),
+            start=date(2024, 1, 1),
+            end=date(2024, 1, 31),
             grouping=Grouping.MONTH,
         )
 
@@ -504,8 +504,8 @@ class TestTrackBudget:
         query = RevenueExpensesQuery(
             account_number=bank_account.account_number,
             transaction_type=TransactionTypeEnum.EXPENSES,
-            start=datetime(2024, 1, 1),
-            end=datetime(2024, 1, 31),
+            start=date(2024, 1, 1),
+            end=date(2024, 1, 31),
             grouping=Grouping.MONTH,
         )
 
@@ -539,8 +539,8 @@ class TestGetCategoryDetailsForPeriod:
         query = RevenueExpensesQuery(
             account_number=bank_account.account_number,
             transaction_type=TransactionTypeEnum.EXPENSES,
-            start=datetime(2024, 1, 1),
-            end=datetime(2024, 1, 31, 23, 59, 59),
+            start=date(2024, 1, 1),
+            end=date(2024, 1, 31),
             grouping=Grouping.MONTH,
         )
 
@@ -572,8 +572,8 @@ class TestGetCategoryDetailsForPeriod:
         query = RevenueExpensesQuery(
             account_number=bank_account.account_number,
             transaction_type=TransactionTypeEnum.EXPENSES,
-            start=datetime(2024, 1, 1),
-            end=datetime(2024, 1, 31, 23, 59, 59),
+            start=date(2024, 1, 1),
+            end=date(2024, 1, 31),
             grouping=Grouping.MONTH,
         )
 
@@ -602,8 +602,8 @@ class TestGetCategoryDetailsForPeriod:
         query = RevenueExpensesQuery(
             account_number=bank_account.account_number,
             transaction_type=TransactionTypeEnum.EXPENSES,
-            start=datetime(2024, 1, 1),
-            end=datetime(2024, 1, 31, 23, 59, 59),
+            start=date(2024, 1, 1),
+            end=date(2024, 1, 31),
             grouping=Grouping.MONTH,
         )
 
@@ -638,8 +638,8 @@ class TestGetCategoryDetailsForPeriod:
         query = RevenueExpensesQuery(
             account_number=bank_account.account_number,
             transaction_type=TransactionTypeEnum.EXPENSES,
-            start=datetime(2024, 1, 1),
-            end=datetime(2024, 1, 31, 23, 59, 59),
+            start=date(2024, 1, 1),
+            end=date(2024, 1, 31),
             grouping=Grouping.MONTH,
         )
 
@@ -668,8 +668,8 @@ class TestGetCategoryDetailsForPeriod:
         query = RevenueExpensesQuery(
             account_number=bank_account.account_number,
             transaction_type=TransactionTypeEnum.EXPENSES,
-            start=datetime(2024, 1, 1),
-            end=datetime(2024, 1, 31),
+            start=date(2024, 1, 1),
+            end=date(2024, 1, 31),
             grouping=Grouping.MONTH,
         )
 
@@ -695,8 +695,8 @@ class TestGetCategoryDetailsForPeriod:
         query = RevenueExpensesQuery(
             account_number=bank_account.account_number,
             transaction_type=TransactionTypeEnum.EXPENSES,
-            start=datetime(2024, 1, 1),
-            end=datetime(2024, 1, 31, 23, 59, 59),
+            start=date(2024, 1, 1),
+            end=date(2024, 1, 31),
             grouping=Grouping.MONTH,
         )
 
@@ -724,8 +724,8 @@ class TestGetCategoryDetailsForPeriod:
         query = RevenueExpensesQuery(
             account_number=bank_account.account_number,
             transaction_type=TransactionTypeEnum.EXPENSES,
-            start=datetime(2024, 1, 1),
-            end=datetime(2024, 1, 31, 23, 59, 59),
+            start=date(2024, 1, 1),
+            end=date(2024, 1, 31),
             grouping=Grouping.MONTH,
         )
 
@@ -757,8 +757,8 @@ class TestGetCategoryDetailsForPeriod:
         query = RevenueExpensesQuery(
             account_number=bank_account.account_number,
             transaction_type=TransactionTypeEnum.EXPENSES,
-            start=datetime(2024, 1, 1),
-            end=datetime(2024, 1, 31, 23, 59, 59),
+            start=date(2024, 1, 1),
+            end=date(2024, 1, 31),
             grouping=Grouping.MONTH,
         )
 

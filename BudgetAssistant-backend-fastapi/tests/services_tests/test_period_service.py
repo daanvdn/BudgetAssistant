@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date
 
 from schemas import DateRangeShortcut
 from services.period_service import PeriodService
@@ -10,11 +10,9 @@ class TestPeriodService:
     def test_resolve_current_month(self):
         """Test resolving current month shortcut."""
         service = PeriodService()
-        result = service.resolve_start_end_date_shortcut(
-            DateRangeShortcut.CURRENT_MONTH
-        )
+        result = service.resolve_start_end_date_shortcut(DateRangeShortcut.CURRENT_MONTH)
 
-        now = datetime.now()
+        now = date.today()
         assert result.start.month == now.month
         assert result.start.year == now.year
         assert result.start.day == 1
@@ -23,11 +21,9 @@ class TestPeriodService:
     def test_resolve_previous_month(self):
         """Test resolving previous month shortcut."""
         service = PeriodService()
-        result = service.resolve_start_end_date_shortcut(
-            DateRangeShortcut.PREVIOUS_MONTH
-        )
+        result = service.resolve_start_end_date_shortcut(DateRangeShortcut.PREVIOUS_MONTH)
 
-        now = datetime.now()
+        now = date.today()
         if now.month == 1:
             expected_month = 12
             expected_year = now.year - 1
@@ -44,7 +40,7 @@ class TestPeriodService:
         service = PeriodService()
         result = service.resolve_start_end_date_shortcut(DateRangeShortcut.CURRENT_YEAR)
 
-        now = datetime.now()
+        now = date.today()
         assert result.start.year == now.year
         assert result.start.month == 1
         assert result.start.day == 1
@@ -55,11 +51,9 @@ class TestPeriodService:
     def test_resolve_previous_year(self):
         """Test resolving previous year shortcut."""
         service = PeriodService()
-        result = service.resolve_start_end_date_shortcut(
-            DateRangeShortcut.PREVIOUS_YEAR
-        )
+        result = service.resolve_start_end_date_shortcut(DateRangeShortcut.PREVIOUS_YEAR)
 
-        now = datetime.now()
+        now = date.today()
         assert result.start.year == now.year - 1
         assert result.start.month == 1
         assert result.start.day == 1
@@ -76,7 +70,7 @@ class TestPeriodService:
     def test_get_period_boundaries_month(self):
         """Test getting period boundaries for month grouping."""
         service = PeriodService()
-        test_date = datetime(2023, 5, 15)
+        test_date = date(2023, 5, 15)
 
         start, end = service.get_period_boundaries(test_date, "MONTH")
 
@@ -89,7 +83,7 @@ class TestPeriodService:
     def test_get_period_boundaries_quarter(self):
         """Test getting period boundaries for quarter grouping."""
         service = PeriodService()
-        test_date = datetime(2023, 5, 15)  # Q2
+        test_date = date(2023, 5, 15)  # Q2
 
         start, end = service.get_period_boundaries(test_date, "QUARTER")
 
@@ -100,7 +94,7 @@ class TestPeriodService:
     def test_get_period_boundaries_year(self):
         """Test getting period boundaries for year grouping."""
         service = PeriodService()
-        test_date = datetime(2023, 5, 15)
+        test_date = date(2023, 5, 15)
 
         start, end = service.get_period_boundaries(test_date, "YEAR")
 
@@ -116,7 +110,7 @@ class TestPeriodService:
         Uses Period class format: MM/YYYY (matching Django backend).
         """
         service = PeriodService()
-        test_date = datetime(2023, 5, 15)
+        test_date = date(2023, 5, 15)
 
         result = service.format_period(test_date, "MONTH")
 
@@ -130,25 +124,13 @@ class TestPeriodService:
         service = PeriodService()
 
         # Q1
-        assert (
-            service.format_period(datetime(2023, 2, 15), "QUARTER")
-            == "01/2023 - 03/2023"
-        )
+        assert service.format_period(date(2023, 2, 15), "QUARTER") == "01/2023 - 03/2023"
         # Q2
-        assert (
-            service.format_period(datetime(2023, 5, 15), "QUARTER")
-            == "04/2023 - 06/2023"
-        )
+        assert service.format_period(date(2023, 5, 15), "QUARTER") == "04/2023 - 06/2023"
         # Q3
-        assert (
-            service.format_period(datetime(2023, 8, 15), "QUARTER")
-            == "07/2023 - 09/2023"
-        )
+        assert service.format_period(date(2023, 8, 15), "QUARTER") == "07/2023 - 09/2023"
         # Q4
-        assert (
-            service.format_period(datetime(2023, 11, 15), "QUARTER")
-            == "10/2023 - 12/2023"
-        )
+        assert service.format_period(date(2023, 11, 15), "QUARTER") == "10/2023 - 12/2023"
 
     def test_format_period_year(self):
         """Test formatting period for year grouping.
@@ -156,7 +138,7 @@ class TestPeriodService:
         Uses Period class format: YYYY - YYYY (matching Django backend).
         """
         service = PeriodService()
-        test_date = datetime(2023, 5, 15)
+        test_date = date(2023, 5, 15)
 
         result = service.format_period(test_date, "YEAR")
 
