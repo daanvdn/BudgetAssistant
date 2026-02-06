@@ -100,7 +100,7 @@
                       [class.anomaly]="isAnomaly(element, column)"
                       [class.negative]="getCellValue(element, column) < 0"
                       [class.positive]="getCellValue(element, column) > 0"
-                      (contextmenu)="openContextMenu(column,element.categoryId,element.startDate, element.endDate,$event)"
+                      (contextmenu)="openContextMenu(column,element.categoryId,getPeriodStartDate(column), getPeriodEndDate(column),$event)"
                       [cdkContextMenuTriggerFor]="contextMenuTemplate">
                     {{ formatAmount(getCellValue(element, column)) }}
                   </td>

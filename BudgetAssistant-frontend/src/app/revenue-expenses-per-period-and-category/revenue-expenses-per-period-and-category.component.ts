@@ -113,6 +113,17 @@ export class RevenueExpensesPerPeriodAndCategoryComponent {
     return this.displayedColumns().slice(1);
   });
 
+  /** Map from period string to its startDate/endDate */
+  readonly periodDateRanges = computed<Map<string, { startDate: string; endDate: string }>>(() => {
+    const data = this.dataQuery.data();
+    const map = new Map<string, { startDate: string; endDate: string }>();
+    if (!data?.periods) return map;
+    for (const p of data.periods) {
+      map.set(p.period, { startDate: p.startDate, endDate: p.endDate });
+    }
+    return map;
+  });
+
   readonly isLoading = computed(() => this.dataQuery.isPending());
   readonly isRefreshing = computed(() => this.dataQuery.isFetching() && !this.dataQuery.isPending());
   readonly hasError = computed(() => this.dataQuery.isError());
@@ -356,9 +367,23 @@ export class RevenueExpensesPerPeriodAndCategoryComponent {
   }
 
   /**
+   * Get the start date for a given period column
+   */
+  getPeriodStartDate(period: string): string {
+    return this.periodDateRanges().get(period)?.startDate ?? '';
+  }
+
+  /**
+   * Get the end date for a given period column
+   */
+  getPeriodEndDate(period: string): string {
+    return this.periodDateRanges().get(period)?.endDate ?? '';
+  }
+
+  /**
    * Handle context menu open for a table cell
    */
-  openContextMenu(period: string, categoryId: number | undefined, startDate: Date, endDate: Date,
+  openContextMenu(period: string, categoryId: number | undefined, startDate: string, endDate: string,
                   event: MouseEvent): void {
     event.preventDefault();
 
@@ -370,8 +395,8 @@ export class RevenueExpensesPerPeriodAndCategoryComponent {
       categoryId: categoryId ?? -1,
       bankAccount: c.bankAccount.accountNumber,
       transactionType: c.transactionType as TransactionTypeEnum,
-      startDate: this.dateUtilsService.stringifyDateWithoutTime(startDate),
-      endDate: this.dateUtilsService.stringifyDateWithoutTime(endDate)
+      startDate: startDate,
+      endDate: endDate
     });
   }
 
