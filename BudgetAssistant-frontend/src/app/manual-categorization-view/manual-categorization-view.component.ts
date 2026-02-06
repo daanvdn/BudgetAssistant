@@ -1,6 +1,9 @@
-import {Component, ElementRef, OnInit, ViewChild} from '@angular/core';
-import {MatPaginator} from "@angular/material/paginator";
-import {MatSort} from "@angular/material/sort";
+import {Component, computed, DestroyRef, inject, OnInit, signal} from '@angular/core';
+import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
+import {CommonModule} from '@angular/common';
+import {MatToolbar} from '@angular/material/toolbar';
+import {MatButtonToggle, MatButtonToggleChange, MatButtonToggleGroup} from '@angular/material/button-toggle';
+import {MatPaginator, PageEvent} from '@angular/material/paginator';
 import {
   MatCell,
   MatCellDef,
@@ -12,190 +15,301 @@ import {
   MatRow,
   MatRowDef,
   MatTable
-} from "@angular/material/table";
-import {PaginationDataSource, SimpleDataSource} from "ngx-pagination-data-source";
-import {AppService} from "../app.service";
-import {BehaviorSubject, map, Observable} from "rxjs";
-import {MatButtonToggle, MatButtonToggleChange, MatButtonToggleGroup} from "@angular/material/button-toggle";
-import {BankAccountRead, CategoryIndex, TransactionRead, TransactionTypeEnum} from "@daanvdn/budget-assistant-client";
-import {AmountType, inferAmountType} from "../model";
-import {MatToolbar} from '@angular/material/toolbar';
+} from '@angular/material/table';
+import {MatProgressSpinner} from '@angular/material/progress-spinner';
+import {MatSnackBar, MatSnackBarModule} from '@angular/material/snack-bar';
+import {MatIcon} from '@angular/material/icon';
+import {MatCard, MatCardContent} from '@angular/material/card';
+import {
+  BudgetAssistantApiService,
+  CategoryIndex,
+  PageTransactionsToManuallyReviewRequest,
+  SortOrder,
+  TransactionRead,
+  TransactionSortProperty,
+  TransactionTypeEnum,
+  TransactionUpdate
+} from '@daanvdn/budget-assistant-client';
+import {injectMutation, injectQuery, injectQueryClient} from '@tanstack/angular-query-experimental';
+import {firstValueFrom} from 'rxjs';
+
+import {AppService} from '../app.service';
+import {AmountType, inferAmountType} from '../model';
 import {BankAccountSelectionComponent} from '../bank-account-selection/bank-account-selection.component';
-import {AsyncPipe, NgIf} from '@angular/common';
 import {CategoryTreeDropdownComponent} from '../category-tree-dropdown/category-tree-dropdown.component';
 
-
-interface GroupBy {
-  counterparty: string;
-  isGroupBy: boolean;
+/** Represents a group header row in the table */
+interface GroupHeaderRow {
+  kind: 'group';
+  counterpartyName: string;
   transactions: TransactionRead[];
   isExpense: boolean;
 }
 
-class GroupByCounterpartyDataSource implements SimpleDataSource<TransactionRead | GroupBy> {
+/** Union type for table rows */
+type TableRow = (TransactionRead & { kind?: 'transaction' }) | GroupHeaderRow;
 
-
-
-  constructor(public backingPaginationDataSource: PaginationDataSource<TransactionRead, BankAccountRead>, private isExpense: boolean) {
-  }
-
-  connect(): Observable<Array<TransactionRead | GroupBy>> {
-    return this.backingPaginationDataSource.connect().pipe(map(data => {
-
-      let mapByCounterpartyName = new Map<string, TransactionRead[]>();
-
-      for (const transaction of data) {
-        let name = transaction.counterparty?.name;
-        if (!name) {
-          name = "";
-        }
-        let transactionsForCounterparty = mapByCounterpartyName.has(name) ? mapByCounterpartyName.get(name) : [];
-        transactionsForCounterparty?.push(transaction);
-        mapByCounterpartyName.set(name, transactionsForCounterparty as TransactionRead[]);
-      }
-      let sortedKeys = Array.from(mapByCounterpartyName.keys()).sort();
-      let result = new Array<TransactionRead | GroupBy>();
-      for (const aKey of sortedKeys) {
-        let transactionsForKey = mapByCounterpartyName.get(aKey) as TransactionRead[];
-        let groupBy: GroupBy = {
-          counterparty: aKey, isGroupBy: true, transactions: transactionsForKey, isExpense: this.isExpense
-        };
-        result.push(groupBy)
-        result.push(...transactionsForKey)
-
-      }
-
-      return result;
-    }));
-  }
-
-  disconnect(): void {
-    this.backingPaginationDataSource.disconnect();
-  }
-
-
-  fetch(page: number, pageSize?: number): void {
-    this.backingPaginationDataSource.fetch(page, pageSize);
-  }
-
-
+function isGroupRow(row: TableRow): row is GroupHeaderRow {
+  return (row as GroupHeaderRow).kind === 'group';
 }
 
 @Component({
-    selector: 'app-manual-categorization-view',
-    templateUrl: './manual-categorization-view.component.html',
-    styleUrls: ['./manual-categorization-view.component.scss'],
-    standalone: true,
-    imports: [MatToolbar, BankAccountSelectionComponent, MatButtonToggleGroup, MatButtonToggle, NgIf, MatPaginator, MatTable, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatCellDef, MatCell, CategoryTreeDropdownComponent, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow, AsyncPipe]
+  selector: 'app-manual-categorization-view',
+  templateUrl: './manual-categorization-view.component.html',
+  styleUrls: ['./manual-categorization-view.component.scss'],
+  standalone: true,
+  imports: [
+    CommonModule,
+    MatToolbar,
+    MatButtonToggleGroup,
+    MatButtonToggle,
+    MatPaginator,
+    MatTable,
+    MatColumnDef,
+    MatHeaderCellDef,
+    MatHeaderCell,
+    MatCellDef,
+    MatCell,
+    MatHeaderRowDef,
+    MatHeaderRow,
+    MatRowDef,
+    MatRow,
+    MatProgressSpinner,
+    MatSnackBarModule,
+    MatIcon,
+    MatCard,
+    MatCardContent,
+    BankAccountSelectionComponent,
+    CategoryTreeDropdownComponent
+  ]
 })
 export class ManualCategorizationViewComponent implements OnInit {
+  // Dependency injection
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly appService = inject(AppService);
+  private readonly apiService = inject(BudgetAssistantApiService);
+  private readonly snackBar = inject(MatSnackBar);
+  private readonly queryClient = injectQueryClient();
 
-  @ViewChild(MatPaginator, { static: false }) paginator!: MatPaginator;
-  @ViewChild(MatSort, { static: false }) sort!: MatSort;
-  @ViewChild(MatTable) table!: MatTable<TransactionRead>;
-  @ViewChild('table', {read: ElementRef, static: false}) tableElement!: ElementRef;
+  // Signals
+  protected readonly activeView = signal<TransactionTypeEnum>(TransactionTypeEnum.EXPENSES);
+  protected readonly selectedAccount = signal<string | undefined>(undefined);
+  protected readonly categoryIndex = signal<CategoryIndex | undefined>(undefined);
+  protected readonly currentPage = signal(0);
+  protected readonly pageSize = signal(50);
+  protected readonly totalToReview = signal(0);
 
+  // Table columns
+  protected readonly displayedColumns = ['transaction', 'amount', 'category'];
 
-  dataSource!: GroupByCounterpartyDataSource;
-  categoryIndex?: CategoryIndex;
+  // TanStack Query – fetch uncategorized transactions
+  transactionsQuery = injectQuery(() => ({
+    queryKey: [
+      'manualReviewTransactions',
+      this.selectedAccount(),
+      this.activeView(),
+      this.currentPage(),
+      this.pageSize()
+    ],
+    queryFn: async () => {
+      const account = this.selectedAccount();
+      if (!account) throw new Error('No bank account selected');
 
-  private bankAccount!: BankAccountRead;
-  displayedColumns = [
-    "transaction",
-    "amount",
-    "category"
-  ];
-  private activeView: BehaviorSubject<TransactionTypeEnum> = new BehaviorSubject<TransactionTypeEnum>(TransactionTypeEnum.EXPENSES);
-  private activeViewObservable = this.activeView.asObservable();
-  constructor(private appService: AppService) {
-    appService.selectedBankAccountObservable$.subscribe(account => {
-      if (account){
-        this.bankAccount = account;
-        this.dataSource = this.initDataSource(account, this.activeView.getValue());
-      }
-    });
-    appService.categoryIndexObservable$.subscribe(categoryIndex => {
-      if (categoryIndex) {
-        this.categoryIndex = categoryIndex;
-      }}
-    )
+      const request: PageTransactionsToManuallyReviewRequest = {
+        page: this.currentPage(),
+        size: this.pageSize(),
+        sortOrder: 'asc' as SortOrder,
+        sortProperty: 'counterparty' as TransactionSortProperty,
+        bankAccount: account,
+        transactionType: this.activeView()
+      };
 
+      return firstValueFrom(
+        this.apiService.transactions.pageTransactionsToManuallyReviewApiTransactionsPageToManuallyReviewPost(request)
+      );
+    },
+    enabled: !!this.selectedAccount(),
+    staleTime: 30_000,
+    refetchOnWindowFocus: false
+  }));
 
-    this.activeViewObservable.subscribe(activeView => {
-      this.dataSource = this.initDataSource(this.bankAccount, activeView);
-    })
+  // Save-transaction mutation
+  saveTransactionMutation = injectMutation(() => ({
+    mutationFn: async (params: { transactionId: string; update: TransactionUpdate }) => {
+      return firstValueFrom(
+        this.apiService.transactions.saveTransactionApiTransactionsSavePost(
+          params.transactionId,
+          params.update
+        )
+      );
+    },
+    onSuccess: () => {
+      // Invalidate to refresh the list (transaction may leave the "to review" set)
+      this.queryClient.invalidateQueries({ queryKey: ['manualReviewTransactions'] });
+      this.refreshCount();
+    },
+    onError: (error: any) => {
+      console.error('Error saving transaction:', error);
+      this.snackBar.open('Failed to save transaction', 'Close', { duration: 3000 });
+    }
+  }));
 
-  }
+  // Computed: grouped table rows
+  protected readonly tableRows = computed<TableRow[]>(() => {
+    const data = this.transactionsQuery.data();
+    if (!data?.content?.length) return [];
 
-  ngOnInit( ): void {
-  }
+    const isExpense = this.activeView() === TransactionTypeEnum.EXPENSES;
+    const grouped = new Map<string, TransactionRead[]>();
 
-  private initDataSource(account: BankAccountRead, transactionType: TransactionTypeEnum): GroupByCounterpartyDataSource {
-    if (transactionType == TransactionTypeEnum.BOTH){
-      throw new Error("TransactionType.BOTH not supported")
+    for (const tx of data.content) {
+      const name = tx.counterparty?.name || '';
+      if (!grouped.has(name)) grouped.set(name, []);
+      grouped.get(name)!.push(tx);
     }
 
-    let isExpense = transactionType === TransactionTypeEnum.EXPENSES;
+    const sortedKeys = [...grouped.keys()].sort((a, b) => a.localeCompare(b));
+    const rows: TableRow[] = [];
 
-    let paginationDataSource = new PaginationDataSource<TransactionRead, BankAccountRead>(
-      (request:any, query:any) => {
-        request.size = 50;
-        return this.appService.pageTransactionsToManuallyReview(request, transactionType);
-      },
-      {property: 'counterparty', order: 'asc'}, account
-    );
-    return new GroupByCounterpartyDataSource(paginationDataSource, isExpense);
-  }
+    for (const key of sortedKeys) {
+      const transactions = grouped.get(key)!;
+      rows.push({ kind: 'group', counterpartyName: key, transactions, isExpense });
+      rows.push(...transactions.map(tx => ({ ...tx, kind: 'transaction' as const })));
+    }
 
+    return rows;
+  });
 
-  saveTransaction(transaction: TransactionRead) {
-    this.appService.saveTransaction(transaction)
-  }
+  // Computed: mobile-friendly grouped data
+  protected readonly groupedTransactions = computed(() => {
+    const data = this.transactionsQuery.data();
+    if (!data?.content?.length) return [];
 
-  setCategory(row: (TransactionRead | GroupBy), selectedCategoryQualifiedNameStr: string) {
-    // Get the category from the CategoryIndex
-    const category = this.categoryIndex?.qualifiedNameToCategoryIndex[selectedCategoryQualifiedNameStr];
+    const isExpense = this.activeView() === TransactionTypeEnum.EXPENSES;
+    const grouped = new Map<string, TransactionRead[]>();
 
-    // Check if row is an interface that has key 'isGroupBy'
-    if ("isGroupBy" in row) {
-      (row as GroupBy).transactions.forEach(transaction => {
-        this.appService.saveTransactionWithCategoryId(transaction, category?.id);
+    for (const tx of data.content) {
+      const name = tx.counterparty?.name || '';
+      if (!grouped.has(name)) grouped.set(name, []);
+      grouped.get(name)!.push(tx);
+    }
+
+    return [...grouped.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([name, transactions]) => ({ name, transactions, isExpense }));
+  });
+
+  // Computed: pagination
+  protected readonly pagination = computed(() => {
+    const data = this.transactionsQuery.data();
+    return {
+      page: data?.page ?? 0,
+      size: data?.size ?? this.pageSize(),
+      totalElements: data?.totalElements ?? 0,
+      totalPages: data?.totalPages ?? 0
+    };
+  });
+
+  protected readonly isLoading = computed(() => this.transactionsQuery.isPending());
+  protected readonly isEmpty = computed(() =>
+    !this.isLoading() && (this.transactionsQuery.data()?.content?.length ?? 0) === 0 && !!this.selectedAccount()
+  );
+
+  ngOnInit(): void {
+    // Subscribe to category index
+    this.appService.categoryIndexObservable$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(index => this.categoryIndex.set(index));
+
+    // Subscribe to bank account changes
+    this.appService.selectedBankAccountObservable$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(account => {
+        if (account?.accountNumber) {
+          this.selectedAccount.set(account.accountNumber);
+          this.currentPage.set(0);
+          this.refreshCount();
+        }
       });
+  }
+
+  /** Refresh the count of transactions awaiting manual review */
+  private refreshCount(): void {
+    const account = this.selectedAccount();
+    if (!account) return;
+    this.appService.countTransactionToManuallyReview(account)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: count => this.totalToReview.set(count.valueOf()),
+        error: () => this.totalToReview.set(0)
+      });
+  }
+
+  // --- Event Handlers ---
+
+  onToggleChange(event: MatButtonToggleChange): void {
+    const value = event.value;
+    this.activeView.set(value === 'revenue' ? TransactionTypeEnum.REVENUE : TransactionTypeEnum.EXPENSES);
+    this.currentPage.set(0);
+  }
+
+  onPageChange(event: PageEvent): void {
+    this.currentPage.set(event.pageIndex);
+    this.pageSize.set(event.pageSize);
+  }
+
+  /** Assign a category — works for both single transactions and group headers */
+  setCategory(row: TableRow, selectedCategoryQualifiedName: string): void {
+    const index = this.categoryIndex();
+    const category = index?.qualifiedNameToCategoryIndex[selectedCategoryQualifiedName];
+    if (!category) {
+      this.snackBar.open('Category not found', 'Close', { duration: 3000 });
       return;
+    }
+
+    if (isGroupRow(row)) {
+      // Bulk assign for all transactions in the group
+      const count = row.transactions.length;
+      for (const tx of row.transactions) {
+        this.saveTransactionMutation.mutate({
+          transactionId: tx.transactionId,
+          update: { categoryId: category.id, manuallyAssignedCategory: true }
+        });
+      }
+      this.snackBar.open(`Category assigned to ${count} transaction(s)`, 'Close', { duration: 2000 });
     } else {
-      let transaction = row as TransactionRead;
-      this.appService.saveTransactionWithCategoryId(transaction, category?.id);
+      this.saveTransactionMutation.mutate({
+        transactionId: row.transactionId,
+        update: { categoryId: category.id, manuallyAssignedCategory: true }
+      });
+      this.snackBar.open('Category saved', 'Close', { duration: 2000 });
     }
   }
 
-  amountType(transaction: TransactionRead | GroupBy): AmountType {
-    if ("isGroupBy" in transaction) {
-      return transaction.isExpense ? AmountType.EXPENSES : AmountType.REVENUE;
+  /** Determine AmountType for category dropdown filtering */
+  amountType(row: TableRow): AmountType {
+    if (isGroupRow(row)) {
+      return row.isExpense ? AmountType.EXPENSES : AmountType.REVENUE;
     }
-    if (transaction.amount === undefined || transaction.amount === null) {
-      throw new Error("Amount is undefined or null");
-    }
-    return inferAmountType(transaction.amount)
-
-
+    if (row.amount == null) return AmountType.BOTH;
+    return inferAmountType(row.amount);
   }
 
-  isGroup(index: any, item: any): boolean {
-    return item.isGroupBy;
+  /** Get category qualified name for pre-selecting the dropdown */
+  getCategoryQualifiedName(row: TableRow): string | undefined {
+    if (isGroupRow(row)) return undefined;
+    const index = this.categoryIndex();
+    if (!index || row.categoryId == null) return undefined;
+    const cat = index.idToCategoryIndex[row.categoryId];
+    return cat?.qualifiedName;
   }
 
-  onToggleChange($event: MatButtonToggleChange) {
-    this.tableElement.nativeElement.scrollIntoView({behavior: 'smooth', block: 'start'});
-    const value = $event.value;
-    if (value === "expenses") {
-      this.activeView.next(TransactionTypeEnum.EXPENSES);
-    } else if (value === "revenue") {
-      this.activeView.next(TransactionTypeEnum.REVENUE);
-    } else {
-      throw new Error("Unknown value " + value);
-    }
+  /** MatTable predicate: is this row a group header? */
+  isGroup = (_index: number, item: TableRow): boolean => isGroupRow(item);
 
+  /** MatTable predicate: is this row a transaction? */
+  isTransaction = (_index: number, item: TableRow): boolean => !isGroupRow(item);
 
-
-  }
+  /** Track by for mobile @for */
+  protected trackByCounterparty = (_index: number, group: { name: string }) => group.name;
 }

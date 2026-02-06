@@ -1,85 +1,190 @@
 <mat-toolbar color="primary" class="toolbar-header">
   <span>Uncategorized Transactions</span>
+  @if (totalToReview() > 0) {
+    <span class="review-badge">{{ totalToReview() }} remaining</span>
+  }
 </mat-toolbar>
-<div style="background: white">
-  <div #parent
-       style="height: 10vh; display: flex; justify-content: space-between;align-items: center; position: relative;">
-    <div #one>
-      <bank-account-selection>
-      </bank-account-selection>
-    </div>
-    <div #two style="position: absolute; left: 50%; transform: translateX(-50%);">
-      <mat-button-toggle-group (change)="onToggleChange($event)" name="fontStyle" aria-label="Font Style">
-        <mat-button-toggle [checked]="true" value="expenses">Expenses</mat-button-toggle>
-        <mat-button-toggle value="revenue">Revenue</mat-button-toggle>
-      </mat-button-toggle-group>
-    </div>
-    <!--    <div #three style="flex-grow: 1">-->
-    <div #three style="position: absolute; right: 0;">
-      <mat-paginator *ngIf="dataSource.backingPaginationDataSource.page$ | async as page"
-                     [length]="page.totalElements"
-                     [pageSize]="page.size"
-                     [pageIndex]="page.number" (page)="dataSource.fetch($event.pageIndex)">
-      </mat-paginator>
 
+<div class="categorization-container">
+  <div class="content-wrapper">
+    <!-- Action Bar -->
+    <div class="action-bar">
+      <div class="action-bar-left">
+        <bank-account-selection class="bank-account-selector"></bank-account-selection>
+
+        <mat-button-toggle-group
+          [value]="activeView() === 'EXPENSES' ? 'expenses' : 'revenue'"
+          (change)="onToggleChange($event)"
+          class="view-toggle">
+          <mat-button-toggle value="expenses">Expenses</mat-button-toggle>
+          <mat-button-toggle value="revenue">Revenue</mat-button-toggle>
+        </mat-button-toggle-group>
+      </div>
+
+      <div class="action-bar-right">
+        <mat-paginator
+          [length]="pagination().totalElements"
+          [pageSize]="pagination().size"
+          [pageIndex]="pagination().page"
+          [pageSizeOptions]="[25, 50, 100]"
+          (page)="onPageChange($event)"
+          showFirstLastButtons>
+        </mat-paginator>
+      </div>
     </div>
-  </div>
-  <div style="height: 75vh;background-color:white; align-content: space-between; overflow-y: auto;">
-    <table #table mat-table [dataSource]="dataSource" class="mat-z8" style="border-collapse: separate; width: 100%">
-      <ng-container matColumnDef="transaction">
-        <th mat-header-cell *matHeaderCellDef style="font-size: large;width: 50%"></th>
-        <td mat-cell style="font-size: large" *matCellDef="let item">
-          <div class="stacked-items"
-               style="font-weight: lighter;padding-block: 8px; ;  overflow-wrap: break-word;">
-            <div>{{ item.transaction }}</div>
-            <div *ngIf="item.transaction !== item.communications"
-                 style="padding-block: 8px">{{ item.communications }}
+
+    <!-- Table Content -->
+    <div class="table-container">
+      @if (isLoading()) {
+        <div class="loading-container">
+          <mat-spinner diameter="48"></mat-spinner>
+          <p>Loading transactions...</p>
+        </div>
+      } @else if (isEmpty()) {
+        <div class="empty-state">
+          <mat-icon class="empty-icon">check_circle_outline</mat-icon>
+          <h3>No uncategorized transactions</h3>
+          <p>All transactions for this account have been categorized.</p>
+        </div>
+      } @else {
+        <!-- Desktop Table View -->
+        <div class="desktop-table">
+          <table mat-table [dataSource]="tableRows()" class="categorization-table">
+            <!-- Transaction Column -->
+            <ng-container matColumnDef="transaction">
+              <th mat-header-cell *matHeaderCellDef>Transaction</th>
+              <td mat-cell *matCellDef="let item">
+                <div class="transaction-cell">
+                  <span class="transaction-text">{{ item.transaction }}</span>
+                  @if (item.transaction !== item.communications && item.communications) {
+                    <span class="communications-text">{{ item.communications }}</span>
+                  }
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Amount Column -->
+            <ng-container matColumnDef="amount">
+              <th mat-header-cell *matHeaderCellDef>Amount</th>
+              <td mat-cell *matCellDef="let item">
+                <span class="amount-cell"
+                      [class.positive]="item.amount >= 0"
+                      [class.negative]="item.amount < 0">
+                  {{ item.amount | number:'1.2-2' }} {{ item.currency }}
+                </span>
+              </td>
+            </ng-container>
+
+            <!-- Category Column -->
+            <ng-container matColumnDef="category">
+              <th mat-header-cell *matHeaderCellDef>Category</th>
+              <td mat-cell *matCellDef="let item">
+                <app-category-tree-dropdown
+                  (selectionChange)="setCategory(item, $event)"
+                  [selectedCategoryQualifiedNameStr]="getCategoryQualifiedName(item)"
+                  [transactionTypeEnum]="amountType(item)">
+                </app-category-tree-dropdown>
+              </td>
+            </ng-container>
+
+            <!-- Group Header Column -->
+            <ng-container matColumnDef="groupHeader">
+              <td mat-cell *matCellDef="let group" class="group-header-cell">
+                <div class="group-header-content">
+                  <mat-icon class="group-icon">people</mat-icon>
+                  <strong>{{ group.counterpartyName || 'Unknown' }}</strong>
+                  <span class="group-count">({{ group.transactions.length }})</span>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Group Category Column (for bulk assignment) -->
+            <ng-container matColumnDef="groupCategory">
+              <td mat-cell *matCellDef="let group" class="group-category-cell">
+                <app-category-tree-dropdown
+                  (selectionChange)="setCategory(group, $event)"
+                  [transactionTypeEnum]="amountType(group)">
+                </app-category-tree-dropdown>
+              </td>
+            </ng-container>
+
+            <!-- Group Amount Placeholder -->
+            <ng-container matColumnDef="groupAmount">
+              <td mat-cell *matCellDef="let group"></td>
+            </ng-container>
+
+            <!-- Regular rows -->
+            <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns; when: isTransaction"
+                class="transaction-row"></tr>
+
+            <!-- Group header rows -->
+            <tr mat-row *matRowDef="let row; columns: ['groupHeader', 'groupAmount', 'groupCategory']; when: isGroup"
+                class="group-row"></tr>
+          </table>
+        </div>
+
+        <!-- Mobile Card View -->
+        <div class="mobile-cards">
+          @for (group of groupedTransactions(); track group.name) {
+            <div class="group-card">
+              <div class="group-card-header">
+                <div class="group-card-title">
+                  <mat-icon>people</mat-icon>
+                  <span>{{ group.name || 'Unknown' }}</span>
+                  <span class="group-count">({{ group.transactions.length }})</span>
+                </div>
+                <app-category-tree-dropdown
+                  class="group-category-dropdown"
+                  (selectionChange)="setCategory({kind: 'group', counterpartyName: group.name, transactions: group.transactions, isExpense: group.isExpense}, $event)"
+                  [transactionTypeEnum]="group.isExpense ? 'EXPENSES' : 'REVENUE'">
+                </app-category-tree-dropdown>
+              </div>
+
+              @for (tx of group.transactions; track tx.transactionId) {
+                <mat-card class="transaction-card">
+                  <mat-card-content>
+                    <div class="card-row">
+                      <div class="card-transaction-info">
+                        @if (tx.transaction) {
+                          <span class="transaction-text">{{ tx.transaction }}</span>
+                        }
+                        @if (tx.transaction !== tx.communications && tx.communications) {
+                          <span class="communications-text">{{ tx.communications }}</span>
+                        }
+                      </div>
+                      <span class="card-amount"
+                            [class.positive]="tx.amount >= 0"
+                            [class.negative]="tx.amount < 0">
+                        {{ tx.amount | number:'1.2-2' }} {{ tx.currency }}
+                      </span>
+                    </div>
+                    <div class="card-category">
+                      <app-category-tree-dropdown
+                        (selectionChange)="setCategory(tx, $event)"
+                        [selectedCategoryQualifiedNameStr]="getCategoryQualifiedName(tx)"
+                        [transactionTypeEnum]="amountType(tx)">
+                      </app-category-tree-dropdown>
+                    </div>
+                  </mat-card-content>
+                </mat-card>
+              }
             </div>
-          </div>
-        </td>
-      </ng-container>
-      <ng-container matColumnDef="amount">
-        <th mat-header-cell *matHeaderCellDef style="font-size: large; width: 10%"></th>
-        <td mat-cell style="font-size: large" *matCellDef="let item">
-          <div class="stacked-items" style="min-width: 100px;">
-            <div>{{ item.amount }} {{ item.currency }}</div>
-          </div>
-        </td>
-      </ng-container>
-      <ng-container matColumnDef="category">
-        <th mat-header-cell *matHeaderCellDef style="font-size: large; width: 40%">Categorie</th>
-        <td mat-cell style="font-size: large;" *matCellDef="let item">
-          <div>
-            <app-category-tree-dropdown
-              (selectionChange)="setCategory(item, $event)"
-              [selectedCategoryQualifiedNameStr]="item.category?.qualifiedName"
-              [transactionTypeEnum]="amountType(item)"
-            >
-            </app-category-tree-dropdown>
-          </div>
+          }
+        </div>
 
-        </td>
-      </ng-container>
-
-      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-      <tr VALIGN=TOP mat-row *matRowDef="let row; columns: displayedColumns"></tr>
-
-      <!-- Group header -->
-      <ng-container matColumnDef="groupHeader">
-        <td mat-cell *matCellDef="let groupBy">
-          <strong>Tegenpartij: {{ groupBy.counterparty ? groupBy.counterparty : 'N/A' }}</strong></td>
-      </ng-container>
-
-      <tr mat-row *matRowDef="let row; columns: ['groupHeader','amount','category']; when: isGroup"></tr>
-    </table>
+        <!-- Bottom Paginator -->
+        <div class="bottom-paginator">
+          <mat-paginator
+            [length]="pagination().totalElements"
+            [pageSize]="pagination().size"
+            [pageIndex]="pagination().page"
+            [pageSizeOptions]="[25, 50, 100]"
+            (page)="onPageChange($event)"
+            showFirstLastButtons>
+          </mat-paginator>
+        </div>
+      }
+    </div>
   </div>
-  <div #three style="position: absolute; right: 0;height: 5vh">
-    <mat-paginator *ngIf="dataSource.backingPaginationDataSource.page$ | async as page"
-                   [length]="page.totalElements"
-                   [pageSize]="page.size"
-                   [pageIndex]="page.number" (page)="dataSource.fetch($event.pageIndex)">
-    </mat-paginator>
-
-  </div>
-
 </div>
