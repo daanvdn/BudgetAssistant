@@ -6,6 +6,7 @@ for evaluating categorization rules.
 
 import re
 from abc import ABC, abstractmethod
+from difflib import SequenceMatcher
 from typing import TYPE_CHECKING, Any, ClassVar, List, Literal, Union
 
 from pydantic import BaseModel, field_validator, model_validator
@@ -16,7 +17,17 @@ if TYPE_CHECKING:
     from models.transaction import Transaction
 
 # Type aliases matching Django implementation
-OperatorName = Literal["contains", "exact match", "fuzzy match"]
+OperatorName = Literal[
+    "contains",
+    "exact match",
+    "fuzzy match",
+    "equals",
+    "not equals",
+    "greater than",
+    "greater than or equals",
+    "less than",
+    "less than or equals",
+]
 FieldType = Literal["number", "string", "categorical"]
 MatchTypeOptions = Literal["any of", "all of"]
 Condition = Literal["AND", "OR"]
@@ -83,11 +94,7 @@ class RuleOperator(BaseModel):
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, RuleOperator):
             return False
-        return (
-            self.name == other.name
-            and self.value == other.value
-            and self.type == other.type
-        )
+        return self.name == other.name and self.value == other.value and self.type == other.type
 
 
 # Singleton instances for operators
@@ -96,10 +103,15 @@ MATCH_STRING_OP = RuleOperator.create("exact match", "string")
 CONTAINS_CAT_OP = RuleOperator.create("contains", "categorical")
 MATCH_CAT_OP = RuleOperator.create("exact match", "categorical")
 MATCH_NUMBER_OP = RuleOperator.create("exact match", "number")
+GT_NUMBER_OP = RuleOperator.create("greater than", "number")
+GTE_NUMBER_OP = RuleOperator.create("greater than or equals", "number")
+LT_NUMBER_OP = RuleOperator.create("less than", "number")
+LTE_NUMBER_OP = RuleOperator.create("less than or equals", "number")
+NOT_EQUALS_NUMBER_OP = RuleOperator.create("not equals", "number")
+EQUALS_NUMBER_OP = RuleOperator.create("equals", "number")
+FUZZY_MATCH_STRING_OP = RuleOperator.create("fuzzy match", "string")
 
-RuleOperatorType = Union[
-    RuleOperator, RuleOperator, RuleOperator, RuleOperator, RuleOperator
-]
+RuleOperatorType = Union[RuleOperator, RuleOperator, RuleOperator, RuleOperator, RuleOperator]
 
 
 class RuleIF(ABC):
@@ -153,64 +165,54 @@ class Rule(BaseModel, RuleIF):
             raise ValueError("Field must contain at most one period")
 
         # Validate value types based on field_type
-        if self.field_type == "number" and not all(
-            isinstance(val, (int, float)) for val in self.value
-        ):
+        if self.field_type == "number" and not all(isinstance(val, (int, float)) for val in self.value):
             raise ValueError("All values must be numbers if the field_type is 'number'")
 
-        if self.field_type in ["string", "categorical"] and not all(
-            isinstance(val, str) for val in self.value
-        ):
-            raise ValueError(
-                "All values must be strings if the field_type is 'string' or 'categorical'"
-            )
+        if self.field_type in ["string", "categorical"] and not all(isinstance(val, str) for val in self.value):
+            raise ValueError("All values must be strings if the field_type is 'string' or 'categorical'")
 
         # Validate operator based on field_type
-        if self.field_type == "number" and self.operator != MATCH_NUMBER_OP:
+        if self.field_type == "number" and self.operator not in [
+            MATCH_NUMBER_OP,
+            EQUALS_NUMBER_OP,
+            GT_NUMBER_OP,
+            GTE_NUMBER_OP,
+            LT_NUMBER_OP,
+            LTE_NUMBER_OP,
+            NOT_EQUALS_NUMBER_OP,
+        ]:
             raise ValueError("Invalid operator for number field_type")
 
         if self.field_type in ["string", "categorical"] and self.operator not in [
             CONTAINS_STRING_OP,
             MATCH_STRING_OP,
+            FUZZY_MATCH_STRING_OP,
             CONTAINS_CAT_OP,
             MATCH_CAT_OP,
         ]:
-            raise ValueError(
-                f"Encountered {self.operator}: Invalid operator for string or categorical field_type!"
-            )
+            raise ValueError(f"Encountered {self.operator}: Invalid operator for string or categorical field_type!")
 
         # Validate match type for exact match operators
-        if (
-            self.operator in [MATCH_STRING_OP, MATCH_CAT_OP]
-            and self.value_match_type == ALL_OF
-        ):
-            raise ValueError(
-                "Value match type must be 'any of' if operator is 'exact match'"
-            )
+        if self.operator in [MATCH_STRING_OP, MATCH_CAT_OP] and self.value_match_type == ALL_OF:
+            raise ValueError("Value match type must be 'any of' if operator is 'exact match'")
 
         return self
 
     def _all_match(self, string_values_to_match: List[str], actual_value: str) -> bool:
         """Check if all values match using regex."""
         for string_value in string_values_to_match:
-            if not re.search(
-                string_value.replace(" ", "\\s*"), actual_value, re.IGNORECASE
-            ):
+            if not re.search(string_value.replace(" ", "\\s*"), actual_value, re.IGNORECASE):
                 return False
         return True
 
     def _any_match(self, string_values_to_match: List[str], actual_value: str) -> bool:
         """Check if any value matches using regex."""
         for string_value in string_values_to_match:
-            if re.search(
-                string_value.replace(" ", "\\s*"), actual_value, re.IGNORECASE
-            ):
+            if re.search(string_value.replace(" ", "\\s*"), actual_value, re.IGNORECASE):
                 return True
         return False
 
-    def evaluate_string(
-        self, actual_value: str, string_values_to_match: List[str]
-    ) -> bool:
+    def evaluate_string(self, actual_value: str, string_values_to_match: List[str]) -> bool:
         """Evaluate string field against rule values."""
         if self.operator == CONTAINS_STRING_OP:
             if self.value_match_type == ANY_OF:
@@ -223,13 +225,49 @@ class Rule(BaseModel, RuleIF):
                 return self._any_match(string_values_to_match, actual_value)
             elif self.value_match_type == ALL_OF:
                 return self._all_match(string_values_to_match, actual_value)
+
+        elif self.operator == FUZZY_MATCH_STRING_OP:
+            if self.value_match_type == ANY_OF:
+                return self._fuzzy_match(string_values_to_match, actual_value)
+            elif self.value_match_type == ALL_OF:
+                return all(self._fuzzy_match([v], actual_value) for v in string_values_to_match)
         else:
             raise ValueError(f"Unsupported operator {self.operator}")
         return False
 
-    def _get_field_value(
-        self, transaction: "Transaction", field_name: TransactionField
-    ) -> Any:
+    def _fuzzy_match(self, string_values_to_match: List[str], actual_value: str, threshold: float = 0.8) -> bool:
+        """Check if any value fuzzy-matches using SequenceMatcher."""
+        for string_value in string_values_to_match:
+            ratio = SequenceMatcher(None, string_value.lower(), actual_value.lower()).ratio()
+            if ratio >= threshold:
+                return True
+        return False
+
+    def evaluate_number(self, actual_value: float, rule_values: List[float]) -> bool:
+        """Evaluate a number field against the rule.
+
+        For comparison operators (>, >=, <, <=), compare against the first value.
+        For equals/not-equals, check against all values using value_match_type.
+        """
+        if self.operator.name in ("exact match", "equals"):
+            if self.value_match_type == ANY_OF:
+                return any(actual_value == v for v in rule_values)
+            else:
+                return all(actual_value == v for v in rule_values)
+        elif self.operator.name == "not equals":
+            return all(actual_value != v for v in rule_values)
+        elif self.operator.name == "greater than":
+            return actual_value > rule_values[0]
+        elif self.operator.name == "greater than or equals":
+            return actual_value >= rule_values[0]
+        elif self.operator.name == "less than":
+            return actual_value < rule_values[0]
+        elif self.operator.name == "less than or equals":
+            return actual_value <= rule_values[0]
+        else:
+            raise ValueError(f"Unsupported number operator: {self.operator}")
+
+    def _get_field_value(self, transaction: "Transaction", field_name: TransactionField) -> Any:
         """Get field value from transaction, supporting nested fields."""
         num_period = field_name.count(".")
         if num_period == 0:
@@ -243,9 +281,7 @@ class Rule(BaseModel, RuleIF):
         else:
             raise ValueError("Field cannot have more than 1 '.'")
 
-    def evaluate_field(
-        self, transaction: "Transaction", field_name: TransactionField
-    ) -> bool:
+    def evaluate_field(self, transaction: "Transaction", field_name: TransactionField) -> bool:
         """Evaluate a single field against the rule."""
         actual_field_value = self._get_field_value(transaction, field_name)
         if actual_field_value is None:
@@ -254,10 +290,7 @@ class Rule(BaseModel, RuleIF):
         if self.field_type == "number":
             if not isinstance(actual_field_value, (int, float)):
                 raise ValueError(f"Field value is not a number: {actual_field_value}")
-            if not all(isinstance(val, (int, float)) for val in self.value):
-                raise ValueError("All values must be numbers")
-            # Implement number evaluation logic here
-            raise NotImplementedError("Number evaluation not implemented")
+            return self.evaluate_number(float(actual_field_value), [float(v) for v in self.value])
 
         elif self.field_type in ["string", "categorical"]:
             if not isinstance(actual_field_value, str):
@@ -344,11 +377,7 @@ class RuleSet(BaseModel, RuleIF):
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, RuleSet):
             return False
-        return (
-            self.condition == other.condition
-            and self.rules == other.rules
-            and self.is_child == other.is_child
-        )
+        return self.condition == other.condition and self.rules == other.rules and self.is_child == other.is_child
 
 
 # Update forward references for recursive type

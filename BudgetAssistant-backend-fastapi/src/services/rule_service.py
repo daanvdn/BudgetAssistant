@@ -23,9 +23,7 @@ class RuleService:
         session: AsyncSession,
     ) -> Optional[RuleSetWrapper]:
         """Get a rule set wrapper by ID."""
-        result = await session.execute(
-            select(RuleSetWrapper).where(RuleSetWrapper.id == rule_set_id)
-        )
+        result = await session.execute(select(RuleSetWrapper).where(RuleSetWrapper.id == rule_set_id))
         return result.scalar_one_or_none()
 
     async def get_rule_set_wrapper_by_category(
@@ -34,9 +32,7 @@ class RuleService:
         session: AsyncSession,
     ) -> Optional[RuleSetWrapper]:
         """Get a rule set wrapper by category ID."""
-        result = await session.execute(
-            select(RuleSetWrapper).where(RuleSetWrapper.category_id == category_id)
-        )
+        result = await session.execute(select(RuleSetWrapper).where(RuleSetWrapper.category_id == category_id))
         return result.scalar_one_or_none()
 
     async def get_or_create_rule_set_wrapper(
@@ -56,9 +52,7 @@ class RuleService:
         category = category_result.scalar_one_or_none()
 
         if not category:
-            raise ValueError(
-                f"Category with name {category_qualified_name} does not exist"
-            )
+            raise ValueError(f"Category with name {category_qualified_name} does not exist")
 
         # Check if rule set wrapper exists
         existing = await self.get_rule_set_wrapper_by_category(category.id, session)
@@ -68,13 +62,13 @@ class RuleService:
             link_result = await session.execute(
                 select(UserRuleSetLink).where(
                     UserRuleSetLink.user_id == user.id,
-                    UserRuleSetLink.rule_set_wrapper_id == existing.id,
+                    UserRuleSetLink.ruleset_id == existing.id,
                 )
             )
             if not link_result.scalar_one_or_none():
                 link = UserRuleSetLink(
                     user_id=user.id,
-                    rule_set_wrapper_id=existing.id,
+                    ruleset_id=existing.id,
                 )
                 session.add(link)
                 await session.commit()
@@ -92,7 +86,7 @@ class RuleService:
         # Associate with user
         link = UserRuleSetLink(
             user_id=user.id,
-            rule_set_wrapper_id=rule_set_wrapper.id,
+            ruleset_id=rule_set_wrapper.id,
         )
         session.add(link)
         await session.commit()
@@ -137,11 +131,7 @@ class RuleService:
             raise ValueError(f"Rule set wrapper with id {rule_set_id} not found")
 
         # Delete user associations first
-        await session.execute(
-            select(UserRuleSetLink).where(
-                UserRuleSetLink.rule_set_wrapper_id == rule_set_id
-            )
-        )
+        await session.execute(select(UserRuleSetLink).where(UserRuleSetLink.ruleset_id == rule_set_id))
         # Note: This should cascade delete, but let's be explicit
 
         await session.delete(rule_set_wrapper)
@@ -154,9 +144,7 @@ class RuleService:
     ) -> List[RuleSetWrapper]:
         """Get all rule sets for a user."""
         result = await session.execute(
-            select(RuleSetWrapper)
-            .join(UserRuleSetLink)
-            .where(UserRuleSetLink.user_id == user.id)
+            select(RuleSetWrapper).join(UserRuleSetLink).where(UserRuleSetLink.user_id == user.id)
         )
         return list(result.scalars().all())
 
@@ -170,7 +158,7 @@ class RuleService:
         result = await session.execute(
             select(UserRuleSetLink).where(
                 UserRuleSetLink.user_id == user.id,
-                UserRuleSetLink.rule_set_wrapper_id == rule_set_id,
+                UserRuleSetLink.ruleset_id == rule_set_id,
             )
         )
         return result.scalar_one_or_none() is not None
@@ -191,7 +179,7 @@ class RuleService:
         # Associate with user
         link = UserRuleSetLink(
             user_id=user.id,
-            rule_set_wrapper_id=rule_set_wrapper.id,
+            ruleset_id=rule_set_wrapper.id,
         )
         session.add(link)
         await session.commit()
@@ -221,16 +209,10 @@ class RuleSetWrappersPostOrderTraverser:
             revenue_category_tree: The category tree for revenue.
             rule_set_wrappers: List of rule set wrappers to use for matching.
         """
-        self.expenses_category_tree = self._category_tree_to_nx_digraph(
-            expenses_category_tree
-        )
-        self.revenue_category_tree = self._category_tree_to_nx_digraph(
-            revenue_category_tree
-        )
+        self.expenses_category_tree = self._category_tree_to_nx_digraph(expenses_category_tree)
+        self.revenue_category_tree = self._category_tree_to_nx_digraph(revenue_category_tree)
         self.rules_by_category: Dict[Category, RuleSetWrapper] = {
-            wrapper.category: wrapper
-            for wrapper in rule_set_wrappers
-            if wrapper.category
+            wrapper.category: wrapper for wrapper in rule_set_wrappers if wrapper.category
         }
         self.current_transaction: Optional[Transaction] = None
         self.current_category: Optional[Category] = None
@@ -285,9 +267,7 @@ class RuleSetWrappersPostOrderTraverser:
         if root is None:
             return None
 
-        categories_in_post_order = list(
-            nx.dfs_postorder_nodes(self.get_category_tree(), root)
-        )
+        categories_in_post_order = list(nx.dfs_postorder_nodes(self.get_category_tree(), root))
 
         for category in categories_in_post_order:
             self.current_category = category

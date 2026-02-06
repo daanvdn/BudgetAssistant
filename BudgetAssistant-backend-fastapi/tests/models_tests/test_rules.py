@@ -16,8 +16,13 @@ from models.rules import (
     ALL_OF,
     ANY_OF,
     CONTAINS_STRING_OP,
+    EQUALS_NUMBER_OP,
+    FUZZY_MATCH_STRING_OP,
+    GT_NUMBER_OP,
+    LTE_NUMBER_OP,
     MATCH_NUMBER_OP,
     MATCH_STRING_OP,
+    NOT_EQUALS_NUMBER_OP,
     Rule,
     RuleMatchType,
     RuleOperator,
@@ -48,9 +53,7 @@ class Attribute(ABC):
         pass
 
     @abstractmethod
-    def set_attribute(
-        self, target_string: str, transaction: "MockTransaction", rule: Rule
-    ) -> "MockTransaction":
+    def set_attribute(self, target_string: str, transaction: "MockTransaction", rule: Rule) -> "MockTransaction":
         """Set the attribute value on a transaction."""
         pass
 
@@ -73,9 +76,7 @@ class SimpleAttribute(Attribute):
     def is_nested_attribute(self) -> bool:
         return False
 
-    def set_attribute(
-        self, target_string: str, transaction: "MockTransaction", rule: Rule
-    ) -> "MockTransaction":
+    def set_attribute(self, target_string: str, transaction: "MockTransaction", rule: Rule) -> "MockTransaction":
         setattr(transaction, self.attribute_name, target_string)
         if rule.value:
             if not isinstance(rule.value, list):
@@ -105,9 +106,7 @@ class NestedAttribute(Attribute):
     def is_nested_attribute(self) -> bool:
         return True
 
-    def set_attribute(
-        self, target_string: str, transaction: "MockTransaction", rule: Rule
-    ) -> "MockTransaction":
+    def set_attribute(self, target_string: str, transaction: "MockTransaction", rule: Rule) -> "MockTransaction":
         first_part, second_part = self.attribute_name.split(".")
         first_part_obj = getattr(transaction, first_part)
         setattr(first_part_obj, second_part, target_string)
@@ -196,17 +195,13 @@ class RuleAndTransactionPreparer:
             if isinstance(self.selected_target_strings, str):
                 fake_text = self._create_fake_text(self.selected_target_strings)
                 attribute = Attribute.create(self.selected_fields)
-                return self.rule, attribute.set_attribute(
-                    fake_text, self.transaction, self.rule
-                )
+                return self.rule, attribute.set_attribute(fake_text, self.transaction, self.rule)
             elif isinstance(self.selected_target_strings, list):
                 fake_texts = []
                 for target_string in self.selected_target_strings:
                     fake_texts.append(self._create_fake_text(target_string))
                 attribute = Attribute.create(self.selected_fields)
-                self.transaction = attribute.set_attribute(
-                    " ".join(fake_texts), self.transaction, self.rule
-                )
+                self.transaction = attribute.set_attribute(" ".join(fake_texts), self.transaction, self.rule)
                 return self.rule, self.transaction
             else:
                 raise ValueError("Field type not supported")
@@ -215,16 +210,12 @@ class RuleAndTransactionPreparer:
                 if isinstance(self.selected_target_strings, str):
                     fake_text = self._create_fake_text(self.selected_target_strings)
                     attribute = Attribute.create(field)
-                    self.transaction = attribute.set_attribute(
-                        fake_text, self.transaction, self.rule
-                    )
+                    self.transaction = attribute.set_attribute(fake_text, self.transaction, self.rule)
                 elif isinstance(self.selected_target_strings, list):
                     for target_string in self.selected_target_strings:
                         fake_text = self._create_fake_text(target_string)
                         attribute = Attribute.create(field)
-                        self.transaction = attribute.set_attribute(
-                            fake_text, self.transaction, self.rule
-                        )
+                        self.transaction = attribute.set_attribute(fake_text, self.transaction, self.rule)
                 else:
                     raise ValueError("Field type not supported")
             return self.rule, self.transaction
@@ -235,23 +226,16 @@ class RuleAndTransactionPreparer:
 class CreateTestCasesStringMixin:
     """Mixin to create test cases for string-based rules."""
 
-    def create_test_cases_string(
-        self, operator: RuleOperator, value_match_type: RuleMatchType
-    ) -> list:
+    def create_test_cases_string(self, operator: RuleOperator, value_match_type: RuleMatchType) -> list:
         """Create test cases for a given operator and match type."""
         fake = Faker()
         random.seed(0)
         cases = []
         for _ in range(100):
             value_list_length = random.randint(1, 5)
-            value_list = [
-                " ".join(fake.words(nb=random.randint(1, 10)))
-                for _ in range(value_list_length)
-            ]
+            value_list = [" ".join(fake.words(nb=random.randint(1, 10))) for _ in range(value_list_length)]
 
-            rule = StringRuleFactory.build(
-                value=value_list, operator=operator, value_match_type=value_match_type
-            )
+            rule = StringRuleFactory.build(value=value_list, operator=operator, value_match_type=value_match_type)
             transaction = MockTransaction()
             cases.append({"rule": rule, "transaction": transaction})
         return cases
@@ -307,23 +291,16 @@ class TestRuleSerializerPydantic:
             (CONTAINS_STRING_OP, ANY_OF),
         ],
     )
-    def test_serialize_deserialize(
-        self, operator: RuleOperator, value_match_type: RuleMatchType
-    ):
+    def test_serialize_deserialize(self, operator: RuleOperator, value_match_type: RuleMatchType):
         """Test that rules can be serialized and deserialized correctly."""
         fake = Faker()
         random.seed(0)
 
         for _ in range(10):  # Reduced from 100 for faster tests
             value_list_length = random.randint(1, 5)
-            value_list = [
-                " ".join(fake.words(nb=random.randint(1, 10)))
-                for _ in range(value_list_length)
-            ]
+            value_list = [" ".join(fake.words(nb=random.randint(1, 10))) for _ in range(value_list_length)]
 
-            rule = StringRuleFactory.build(
-                value=value_list, operator=operator, value_match_type=value_match_type
-            )
+            rule = StringRuleFactory.build(value=value_list, operator=operator, value_match_type=value_match_type)
 
             # Serialize to dict
             serialized_data = rule.model_dump()
@@ -764,3 +741,116 @@ class TestRuleSet:
         restored = RuleSet.model_validate(data)
 
         assert rule_set == restored
+
+
+# =============================================================================
+# Number evaluation tests (Task 0b)
+# =============================================================================
+
+
+class TestNumberEvaluation:
+    """Tests for number field evaluation."""
+
+    def _make_number_rule(self, operator, value, value_match_type=ANY_OF):
+        return Rule(
+            field=["amount"],
+            field_type="number",
+            value=value,
+            value_match_type=value_match_type,
+            operator=operator,
+            clazz="Rule",
+            type=TransactionTypeEnum.EXPENSES,
+        )
+
+    def test_evaluate_number_equals(self):
+        rule = self._make_number_rule(EQUALS_NUMBER_OP, [100.0])
+        txn = MockTransaction()
+        txn.amount = 100.0
+        assert rule.evaluate(txn) is True
+        txn.amount = 99.0
+        assert rule.evaluate(txn) is False
+
+    def test_evaluate_number_greater_than(self):
+        rule = self._make_number_rule(GT_NUMBER_OP, [50.0])
+        txn = MockTransaction()
+        txn.amount = 75.0
+        assert rule.evaluate(txn) is True
+        txn.amount = 30.0
+        assert rule.evaluate(txn) is False
+
+    def test_evaluate_number_less_than_or_equals(self):
+        rule = self._make_number_rule(LTE_NUMBER_OP, [200.0])
+        txn = MockTransaction()
+        txn.amount = 200.0
+        assert rule.evaluate(txn) is True
+        txn.amount = 150.0
+        assert rule.evaluate(txn) is True
+        txn.amount = 201.0
+        assert rule.evaluate(txn) is False
+
+    def test_evaluate_number_not_equals(self):
+        rule = self._make_number_rule(NOT_EQUALS_NUMBER_OP, [0.0])
+        txn = MockTransaction()
+        txn.amount = 50.0
+        assert rule.evaluate(txn) is True
+        txn.amount = 0.0
+        assert rule.evaluate(txn) is False
+
+    def test_evaluate_number_any_of_equals(self):
+        rule = self._make_number_rule(EQUALS_NUMBER_OP, [10, 20, 30], ANY_OF)
+        txn = MockTransaction()
+        txn.amount = 20
+        assert rule.evaluate(txn) is True
+        txn.amount = 5
+        assert rule.evaluate(txn) is False
+
+    def test_evaluate_number_invalid_type(self):
+        rule = self._make_number_rule(EQUALS_NUMBER_OP, [100.0])
+        txn = MockTransaction()
+        txn.amount = "not_a_number"
+        with pytest.raises(ValueError, match="not a number"):
+            rule.evaluate(txn)
+
+
+# =============================================================================
+# Fuzzy match tests (Task 0c)
+# =============================================================================
+
+
+class TestFuzzyMatch:
+    """Tests for fuzzy match string evaluation."""
+
+    def _make_fuzzy_rule(self, value, value_match_type=ANY_OF):
+        return Rule(
+            field=["communications"],
+            field_type="string",
+            value=value,
+            value_match_type=value_match_type,
+            operator=FUZZY_MATCH_STRING_OP,
+            clazz="Rule",
+            type=TransactionTypeEnum.EXPENSES,
+        )
+
+    def test_fuzzy_match_close_string(self):
+        rule = self._make_fuzzy_rule(["Carrefour"])
+        txn = MockTransaction()
+        txn.communications = "Carefour"
+        assert rule.evaluate(txn) is True
+
+    def test_fuzzy_match_exact_passes(self):
+        rule = self._make_fuzzy_rule(["Carrefour"])
+        txn = MockTransaction()
+        txn.communications = "Carrefour"
+        assert rule.evaluate(txn) is True
+
+    def test_fuzzy_match_no_match(self):
+        rule = self._make_fuzzy_rule(["Carrefour"])
+        txn = MockTransaction()
+        txn.communications = "completely different string xyz"
+        assert rule.evaluate(txn) is False
+
+    def test_fuzzy_match_all_of(self):
+        rule = self._make_fuzzy_rule(["Carefour", "Carrefour"], ALL_OF)
+        txn = MockTransaction()
+        txn.communications = "Carrefour"
+        assert rule.evaluate(txn) is True
