@@ -17,6 +17,7 @@ import {
 import {Criteria} from "../model/criteria.model";
 import {NgFor, NgIf} from '@angular/common';
 import {BaseChartDirective} from 'ng2-charts';
+import {DateUtilsService} from "../shared/date-utils.service";
 
 
 interface Category {
@@ -48,7 +49,7 @@ export class CategoryDetailsComponent implements OnInit, OnChanges {
     chartOptions: any = this.initChartOptions();
     @Input() criteria!: Criteria;
 
-    constructor(private appService: AppService) {
+    constructor(private appService: AppService, private dateUtilsService: DateUtilsService) {
 
         this.appService.selectedBankAccountObservable$.subscribe(bankAccount => {
             if (bankAccount) {
@@ -135,8 +136,8 @@ export class CategoryDetailsComponent implements OnInit, OnChanges {
             accountNumber: this.criteria.bankAccount.accountNumber,
             grouping: this.criteria.grouping,
             transactionType: this.criteria.transactionType as TransactionTypeEnum,
-            start: JSON.stringify(this.criteria.startDate),
-            end: JSON.stringify(this.criteria.endDate),
+            start: this.dateUtilsService.stringifyDateWithoutTime(this.criteria.startDate),
+            end: this.dateUtilsService.stringifyDateWithoutTime(this.criteria.endDate),
             expensesRecurrence: RecurrenceType.BOTH,
             revenueRecurrence: RecurrenceType.BOTH,
             categoryQualifiedName: this.selectedCategory.name

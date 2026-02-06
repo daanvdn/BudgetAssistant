@@ -4,7 +4,9 @@ import importlib.resources as pkg_resources
 
 import pytest
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.pool import StaticPool
+from sqlmodel import SQLModel
 
 from common.enums import TransactionTypeEnum
 from models import BankAccount, BudgetTree, BudgetTreeNode, Category
@@ -441,3 +443,82 @@ class TestBudgetTreeProvider:
         actual_count = len(result.scalars().all())
 
         assert budget_tree.number_of_descendants == actual_count
+
+    @pytest.mark.asyncio
+    async def test_provide_handles_concurrent_creation_race_condition(self):
+        """Test that provide() handles the race condition when two concurrent
+        requests both try to create a budget tree for the same bank account.
+
+        Simulates the production scenario where:
+        1. Request A checks for existing tree -> not found
+        2. Request B checks for existing tree -> not found
+        3. Request A creates and commits the tree (succeeds)
+        4. Request B tries to create the tree -> IntegrityError
+        5. Request B catches the error and returns the existing tree
+        """
+        # Use StaticPool so two sessions share the same in-memory database
+        engine = create_async_engine(
+            "sqlite+aiosqlite:///:memory:",
+            echo=False,
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+        )
+
+        async with engine.begin() as conn:
+            await conn.run_sync(SQLModel.metadata.create_all)
+
+        session_maker = async_sessionmaker(
+            engine,
+            class_=AsyncSession,
+            expire_on_commit=False,
+            autoflush=False,
+        )
+
+        try:
+            # Setup: create category tree and bank account
+            async with session_maker() as setup_session:
+                cat_provider = CategoryTreeProvider()
+                await cat_provider.provide(TransactionTypeEnum.EXPENSES, setup_session)
+                bank_account = BankAccount(
+                    account_number="RACE_CONDITION_TEST",
+                    alias="Race Condition Test",
+                )
+                setup_session.add(bank_account)
+                await setup_session.commit()
+
+            # Session 1 (Request A): create the budget tree first
+            async with session_maker() as session1:
+                bank_account1 = await session1.get(BankAccount, "RACE_CONDITION_TEST")
+                provider1 = BudgetTreeProvider()
+                tree1 = await provider1.provide(bank_account1, session1)
+                await session1.commit()
+
+                assert tree1 is not None
+                assert tree1.bank_account_id == "RACE_CONDITION_TEST"
+
+            # Session 2 (Request B): simulate the race condition
+            # _find_existing returns None the first time (it queried before
+            # session1 committed), then on retry it finds the existing tree.
+            async with session_maker() as session2:
+                bank_account2 = await session2.get(BankAccount, "RACE_CONDITION_TEST")
+                provider2 = BudgetTreeProvider()
+                original_find = provider2._find_existing
+                call_count = 0
+
+                async def mock_find_existing(ba, sess):
+                    nonlocal call_count
+                    call_count += 1
+                    if call_count == 1:
+                        return None  # Simulate: didn't see the concurrent insert
+                    return await original_find(ba, sess)
+
+                provider2._find_existing = mock_find_existing
+
+                result = await provider2.provide(bank_account2, session2)
+
+                assert result is not None
+                assert result.bank_account_id == "RACE_CONDITION_TEST"
+                # First call returned None (mock), second call found existing
+                assert call_count == 2
+        finally:
+            await engine.dispose()

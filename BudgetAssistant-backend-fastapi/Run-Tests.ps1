@@ -14,6 +14,7 @@
 #     If all tests pass, the file contains "All tests passed!"
 #
 # FOR COPILOT:
+# Use Run-Tests.ps1, a script to run pytest tests with proper environment configuration
 #   - To check test results, read pytest-failed.txt after running this script
 #   - If pytest-failed.txt contains failure details, analyze the error messages and tracebacks
 #   - The PYTHONPATH is configured so imports from 'src' and 'tests' work correctly

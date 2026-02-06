@@ -1,15 +1,19 @@
 """Category and Budget tree providers with async SQLModel operations."""
 
 import importlib.resources as pkg_resources
+import logging
 import re
 from typing import Dict, List
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from common.enums import TransactionTypeEnum
 from models import BankAccount, BudgetTree, BudgetTreeNode, Category, CategoryTree
+
+logger = logging.getLogger(__name__)
 
 
 class CategoryTreeInserter:
@@ -108,11 +112,7 @@ class CategoryTreeInserter:
             raise ValueError("Invalid category tree type")
 
         # Load resource file
-        with (
-            pkg_resources.files("resources")
-            .joinpath(resource)
-            .open(encoding="utf-8") as file
-        ):
+        with pkg_resources.files("resources").joinpath(resource).open(encoding="utf-8") as file:
             lines = file.read().split("\n")
 
         # Create root category
@@ -209,24 +209,17 @@ class BudgetTreeProvider:
         """Get or create budget tree for bank account.
 
         Creates a budget tree that mirrors the expenses category tree structure.
+        Uses a savepoint to handle race conditions where concurrent requests
+        both attempt to create a budget tree for the same bank account.
         """
         # Try to find existing budget tree
-        result = await session.execute(
-            select(BudgetTree)
-            .options(selectinload(BudgetTree.root))
-            .where(BudgetTree.bank_account_id == bank_account.account_number)
-        )
-        existing_budget_tree = result.scalar_one_or_none()
+        existing = await self._find_existing(bank_account, session)
+        if existing is not None:
+            return existing
 
-        if existing_budget_tree is not None:
-            return existing_budget_tree
+        # Get expenses category tree (needed before the savepoint)
+        expenses_category_tree = await CategoryTreeProvider().provide(TransactionTypeEnum.EXPENSES, session)
 
-        # Get expenses category tree
-        expenses_category_tree = await CategoryTreeProvider().provide(
-            TransactionTypeEnum.EXPENSES, session
-        )
-
-        # Create budget tree mirroring category structure
         root_category = expenses_category_tree.root
         if root_category is None:
             raise ValueError("Category tree has no root")
@@ -234,36 +227,65 @@ class BudgetTreeProvider:
         # Refresh root_category to ensure children are loaded
         await session.refresh(root_category, ["children"])
 
-        number_of_descendants = 0
+        # Use a savepoint so that on IntegrityError (race condition),
+        # we can roll back only the creation attempt and re-query.
+        try:
+            async with session.begin_nested():
+                number_of_descendants = 0
 
-        # Create root budget node
-        root_node = BudgetTreeNode(
-            category=root_category,
-            category_id=root_category.id,
-            amount=-1,
-        )
-        session.add(root_node)
-        await session.flush()
-        number_of_descendants += 1
+                # Create root budget node
+                root_node = BudgetTreeNode(
+                    category=root_category,
+                    category_id=root_category.id,
+                    amount=-1,
+                )
+                session.add(root_node)
+                await session.flush()
+                number_of_descendants += 1
 
-        # Recursively create child nodes
-        for child_category in root_category.children:
-            number_of_descendants = await self._handle_child(
-                child_category, root_node, number_of_descendants, session
+                # Recursively create child nodes
+                for child_category in root_category.children:
+                    number_of_descendants = await self._handle_child(
+                        child_category, root_node, number_of_descendants, session
+                    )
+
+                # Create and save budget tree
+                budget_tree = BudgetTree(
+                    bank_account_id=bank_account.account_number,
+                    root=root_node,
+                    root_id=root_node.id,
+                    number_of_descendants=number_of_descendants,
+                )
+                session.add(budget_tree)
+                await session.flush()
+
+            return budget_tree
+
+        except IntegrityError:
+            logger.info(
+                "Budget tree for account %s was created concurrently, fetching existing tree.",
+                bank_account.account_number,
             )
+            # Another request created the tree concurrently.
+            # The savepoint rollback already happened; re-query.
+            existing = await self._find_existing(bank_account, session)
+            if existing is not None:
+                return existing
+            # Should not happen, but re-raise if the tree is still not found
+            raise
 
-        # Create and save budget tree
-        budget_tree = BudgetTree(
-            bank_account=bank_account,
-            bank_account_id=bank_account.account_number,
-            root=root_node,
-            root_id=root_node.id,
-            number_of_descendants=number_of_descendants,
+    async def _find_existing(
+        self,
+        bank_account: BankAccount,
+        session: AsyncSession,
+    ) -> BudgetTree | None:
+        """Find an existing budget tree for a bank account."""
+        result = await session.execute(
+            select(BudgetTree)
+            .options(selectinload(BudgetTree.root))
+            .where(BudgetTree.bank_account_id == bank_account.account_number)
         )
-        session.add(budget_tree)
-        await session.flush()
-
-        return budget_tree
+        return result.scalar_one_or_none()
 
     async def _handle_child(
         self,

@@ -157,6 +157,8 @@ class TestTransactionsEndpoints:
                     "query": {
                         "bank_account": "BE12345",
                         "period": "2023-01",
+                        "start_date": "2023-01-01",
+                        "end_date": "2023-01-31",
                         "transaction_type": "EXPENSES",
                         "category_id": 1,
                     },
@@ -353,6 +355,8 @@ class TestTransactionsEndpointsAuthenticated:
                 "query": {
                     "bank_account": seeded["account_number"],
                     "period": "2023-01",
+                    "start_date": "2023-01-01",
+                    "end_date": "2023-01-31",
                     "transaction_type": "EXPENSES",
                     "category_id": seeded["category_id"],
                 },
