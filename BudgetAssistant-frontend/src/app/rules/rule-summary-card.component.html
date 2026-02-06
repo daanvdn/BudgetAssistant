@@ -1,0 +1,62 @@
+<div class="summary-card" [class.empty]="!hasRules">
+    <div class="card-header">
+        <span class="status-badge" [class.active]="hasRules" [class.empty-badge]="!hasRules">
+            @if (hasRules) {
+                <span class="status-dot active-dot"></span> ACTIVE
+            } @else {
+                <span class="status-dot empty-dot"></span> EMPTY
+            }
+        </span>
+
+        <div class="card-actions">
+            @if (hasRules) {
+                <button mat-icon-button
+                        class="edit-button"
+                        (click)="onEdit()"
+                        matTooltip="Edit rules">
+                    <mat-icon>edit</mat-icon>
+                </button>
+            } @else {
+                <button mat-stroked-button
+                        class="create-button"
+                        (click)="onCreate()"
+                        matTooltip="Create rules for this category">
+                    <mat-icon>add</mat-icon> Create
+                </button>
+            }
+        </div>
+    </div>
+
+    <div class="card-body">
+        @if (hasRules && summaryRoot) {
+            <div class="rule-description">
+                <span class="assign-label">Assign "{{ category.name }}" when</span>
+                <ng-container *ngTemplateOutlet="summaryNodeTpl; context: { $implicit: summaryRoot }">
+                </ng-container>
+            </div>
+        } @else {
+            <p class="no-rules-text">No rules defined</p>
+        }
+    </div>
+</div>
+
+<!-- Recursive template for rendering SummaryNode tree -->
+<ng-template #summaryNodeTpl let-node>
+    @if (node.isGroup && node.children?.length) {
+        <span class="condition-label">{{ node.condition }} of:</span>
+        <ul class="rule-list">
+            @for (child of node.children; track child.text) {
+                <li>
+                    @if (child.isGroup) {
+                        <ng-container *ngTemplateOutlet="summaryNodeTpl; context: { $implicit: child }">
+                        </ng-container>
+                    } @else {
+                        <span class="rule-text">{{ child.text }}</span>
+                    }
+                </li>
+            }
+        </ul>
+    } @else if (!node.isGroup) {
+        <span class="rule-text">{{ node.text }}</span>
+    }
+</ng-template>

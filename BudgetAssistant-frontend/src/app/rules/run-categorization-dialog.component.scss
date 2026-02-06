@@ -1,0 +1,103 @@
+@import '../../styles/variables';
+
+.dialog-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0;
+    padding-right: 0;
+}
+
+.close-button {
+    color: $text-secondary;
+    margin-right: -12px;
+}
+
+.dialog-content {
+    min-width: 380px;
+    min-height: 100px;
+    padding: 16px 0;
+}
+
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 24px 0;
+
+    p {
+        color: $text-secondary;
+        margin: 0;
+    }
+}
+
+.error-container {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    background: $expense-red-bg;
+    border: 1px solid $expense-red-border;
+    border-radius: $radius-card;
+}
+
+.error-icon {
+    color: $error-danger-red;
+    flex-shrink: 0;
+}
+
+.error-message {
+    color: $error-danger-red;
+    margin: 0;
+}
+
+.result-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.result-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: $radius-card;
+    font-size: 15px;
+}
+
+.success-row {
+    background: $income-green-bg;
+    border: 1px solid $income-green-border;
+}
+
+.warning-row {
+    background: $expense-red-bg;
+    border: 1px solid $expense-red-border;
+}
+
+.result-icon {
+    flex-shrink: 0;
+}
+
+.success-icon {
+    color: $success-green;
+}
+
+.warning-icon {
+    color: $error-danger-red;
+}
+
+.result-message {
+    padding: 8px 14px;
+    background: $filter-section-bg;
+    border-radius: $radius-card;
+    color: $text-secondary;
+    font-size: 14px;
+}
+
+.dialog-actions {
+    justify-content: flex-end;
+    padding: 8px 0;
+}

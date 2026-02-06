@@ -8,7 +8,7 @@ import {LoginLayoutComponent} from "./layouts/login-layout/login-layout.componen
 import {ProfileComponent} from "./profile/profile.component";
 import {RegisterComponent} from "./register/register.component";
 import {BudgetComponent} from "./budget/budget.component";
-import {RulesViewComponent} from "./rules-view/rules-view.component";
+import {RulesPageComponent} from "./rules/rules-page.component";
 import {ManualCategorizationViewComponent} from "./manual-categorization-view/manual-categorization-view.component";
 import {environment} from '../environments/environment';
 import {TransactionsComponent} from "./transactions/transactions.component";
@@ -37,7 +37,7 @@ const childRoutes: Routes = [
     },
     {
         path: 'regels',
-        component: RulesViewComponent
+        component: RulesPageComponent
     },
     {
         path: 'categorieën',

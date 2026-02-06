@@ -1,0 +1,134 @@
+@import '../../styles/variables';
+
+.summary-card {
+    background: $card-background;
+    border: 1px solid $border-gray;
+    border-radius: $radius-card;
+    padding: 16px;
+    margin-bottom: 8px;
+    box-shadow: $shadow-card;
+    transition: $transition-fast;
+
+    &:hover {
+        box-shadow: $shadow-dropdown;
+        border-color: $primary-blue;
+    }
+
+    &.empty {
+        border-style: dashed;
+        opacity: 0.85;
+
+        &:hover {
+            opacity: 1;
+        }
+    }
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 2px 8px;
+    border-radius: $radius-tag;
+
+    &.active {
+        color: $success-green;
+        background: $income-green-bg;
+    }
+
+    &.empty-badge {
+        color: $text-muted;
+        background: $filter-section-bg;
+    }
+}
+
+.status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+
+    &.active-dot {
+        background: $success-green;
+    }
+
+    &.empty-dot {
+        background: $text-muted;
+    }
+}
+
+.card-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.edit-button {
+    color: $text-secondary;
+    transition: $transition-fast;
+
+    &:hover {
+        color: $primary-blue;
+    }
+}
+
+.create-button {
+    font-size: 13px;
+    color: $primary-blue;
+    border-color: $primary-blue;
+}
+
+.card-body {
+    font-size: 14px;
+    color: $text-primary;
+    line-height: 1.6;
+}
+
+.assign-label {
+    font-weight: 500;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.condition-label {
+    font-weight: 600;
+    color: $text-secondary;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.rule-list {
+    margin: 4px 0 4px 0;
+    padding-left: 20px;
+    list-style-type: disc;
+
+    li {
+        margin-bottom: 2px;
+    }
+
+    .rule-list {
+        list-style-type: circle;
+    }
+}
+
+.rule-text {
+    color: $text-primary;
+}
+
+.no-rules-text {
+    color: $text-muted;
+    font-style: italic;
+    margin: 0;
+}

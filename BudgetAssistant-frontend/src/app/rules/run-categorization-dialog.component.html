@@ -1,0 +1,42 @@
+<h2 mat-dialog-title class="dialog-title">
+    Run Categorization Results
+    <button mat-icon-button class="close-button" (click)="close()">
+        <mat-icon>close</mat-icon>
+    </button>
+</h2>
+
+<div mat-dialog-content class="dialog-content">
+    @if (loading) {
+        <div class="loading-container">
+            <mat-spinner diameter="48"></mat-spinner>
+            <p>Running categorization…</p>
+        </div>
+    } @else if (error) {
+        <div class="error-container">
+            <mat-icon class="error-icon">error_outline</mat-icon>
+            <p class="error-message">{{ error }}</p>
+        </div>
+    } @else if (result) {
+        <div class="result-container">
+            <div class="result-row success-row">
+                <mat-icon class="result-icon success-icon">check_circle</mat-icon>
+                <span>Categorized: <strong>{{ result.withCategoryCount }}</strong> transactions</span>
+            </div>
+            <div class="result-row warning-row">
+                <mat-icon class="result-icon warning-icon">cancel</mat-icon>
+                <span>Uncategorized: <strong>{{ result.withoutCategoryCount }}</strong> transactions</span>
+            </div>
+            @if (result.message) {
+                <div class="result-message">
+                    Message: {{ result.message }}
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<div mat-dialog-actions class="dialog-actions">
+    <button mat-raised-button color="primary" (click)="close()" [disabled]="loading">
+        Close
+    </button>
+</div>
