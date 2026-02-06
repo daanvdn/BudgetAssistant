@@ -1,12 +1,16 @@
 <div class="rule-group"
      [class.condition-and]="ruleSet.condition === 'AND'"
-     [class.condition-or]="ruleSet.condition === 'OR'">
+     [class.condition-or]="ruleSet.condition === 'OR'"
+     role="group"
+     [attr.aria-label]="'Rule group: ' + ruleSet.condition">
 
   <!-- Condition badge (AND / OR toggle) -->
   <button class="condition-badge"
           [class.and]="ruleSet.condition === 'AND'"
           [class.or]="ruleSet.condition === 'OR'"
           (click)="toggleCondition()"
+          role="button"
+          [attr.aria-label]="'Toggle condition, currently ' + ruleSet.condition"
           matTooltip="Click to toggle between AND / OR">
     ({{ ruleSet.condition }})
   </button>
@@ -36,7 +40,8 @@
           </app-pill-rule-group>
           <button mat-icon-button class="remove-group-btn"
                   (click)="removeChild($index)"
-                  matTooltip="Remove group">
+                  matTooltip="Remove group"
+                  aria-label="Remove group">
             <mat-icon>delete</mat-icon>
           </button>
         </div>
@@ -46,10 +51,10 @@
 
   <!-- Action buttons -->
   <div class="group-actions">
-    <button class="add-btn" (click)="addFilter()">
+    <button class="add-btn" (click)="addFilter()" aria-label="Add filter">
       <mat-icon>add</mat-icon> Add filter
     </button>
-    <button class="add-btn" (click)="addGroup()">
+    <button class="add-btn" (click)="addGroup()" aria-label="Add group">
       <mat-icon>add</mat-icon> Add group
     </button>
   </div>

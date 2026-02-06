@@ -22,6 +22,17 @@
             opacity: 1;
         }
     }
+
+    &.error {
+        border-color: $error-danger-red;
+        border-style: dashed;
+        opacity: 0.9;
+
+        &:hover {
+            opacity: 1;
+            box-shadow: $shadow-dropdown;
+        }
+    }
 }
 
 .card-header {
@@ -51,6 +62,11 @@
         color: $text-muted;
         background: $filter-section-bg;
     }
+
+    &.error-badge {
+        color: $error-danger-red;
+        background: $expense-red-bg;
+    }
 }
 
 .status-dot {
@@ -65,6 +81,10 @@
 
     &.empty-dot {
         background: $text-muted;
+    }
+
+    &.error-dot {
+        background: $error-danger-red;
     }
 }
 
@@ -131,4 +151,17 @@
     color: $text-muted;
     font-style: italic;
     margin: 0;
+}
+
+.error-text {
+    color: $error-danger-red;
+    font-style: italic;
+    margin: 0;
+    font-size: 13px;
+}
+
+.retry-button {
+    font-size: 13px;
+    color: $error-danger-red;
+    border-color: $error-danger-red;
 }

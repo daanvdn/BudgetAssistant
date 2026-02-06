@@ -1,6 +1,6 @@
 <div class="dialog-header">
-  <h2>Edit rules for "{{ data.category.name }}"</h2>
-  <button mat-icon-button class="close-btn" (click)="onCancel()">
+  <h2 id="rule-editor-title">Edit rules for "{{ data.category.name }}"</h2>
+  <button mat-icon-button class="close-btn" (click)="onCancel()" aria-label="Close dialog">
     <mat-icon>close</mat-icon>
   </button>
 </div>
@@ -24,7 +24,8 @@
   <button mat-button (click)="onCancel()">Cancel</button>
   <button mat-raised-button color="primary" class="save-btn"
           [disabled]="saving"
-          (click)="onSave()">
+          (click)="onSave()"
+          aria-label="Save rules">
     @if (saving) {
       <span class="spinner-container">
         <mat-spinner diameter="18"></mat-spinner>

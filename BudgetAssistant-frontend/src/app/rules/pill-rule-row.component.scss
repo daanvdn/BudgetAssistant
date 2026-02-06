@@ -73,3 +73,24 @@
 ::ng-deep .value-editor-menu {
     max-width: 380px !important;
 }
+
+// ── Responsive ──────────────────────────────────────────────────────
+@media (max-width: $breakpoint-tablet) {
+    .pill-row {
+        flex-wrap: wrap;
+        gap: 4px;
+
+        .delete-btn {
+            opacity: 1; // Always visible on mobile (no hover)
+        }
+    }
+
+    .pill {
+        font-size: 12px;
+        padding: 3px 8px;
+    }
+
+    .pill-value {
+        max-width: 180px;
+    }
+}

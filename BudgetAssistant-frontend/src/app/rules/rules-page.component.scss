@@ -141,3 +141,31 @@
         margin: 0;
     }
 }
+
+// ── Responsive ──────────────────────────────────────────────────────
+@media (max-width: $breakpoint-tablet) {
+    .content-area {
+        padding: 8px;
+    }
+
+    .card-container {
+        margin-left: 16px;
+        max-width: 100%;
+    }
+
+    .tree-children {
+        padding-left: 20px;
+    }
+
+    .action-bar {
+        padding: 8px 12px;
+        gap: 8px;
+    }
+
+    .toolbar-header {
+        .run-button {
+            font-size: 12px;
+            padding: 0 12px;
+        }
+    }
+}

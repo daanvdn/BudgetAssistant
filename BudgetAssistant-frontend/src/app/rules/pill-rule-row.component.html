@@ -1,6 +1,8 @@
 <div class="pill-row">
   <!-- Field pill -->
-  <button class="pill pill-field" [matMenuTriggerFor]="fieldMenu">
+  <button class="pill pill-field"
+          [matMenuTriggerFor]="fieldMenu"
+          [attr.aria-label]="'Field: ' + fieldDisplayName">
     {{ fieldDisplayName }}
   </button>
   <mat-menu #fieldMenu="matMenu">
@@ -15,7 +17,9 @@
   </mat-menu>
 
   <!-- Operator pill -->
-  <button class="pill pill-operator" [matMenuTriggerFor]="operatorMenu">
+  <button class="pill pill-operator"
+          [matMenuTriggerFor]="operatorMenu"
+          [attr.aria-label]="'Operator: ' + operatorDisplayLabel">
     {{ operatorDisplayLabel }}
   </button>
   <mat-menu #operatorMenu="matMenu">
@@ -29,7 +33,8 @@
   <!-- Value pill -->
   <button class="pill pill-value"
           [class.pill-placeholder]="!rule.value || rule.value.length === 0"
-          [matMenuTriggerFor]="valueMenu">
+          [matMenuTriggerFor]="valueMenu"
+          [attr.aria-label]="'Values: ' + valueDisplayText">
     {{ valueDisplayText }}
   </button>
   <mat-menu #valueMenu="matMenu" class="value-editor-menu">
@@ -47,7 +52,9 @@
   </mat-menu>
 
   <!-- Delete button -->
-  <button mat-icon-button class="delete-btn" (click)="remove.emit()" matTooltip="Remove filter">
+  <button mat-icon-button class="delete-btn" (click)="remove.emit()"
+          matTooltip="Remove filter"
+          aria-label="Remove rule">
     <mat-icon>delete</mat-icon>
   </button>
 </div>

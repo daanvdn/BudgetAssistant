@@ -49,8 +49,10 @@
                         <app-rule-summary-card
                                 [category]="node"
                                 [ruleSetWrapper]="getRuleSetWrapper(node)"
+                                [hasError]="hasRuleError(node)"
                                 (edit)="onEditRules(node)"
-                                (create)="onCreateRules(node)">
+                                (create)="onCreateRules(node)"
+                                (retry)="onRetryLoad(node)">
                         </app-rule-summary-card>
                     </div>
                 </mat-tree-node>

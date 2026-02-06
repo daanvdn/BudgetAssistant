@@ -22,9 +22,11 @@ import {RulesService} from './rules.service';
 export class RuleSummaryCardComponent implements OnChanges {
     @Input({required: true}) category!: CategoryRead;
     @Input() ruleSetWrapper: RuleSetWrapperRead | null = null;
+    @Input() hasError: boolean = false;
 
     @Output() edit = new EventEmitter<void>();
     @Output() create = new EventEmitter<void>();
+    @Output() retry = new EventEmitter<void>();
 
     private rulesService = inject(RulesService);
 
@@ -60,5 +62,9 @@ export class RuleSummaryCardComponent implements OnChanges {
 
     onCreate(): void {
         this.create.emit();
+    }
+
+    onRetry(): void {
+        this.retry.emit();
     }
 }

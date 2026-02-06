@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, catchError, throwError, retry, timer } from 'rxjs';
 import { BudgetAssistantApiService } from '@daanvdn/budget-assistant-client';
 import {
     RuleSetWrapperRead, RuleSetWrapperCreate,
@@ -13,6 +13,17 @@ import {
 export class RulesService {
     private api = inject(BudgetAssistantApiService);
 
+    /** Standardized error handler for API calls */
+    private handleError(operation: string) {
+        return (error: any): Observable<never> => {
+            const message = error?.error?.detail
+                || error?.message
+                || `${operation} failed`;
+            console.error(`[RulesService] ${operation}:`, error);
+            return throwError(() => new Error(message));
+        };
+    }
+
     /**
      * Get or create a RuleSetWrapper for a category.
      */
@@ -24,7 +35,10 @@ export class RulesService {
             categoryQualifiedName,
             type
         };
-        return this.api.rules.getOrCreateRuleSetWrapperApiRulesGetOrCreatePost(request);
+        return this.api.rules.getOrCreateRuleSetWrapperApiRulesGetOrCreatePost(request).pipe(
+            retry({ count: 1, delay: (_, retryCount) => timer(retryCount * 1000) }),
+            catchError(this.handleError('Get or create rule set'))
+        );
     }
 
     /**
@@ -39,14 +53,18 @@ export class RulesService {
             categoryId,
             ruleSet: serialized
         };
-        return this.api.rules.saveRuleSetWrapperApiRulesSavePost(body);
+        return this.api.rules.saveRuleSetWrapperApiRulesSavePost(body).pipe(
+            catchError(this.handleError('Save rule set'))
+        );
     }
 
     /**
      * Run categorization on all transactions.
      */
     categorizeTransactions(): Observable<CategorizeTransactionsResponse> {
-        return this.api.rules.categorizeTransactionsApiRulesCategorizeTransactionsPost();
+        return this.api.rules.categorizeTransactionsApiRulesCategorizeTransactionsPost().pipe(
+            catchError(this.handleError('Categorize transactions'))
+        );
     }
 
     /**
@@ -69,6 +87,8 @@ export class RulesService {
      * Used by the pill editor dialog which handles its own serialization.
      */
     saveRuleSetWrapperDirect(body: RuleSetWrapperCreate): Observable<SuccessResponse> {
-        return this.api.rules.saveRuleSetWrapperApiRulesSavePost(body);
+        return this.api.rules.saveRuleSetWrapperApiRulesSavePost(body).pipe(
+            catchError(this.handleError('Save rule set'))
+        );
     }
 }

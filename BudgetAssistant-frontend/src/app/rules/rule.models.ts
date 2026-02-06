@@ -80,27 +80,42 @@ function ruleSummaryText(rule: Rule): string {
             : String(rule.operator))
         : '?';
 
-    // Value(s)
+    // Value(s) — cap display at 3 items for readability
     const values = rule.value ?? [];
-    const valuePart = values.length > 1
-        ? values.map(v => `"${v}"`).join(' or ')
-        : (values.length === 1 ? `"${values[0]}"` : '""');
+    let valuePart: string;
+    if (values.length === 0) {
+        valuePart = '(no value)';
+    } else if (values.length <= 3) {
+        valuePart = values.map(v => `"${v}"`).join(' or ');
+    } else {
+        const shown = values.slice(0, 3).map(v => `"${v}"`).join(', ');
+        valuePart = `${shown} (+${values.length - 3} more)`;
+    }
 
     return `${fieldPart} ${operatorName} ${valuePart}`;
 }
 
+/** Maximum nesting depth shown in summaries before truncating with "…" */
+const MAX_SUMMARY_DEPTH = 3;
+
 /**
  * Convert a RuleSet into a tree of human-readable summary nodes.
  * Used by RuleSummaryCardComponent to render the read-only view.
+ * Caps display depth at MAX_SUMMARY_DEPTH to avoid overly nested UIs.
  */
-export function ruleSetToSummary(ruleSet: RuleSet): SummaryNode {
-    if (!ruleSet.rules || ruleSet.rules.length === 0) {
+export function ruleSetToSummary(ruleSet: RuleSet, depth: number = 0): SummaryNode {
+    if (!ruleSet || !ruleSet.rules || ruleSet.rules.length === 0) {
         return { text: '(no rules)' };
+    }
+
+    // Cap depth — show ellipsis for deeply nested groups
+    if (depth >= MAX_SUMMARY_DEPTH) {
+        return { text: '(…nested rules)' };
     }
 
     const children: SummaryNode[] = ruleSet.rules.map((item: any) => {
         if (RuleUtils.isRuleSet(item)) {
-            return ruleSetToSummary(item as RuleSet);
+            return ruleSetToSummary(item as RuleSet, depth + 1);
         }
         if (RuleUtils.isRule(item)) {
             return { text: ruleSummaryText(item as Rule) };

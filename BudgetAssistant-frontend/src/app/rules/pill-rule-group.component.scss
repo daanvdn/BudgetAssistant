@@ -117,3 +117,25 @@ $or-color: #f59e0b;
         }
     }
 }
+
+// ── Responsive ──────────────────────────────────────────────────────
+@media (max-width: $breakpoint-tablet) {
+    .rule-group {
+        padding-left: 16px;
+    }
+
+    .nested-group {
+        .remove-group-btn {
+            opacity: 1; // Always visible on mobile
+        }
+    }
+
+    .group-actions {
+        flex-wrap: wrap;
+
+        .add-btn {
+            font-size: 11px;
+            padding: 3px 8px;
+        }
+    }
+}

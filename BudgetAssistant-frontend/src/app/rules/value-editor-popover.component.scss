@@ -108,3 +108,25 @@
     font-size: 13px;
     font-style: italic;
 }
+
+// ── Responsive ──────────────────────────────────────────────────────
+@media (max-width: $breakpoint-tablet) {
+    :host {
+        min-width: 200px;
+        max-width: 300px;
+        padding: 8px;
+    }
+
+    .match-type-row {
+        flex-wrap: wrap;
+        gap: 4px;
+
+        .match-options {
+            flex-wrap: wrap;
+        }
+    }
+
+    .categorical-list {
+        max-height: 160px;
+    }
+}

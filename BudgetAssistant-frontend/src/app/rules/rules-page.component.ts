@@ -67,6 +67,7 @@ export class RulesPageComponent implements OnInit, OnDestroy {
     // Cache of loaded rule set wrappers keyed by category qualifiedName
     ruleSetWrapperCache = new Map<string, RuleSetWrapperRead>();
     loadingCategories = new Set<string>();
+    errorCategories = new Set<string>();
 
     private subscriptions: Subscription[] = [];
 
@@ -122,6 +123,7 @@ export class RulesPageComponent implements OnInit, OnDestroy {
             return;
         }
         this.loadingCategories.add(key);
+        this.errorCategories.delete(key);
         const type = this.activeView() === 'expenses'
             ? TransactionTypeEnum.EXPENSES
             : TransactionTypeEnum.REVENUE;
@@ -133,6 +135,7 @@ export class RulesPageComponent implements OnInit, OnDestroy {
             },
             error: () => {
                 this.loadingCategories.delete(key);
+                this.errorCategories.add(key);
             },
         });
     }
@@ -143,6 +146,17 @@ export class RulesPageComponent implements OnInit, OnDestroy {
 
     isLoadingRules(category: CategoryRead): boolean {
         return this.loadingCategories.has(category.qualifiedName);
+    }
+
+    hasRuleError(category: CategoryRead): boolean {
+        return this.errorCategories.has(category.qualifiedName);
+    }
+
+    onRetryLoad(category: CategoryRead): void {
+        const key = category.qualifiedName;
+        this.errorCategories.delete(key);
+        this.ruleSetWrapperCache.delete(key);
+        this.loadRuleSetWrapper(category);
     }
 
     onNodeToggle(node: CategoryRead): void {
@@ -174,6 +188,7 @@ export class RulesPageComponent implements OnInit, OnDestroy {
             width: '90vw',
             maxWidth: '900px',
             autoFocus: false,
+            ariaLabelledBy: 'rule-editor-title',
         });
 
         dialogRef.afterClosed().subscribe((result?: RuleSet) => {
@@ -202,6 +217,7 @@ export class RulesPageComponent implements OnInit, OnDestroy {
                 width: '90vw',
                 maxWidth: '900px',
                 autoFocus: false,
+                ariaLabelledBy: 'rule-editor-title',
             });
             dialogRef.afterClosed().subscribe((result?: RuleSet) => {
                 if (result) {

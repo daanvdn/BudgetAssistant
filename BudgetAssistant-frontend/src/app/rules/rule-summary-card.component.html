@@ -1,7 +1,10 @@
-<div class="summary-card" [class.empty]="!hasRules">
+<div class="summary-card" [class.empty]="!hasRules" [class.error]="hasError" role="region"
+     [attr.aria-label]="'Rules for ' + category.name">
     <div class="card-header">
-        <span class="status-badge" [class.active]="hasRules" [class.empty-badge]="!hasRules">
-            @if (hasRules) {
+        <span class="status-badge" [class.active]="hasRules" [class.empty-badge]="!hasRules && !hasError" [class.error-badge]="hasError">
+            @if (hasError) {
+                <span class="status-dot error-dot"></span> ERROR
+            } @else if (hasRules) {
                 <span class="status-dot active-dot"></span> ACTIVE
             } @else {
                 <span class="status-dot empty-dot"></span> EMPTY
@@ -9,10 +12,19 @@
         </span>
 
         <div class="card-actions">
-            @if (hasRules) {
+            @if (hasError) {
+                <button mat-stroked-button
+                        class="retry-button"
+                        (click)="onRetry()"
+                        aria-label="Retry loading rules"
+                        matTooltip="Retry loading rules">
+                    <mat-icon>refresh</mat-icon> Retry
+                </button>
+            } @else if (hasRules) {
                 <button mat-icon-button
                         class="edit-button"
                         (click)="onEdit()"
+                        aria-label="Edit rules"
                         matTooltip="Edit rules">
                     <mat-icon>edit</mat-icon>
                 </button>
@@ -20,6 +32,7 @@
                 <button mat-stroked-button
                         class="create-button"
                         (click)="onCreate()"
+                        aria-label="Create rules for this category"
                         matTooltip="Create rules for this category">
                     <mat-icon>add</mat-icon> Create
                 </button>
@@ -28,7 +41,9 @@
     </div>
 
     <div class="card-body">
-        @if (hasRules && summaryRoot) {
+        @if (hasError) {
+            <p class="error-text">Failed to load rules. Check your backend connection.</p>
+        } @else if (hasRules && summaryRoot) {
             <div class="rule-description">
                 <span class="assign-label">Assign "{{ category.name }}" when</span>
                 <ng-container *ngTemplateOutlet="summaryNodeTpl; context: { $implicit: summaryRoot }">
