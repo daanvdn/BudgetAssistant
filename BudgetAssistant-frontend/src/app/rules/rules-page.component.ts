@@ -1,15 +1,5 @@
 import {Component, inject, OnInit, signal, WritableSignal, OnDestroy} from '@angular/core';
 import {CommonModule} from '@angular/common';
-import {NestedTreeControl} from '@angular/cdk/tree';
-import {
-    MatTree,
-    MatTreeNestedDataSource,
-    MatTreeNodeDef,
-    MatTreeNode,
-    MatTreeNodeToggle,
-    MatNestedTreeNode,
-    MatTreeNodeOutlet,
-} from '@angular/material/tree';
 import {MatToolbar} from '@angular/material/toolbar';
 import {MatButtonToggleChange, MatButtonToggleGroup, MatButtonToggle} from '@angular/material/button-toggle';
 import {MatButtonModule} from '@angular/material/button';
@@ -17,6 +7,8 @@ import {MatIconModule} from '@angular/material/icon';
 import {MatTooltipModule} from '@angular/material/tooltip';
 import {MatDialog} from '@angular/material/dialog';
 import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
+import {MatExpansionModule} from '@angular/material/expansion';
+import {MatChipsModule} from '@angular/material/chips';
 import {Subscription} from 'rxjs';
 
 import {CategoryRead, RuleSetWrapperRead, RuleSet, TransactionTypeEnum} from './rule.models';
@@ -41,13 +33,9 @@ type ActiveView = 'expenses' | 'revenue';
         MatButtonModule,
         MatIconModule,
         MatTooltipModule,
-        MatTree,
-        MatTreeNodeDef,
-        MatTreeNode,
-        MatTreeNodeToggle,
-        MatNestedTreeNode,
-        MatTreeNodeOutlet,
         MatProgressSpinnerModule,
+        MatExpansionModule,
+        MatChipsModule,
         RuleSummaryCardComponent,
     ],
 })
@@ -58,11 +46,9 @@ export class RulesPageComponent implements OnInit, OnDestroy {
 
     activeView: WritableSignal<ActiveView> = signal('expenses');
 
-    // Tree controls for both views
-    expensesTreeControl = new NestedTreeControl<CategoryRead>(this.getChildren);
-    revenueTreeControl = new NestedTreeControl<CategoryRead>(this.getChildren);
-    expensesDataSource = new MatTreeNestedDataSource<CategoryRead>();
-    revenueDataSource = new MatTreeNestedDataSource<CategoryRead>();
+    // Flat category lists for both views
+    expensesFlatCategories: CategoryRead[] = [];
+    revenueFlatCategories: CategoryRead[] = [];
 
     // Cache of loaded rule set wrappers keyed by category qualifiedName
     ruleSetWrapperCache = new Map<string, RuleSetWrapperRead>();
@@ -75,41 +61,69 @@ export class RulesPageComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         const expSub = this.appService.sharedCategoryTreeExpenses.subscribe(nodes => {
-            this.expensesDataSource.data = this.filterAndSort(nodes);
+            this.expensesFlatCategories = this.flattenAndSort(this.filterNodes(nodes));
+            this.preloadRuleSets(this.expensesFlatCategories, TransactionTypeEnum.EXPENSES);
         });
 
         const revSub = this.appService.sharedCategoryTreeRevenue.subscribe(nodes => {
-            this.revenueDataSource.data = this.filterAndSort(nodes);
+            this.revenueFlatCategories = this.flattenAndSort(this.filterNodes(nodes));
+            this.preloadRuleSets(this.revenueFlatCategories, TransactionTypeEnum.REVENUE);
         });
 
         this.subscriptions.push(expSub, revSub);
+    }
+
+    /** Eagerly load rule set wrappers for all categories so the empty chip can show immediately */
+    private preloadRuleSets(categories: CategoryRead[], type: TransactionTypeEnum): void {
+        for (const category of categories) {
+            const key = category.qualifiedName;
+            if (this.ruleSetWrapperCache.has(key) || this.loadingCategories.has(key)) {
+                continue;
+            }
+            this.loadingCategories.add(key);
+            this.rulesService.getOrCreateRuleSetWrapper(key, type).subscribe({
+                next: (wrapper) => {
+                    this.ruleSetWrapperCache.set(key, wrapper);
+                    this.loadingCategories.delete(key);
+                },
+                error: () => {
+                    this.loadingCategories.delete(key);
+                    this.errorCategories.add(key);
+                },
+            });
+        }
     }
 
     ngOnDestroy(): void {
         this.subscriptions.forEach(s => s.unsubscribe());
     }
 
-    private filterAndSort(nodes: CategoryRead[]): CategoryRead[] {
-        return nodes
-            .filter(n => !RulesPageComponent.ILLEGAL_NODES.includes(n.name))
-            .sort((a, b) => a.name.localeCompare(b.name));
+    private filterNodes(nodes: CategoryRead[]): CategoryRead[] {
+        return nodes.filter(n => !RulesPageComponent.ILLEGAL_NODES.includes(n.name));
     }
 
-    private getChildren(node: CategoryRead): CategoryRead[] | undefined {
-        const children = node.children;
-        return children && children.length > 0 ? children as CategoryRead[] : undefined;
+    /** Recursively flatten a tree of categories into a flat sorted list */
+    private flattenAndSort(nodes: CategoryRead[]): CategoryRead[] {
+        const result: CategoryRead[] = [];
+        const recurse = (list: CategoryRead[]) => {
+            for (const node of list) {
+                result.push(node);
+                if (node.children && node.children.length > 0) {
+                    recurse(node.children as CategoryRead[]);
+                }
+            }
+        };
+        recurse(nodes);
+        return result.sort((a, b) => a.qualifiedName.localeCompare(b.qualifiedName));
     }
 
-    hasChild = (_: number, node: CategoryRead): boolean => {
-        return !!node.children && node.children.length > 0;
-    };
-
-    get currentTreeControl(): NestedTreeControl<CategoryRead> {
-        return this.activeView() === 'expenses' ? this.expensesTreeControl : this.revenueTreeControl;
+    /** Split qualifiedName on '#' for display */
+    formatQualifiedName(qualifiedName: string): string[] {
+        return qualifiedName.split('#');
     }
 
-    get currentDataSource(): MatTreeNestedDataSource<CategoryRead> {
-        return this.activeView() === 'expenses' ? this.expensesDataSource : this.revenueDataSource;
+    get currentFlatCategories(): CategoryRead[] {
+        return this.activeView() === 'expenses' ? this.expensesFlatCategories : this.revenueFlatCategories;
     }
 
     onToggleChange(event: MatButtonToggleChange): void {
@@ -152,28 +166,24 @@ export class RulesPageComponent implements OnInit, OnDestroy {
         return this.errorCategories.has(category.qualifiedName);
     }
 
+    /** True when the wrapper has been loaded but contains no rules */
+    isCategoryEmpty(category: CategoryRead): boolean {
+        const wrapper = this.ruleSetWrapperCache.get(category.qualifiedName);
+        if (!wrapper) return false; // not loaded yet — don't show chip
+        if (!wrapper.ruleSet) return true;
+        try {
+            const parsed = this.rulesService.parseRuleSet(wrapper);
+            return !parsed.rules || parsed.rules.length === 0;
+        } catch {
+            return true;
+        }
+    }
+
     onRetryLoad(category: CategoryRead): void {
         const key = category.qualifiedName;
         this.errorCategories.delete(key);
         this.ruleSetWrapperCache.delete(key);
         this.loadRuleSetWrapper(category);
-    }
-
-    onNodeToggle(node: CategoryRead): void {
-        // When expanding a node, load rule sets for all leaf children
-        if (this.currentTreeControl.isExpanded(node)) {
-            this.loadRuleSetsForBranch(node);
-        }
-    }
-
-    private loadRuleSetsForBranch(node: CategoryRead): void {
-        // Load for the node itself (especially if it's a leaf)
-        this.loadRuleSetWrapper(node);
-        // Also load for immediate children
-        const children = this.getChildren(node);
-        if (children) {
-            children.forEach(child => this.loadRuleSetWrapper(child));
-        }
     }
 
     onEditRules(category: CategoryRead): void {

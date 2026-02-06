@@ -1,5 +1,6 @@
 <mat-toolbar color="primary" class="toolbar-header">
-    <span>Rules</span>
+    <span class="toolbar-spacer"></span>
+    <span class="toolbar-title">Rules</span>
     <span class="toolbar-spacer"></span>
     <button mat-raised-button
             class="run-button"
@@ -14,71 +15,55 @@
     <div class="content-wrapper">
         <!-- Action Bar -->
         <div class="action-bar">
-            <div class="action-bar-left">
-                <mat-button-toggle-group
-                        [value]="activeView()"
-                        (change)="onToggleChange($event)"
-                        aria-label="Transaction type">
-                    <mat-button-toggle value="expenses">Expenses</mat-button-toggle>
-                    <mat-button-toggle value="revenue">Revenue</mat-button-toggle>
-                </mat-button-toggle-group>
-            </div>
+            <mat-button-toggle-group id="expenses-revenue-toggle"
+                    [value]="activeView()"
+                    (change)="onToggleChange($event)"
+                    aria-label="Transaction type">
+                <mat-button-toggle value="expenses">Expenses</mat-button-toggle>
+                <mat-button-toggle value="revenue">Revenue</mat-button-toggle>
+            </mat-button-toggle-group>
         </div>
 
         <!-- Scrollable Content -->
         <div class="content-area">
-            <mat-tree
-                    [dataSource]="currentDataSource"
-                    [treeControl]="currentTreeControl"
-                    class="category-tree">
+            <mat-accordion multi class="category-accordion">
+                @for (category of currentFlatCategories; track category.qualifiedName) {
+                    <mat-expansion-panel (opened)="loadRuleSetWrapper(category)"
+                                         (click)="loadRuleSetWrapper(category)">
+                        <mat-expansion-panel-header>
+                            <mat-panel-title>
+                                <span class="qualified-name">
+                                    @for (segment of formatQualifiedName(category.qualifiedName); track $index; let last = $last) {
+                                        <span class="category-segment">{{ segment }}</span>
+                                        @if (!last) {
+                                            <mat-icon class="separator-icon">chevron_right</mat-icon>
+                                        }
+                                    }
+                                </span>
+                                @if (isCategoryEmpty(category)) {
+                                    <mat-chip class="empty-chip" disabled>empty</mat-chip>
+                                }
+                            </mat-panel-title>
+                            <mat-panel-description>
+                                @if (isLoadingRules(category)) {
+                                    <mat-spinner diameter="20"></mat-spinner>
+                                }
+                            </mat-panel-description>
+                        </mat-expansion-panel-header>
 
-                <!-- Leaf node -->
-                <mat-tree-node *matTreeNodeDef="let node" matTreeNodeToggle>
-                    <div class="tree-leaf-node" (click)="loadRuleSetWrapper(node)">
-                        <button mat-icon-button disabled class="tree-toggle-placeholder">
-                            <mat-icon>remove</mat-icon>
-                        </button>
-                        <span class="node-name">{{ node.name }}</span>
-                    </div>
-                    <div class="card-container" (click)="loadRuleSetWrapper(node)">
-                        @if (isLoadingRules(node)) {
-                            <div class="loading-indicator">
-                                <mat-spinner diameter="24"></mat-spinner>
-                            </div>
-                        }
                         <app-rule-summary-card
-                                [category]="node"
-                                [ruleSetWrapper]="getRuleSetWrapper(node)"
-                                [hasError]="hasRuleError(node)"
-                                (edit)="onEditRules(node)"
-                                (create)="onCreateRules(node)"
-                                (retry)="onRetryLoad(node)">
+                                [category]="category"
+                                [ruleSetWrapper]="getRuleSetWrapper(category)"
+                                [hasError]="hasRuleError(category)"
+                                (edit)="onEditRules(category)"
+                                (create)="onCreateRules(category)"
+                                (retry)="onRetryLoad(category)">
                         </app-rule-summary-card>
-                    </div>
-                </mat-tree-node>
+                    </mat-expansion-panel>
+                }
+            </mat-accordion>
 
-                <!-- Expandable parent node -->
-                <mat-nested-tree-node *matTreeNodeDef="let node; when: hasChild">
-                    <div class="tree-parent-node">
-                        <button mat-icon-button
-                                matTreeNodeToggle
-                                (click)="onNodeToggle(node)"
-                                [attr.aria-label]="'Toggle ' + node.name">
-                            <mat-icon class="mat-icon-rtl-mirror">
-                                {{ currentTreeControl.isExpanded(node) ? 'expand_more' : 'chevron_right' }}
-                            </mat-icon>
-                        </button>
-                        <span class="node-name parent-name">{{ node.name }}</span>
-                    </div>
-                    <div [class.tree-children-hidden]="!currentTreeControl.isExpanded(node)"
-                         role="group"
-                         class="tree-children">
-                        <ng-container matTreeNodeOutlet></ng-container>
-                    </div>
-                </mat-nested-tree-node>
-            </mat-tree>
-
-            @if (currentDataSource.data.length === 0) {
+            @if (currentFlatCategories.length === 0) {
                 <div class="empty-state">
                     <mat-icon class="empty-icon">category</mat-icon>
                     <p>No categories loaded yet.</p>

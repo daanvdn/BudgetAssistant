@@ -9,6 +9,11 @@
     align-items: center;
 }
 
+.toolbar-title {
+    font-size: 20px;
+    font-weight: 500;
+}
+
 .toolbar-spacer {
     flex: 1;
 }
@@ -37,24 +42,15 @@
 // Action bar
 .action-bar {
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
-    justify-content: space-between;
-    gap: 16px;
+    justify-content: center;
     padding: 12px 16px;
     background: $card-background;
     border-bottom: 1px solid $border-gray;
-    border-left: 4px solid $primary-blue;
     position: sticky;
     top: 0;
     z-index: 10;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
-}
-
-.action-bar-left {
-    display: flex;
-    align-items: center;
-    gap: 16px;
 }
 
 // Content area
@@ -64,59 +60,58 @@
     padding: 16px;
 }
 
-// Tree styling
-.category-tree {
-    background: transparent;
+// Expansion panel / accordion styling
+.category-accordion {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
-.tree-leaf-node {
+.qualified-name {
     display: flex;
     align-items: center;
-    gap: 4px;
-    padding: 4px 0;
+    gap: 2px;
+    flex-wrap: wrap;
 }
 
-.tree-parent-node {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    padding: 4px 0;
-}
-
-.tree-toggle-placeholder {
-    opacity: 0.4;
-}
-
-.node-name {
+.category-segment {
     font-size: 14px;
-    color: $text-primary;
+    color: $text-secondary;
 }
 
-.parent-name {
-    font-weight: 600;
-    font-size: 15px;
+.separator-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: $text-muted;
+    vertical-align: middle;
 }
 
-.tree-children-hidden {
-    display: none;
+// Make panel title stretch so the chip can push to the far right
+::ng-deep .mat-expansion-panel-header .mat-content {
+    align-items: center;
 }
 
-.tree-children {
-    padding-left: 40px;
-}
-
-// Card container within tree nodes
-.card-container {
-    margin-left: 40px;
-    margin-bottom: 4px;
-    max-width: 720px;
-}
-
-.loading-indicator {
+::ng-deep mat-panel-title {
+    flex-grow: 1;
     display: flex;
     align-items: center;
-    justify-content: center;
-    padding: 8px;
+}
+
+.empty-chip {
+    margin-left: auto;
+    font-size: 11px;
+    min-height: 24px;
+    opacity: 0.7;
+    flex-shrink: 0;
+}
+
+// Loading indicator inside panel description
+mat-panel-description {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-shrink: 0;
 }
 
 // Empty state
@@ -148,18 +143,8 @@
         padding: 8px;
     }
 
-    .card-container {
-        margin-left: 16px;
-        max-width: 100%;
-    }
-
-    .tree-children {
-        padding-left: 20px;
-    }
-
     .action-bar {
         padding: 8px 12px;
-        gap: 8px;
     }
 
     .toolbar-header {

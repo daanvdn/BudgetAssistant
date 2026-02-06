@@ -6,7 +6,7 @@ export {
     DEFAULT_QUERY_BUILDER_CONFIG, FIELDS_BY_PATH_FROM_TRANSACTION_MAP,
     convertClientRuleSetToRuleSet,
     RuleUtils, QueryBuilderConfig
-} from '../query-builder/query-builder.interfaces';
+} from './query-builder.interfaces';
 
 // Re-export API types from client library
 export {
@@ -20,7 +20,7 @@ import {
     Field, NumericalOperators, CategoricalOperators,
     DEFAULT_QUERY_BUILDER_CONFIG, FIELDS_BY_PATH_FROM_TRANSACTION_MAP,
     RuleSet, Rule, RuleUtils, QueryBuilderConfig
-} from '../query-builder/query-builder.interfaces';
+} from './query-builder.interfaces';
 
 // ---------------------------------------------------------------------------
 // New types for the pill-editor / summary UI
