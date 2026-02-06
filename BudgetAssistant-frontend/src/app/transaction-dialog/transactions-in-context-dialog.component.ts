@@ -246,7 +246,8 @@ export class TransactionsInContextDialogComponent implements OnInit {
 
     const update: TransactionUpdate = {
       categoryId: category.id,
-      manuallyAssignedCategory: true
+      manuallyAssignedCategory: true,
+      isManuallyReviewed: true
     };
 
     this.saveTransactionMutation.mutate({

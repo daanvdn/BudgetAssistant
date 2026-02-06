@@ -194,8 +194,7 @@ export class TransactionsComponent implements OnInit {
         query: query ? {...query, accountNumber: query.accountNumber || account} : {accountNumber: account}
       };
 
-      const result = await firstValueFrom(
-          this.apiService.transactions.pageTransactionsApiTransactionsPagePost(request)
+      const result = await firstValueFrom(          this.apiService.transactions.pageTransactionsApiTransactionsPagePost(request)
       );
 
       return {
@@ -465,7 +464,8 @@ export class TransactionsComponent implements OnInit {
 
     const update: TransactionUpdate = {
       categoryId: category.id,
-      manuallyAssignedCategory: true
+      manuallyAssignedCategory: true,
+      isManuallyReviewed: true,
     };
 
     this.saveTransactionMutation.mutate({

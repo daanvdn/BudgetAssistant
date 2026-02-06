@@ -1,0 +1,95 @@
+// Category Tree Dropdown Component Styles
+@import '../../styles/variables';
+
+// Local aliases
+$dropdown-accent: $primary-blue;
+$node-hover-bg: $hover-gray;
+$selected-bg: $light-blue-hover;
+
+// ── Form field ──────────────────────────────────────────────────────────────
+.category-field {
+  width: 100%;
+
+  // Tighten the form-field wrapper so it sits comfortably in table cells
+  ::ng-deep .mat-mdc-form-field-infix {
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+}
+
+// ── Tree checkboxes ─────────────────────────────────────────────────────────
+.tree-checkbox {
+  font-weight: 400;
+  font-size: 14px;
+  color: $text-primary;
+  transition: color $transition-fast;
+
+  &:hover {
+    color: $dropdown-accent;
+  }
+
+  // Checkbox colour when checked
+  ::ng-deep .mdc-checkbox--selected .mdc-checkbox__background {
+    background-color: $dropdown-accent !important;
+    border-color: $dropdown-accent !important;
+  }
+}
+
+// ── Expand / collapse icon ──────────────────────────────────────────────────
+.expand-icon {
+  font-size: 18px;
+  color: $text-secondary;
+  transition: color $transition-fast, transform $transition-fast;
+}
+
+// ── Clear-filter button ─────────────────────────────────────────────────────
+button[matSuffix] {
+  color: $text-secondary;
+  transition: color $transition-fast;
+
+  &:hover {
+    color: $error-danger-red;
+  }
+}
+
+// ── Autocomplete panel & tree nodes ─────────────────────────────────────────
+::ng-deep {
+  .mat-mdc-autocomplete-panel {
+    max-height: 350px;
+    border-radius: $radius-card;
+    box-shadow: $shadow-dropdown;
+    border: 1px solid $border-gray;
+    padding: 4px 0;
+  }
+
+  .mat-tree {
+    background: transparent;
+  }
+
+  .mat-tree-node {
+    min-height: 36px;
+    border-radius: $radius-button;
+    margin: 1px 4px;
+    padding: 0 4px;
+    transition: background-color $transition-fast;
+
+    &:hover {
+      background-color: $node-hover-bg;
+    }
+  }
+
+  // Disabled placeholder option ("Select a category from the tree")
+  .mat-mdc-option[disabled] {
+    font-size: 12px;
+    font-style: italic;
+    color: $text-muted;
+    min-height: 32px;
+  }
+}
+
+// ── Responsive ──────────────────────────────────────────────────────────────
+@media (max-width: $breakpoint-mobile) {
+  .category-field {
+    width: 100%;
+  }
+}

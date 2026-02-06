@@ -12,13 +12,13 @@
       <div class="action-bar-left">
         <bank-account-selection class="bank-account-selector"></bank-account-selection>
 
-        <mat-button-toggle-group
-          [value]="activeView() === 'EXPENSES' ? 'expenses' : 'revenue'"
-          (change)="onToggleChange($event)"
-          class="view-toggle">
-          <mat-button-toggle value="expenses">Expenses</mat-button-toggle>
-          <mat-button-toggle value="revenue">Revenue</mat-button-toggle>
-        </mat-button-toggle-group>
+          <mat-button-toggle-group
+                  [value]="activeView() === 'EXPENSES' ? 'expenses' : 'revenue'"
+                  (change)="onToggleChange($event)"
+                  class="view-toggle">
+              <mat-button-toggle value="expenses">Expenses</mat-button-toggle>
+              <mat-button-toggle value="revenue">Revenue</mat-button-toggle>
+          </mat-button-toggle-group>
       </div>
 
       <div class="action-bar-right">
