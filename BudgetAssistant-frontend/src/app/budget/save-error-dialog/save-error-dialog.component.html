@@ -1,25 +1,24 @@
-<h1 style="align-content: center" mat-dialog-title>Fout</h1>
-<div mat-dialog-content>
-  <div >{{ data.message }}</div>
-  <table mat-table [dataSource]="data.nodes" class="mat-z8" style="border-collapse: separate; width: 100%">
+<h1 mat-dialog-title class="dialog-title">Fout</h1>
 
-    <!-- Category Column -->
+<div mat-dialog-content class="dialog-content">
+  <p class="error-message">{{ data.message }}</p>
+
+  <table mat-table [dataSource]="data.nodes" class="error-table">
     <ng-container matColumnDef="categorie">
       <th mat-header-cell *matHeaderCellDef>Categorie</th>
       <td mat-cell *matCellDef="let node">{{ node.name }}</td>
     </ng-container>
 
-    <!-- Budget Column -->
     <ng-container matColumnDef="maandbudget">
       <th mat-header-cell *matHeaderCellDef>Maandbudget</th>
-      <td mat-cell *matCellDef="let node">{{ node.budgetTreeNodeAmount }}</td>
+      <td mat-cell *matCellDef="let node">{{ node.amount | currency:'EUR':'symbol':'1.2-2' }}</td>
     </ng-container>
 
-    <tr mat-header-row *matHeaderRowDef="['categorie', 'maandbudget']"></tr>
-    <tr mat-row *matRowDef="let row; columns: ['categorie', 'maandbudget'];"></tr>
-
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
   </table>
 </div>
-<div mat-dialog-actions>
-  <button mat-button mat-dialog-close>Ok</button>
+
+<div mat-dialog-actions class="dialog-actions">
+  <button mat-button mat-dialog-close color="primary">Ok</button>
 </div>

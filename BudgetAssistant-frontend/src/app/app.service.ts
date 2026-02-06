@@ -13,14 +13,9 @@ import {
     resolveTransactionCategory
 } from './model';
 import {AuthService} from "./auth/auth.service";
-import {BudgetTreeNode} from "./budget/budget.component";
 import {
     BankAccountRead,
     BudgetAssistantApiService,
-    BudgetTreeCreate,
-    BudgetTreeNodeRead,
-    BudgetTreeNodeUpdate,
-    BudgetTreeRead,
     CategoriesForAccountResponse,
     CategorizeTransactionsResponse,
     CategoryDetailsForPeriodResponse,
@@ -423,74 +418,7 @@ export class AppService {
 
     }
 
-    public findOrCreateBudget(bankAccount: BankAccountRead): Observable<BudgetTreeNode[]> {
 
-        const budgetTreeCreate: BudgetTreeCreate = {
-            bankAccountId: bankAccount.accountNumber
-        }
-        let obs: Observable<BudgetTreeRead> = this.apiService.budget.findOrCreateBudgetApiBudgetFindOrCreatePost(
-            budgetTreeCreate);
-        return obs.pipe(map((budgetTree: BudgetTreeRead) => {
-            // Convert the BudgetTree to an array of BudgetTreeNode objects
-            const result: BudgetTreeNode[] = [];
-
-            // Process the root node and its children recursively
-            if (budgetTree.root) {
-                this.convertBudgetTreeNodeApiToBudgetTreeNode(budgetTree.root, -1, result);
-            }
-
-            return result;
-        }));
-
-    }
-
-    private convertBudgetTreeNodeApiToBudgetTreeNode(apiNode: BudgetTreeNodeRead, parentId: number,
-                                                     result: BudgetTreeNode[]): void {
-        // Create a new BudgetTreeNode from the API node
-        const localNode: BudgetTreeNode = {
-            budgetTreeNodeAmount: apiNode.amount,
-            budgetTreeNodeId: apiNode.id,
-            budgetTreeNodeParentId: parentId,
-            children: [],
-            name: apiNode.name ?? '',
-            qualifiedName: apiNode.qualifiedName ?? ''
-        };
-
-        // Add the node to the result array
-        result.push(localNode);
-
-        // Process children recursively
-        if (apiNode.children && apiNode.children.length > 0) {
-            for (const childNode of apiNode.children) {
-                // Process the child node recursively
-                this.convertBudgetTreeNodeApiToBudgetTreeNode(childNode, localNode.budgetTreeNodeId, result);
-
-                // Add the converted child to the current node's children array
-                localNode.children.push(result[result.length - 1]);
-            }
-        }
-    }
-
-    private convertBudgetTreeNodeToBudgetTreeNodeApi(node: BudgetTreeNode): BudgetTreeNodeRead {
-
-        return {
-            amount: node.budgetTreeNodeAmount,
-            id: node.budgetTreeNodeId,
-            children: node.children.map(child => this.convertBudgetTreeNodeToBudgetTreeNodeApi(child)),
-            name: node.name,
-            qualifiedName: node.qualifiedName
-        }
-    }
-
-
-    public updateBudgetEntryAmount(budgetEntry: BudgetTreeNode): Observable<HttpResponse<any>> {
-        const budgetTreeNodeUpdate: BudgetTreeNodeUpdate = {
-            amount: budgetEntry.budgetTreeNodeAmount
-        };
-        return this.apiService.budget.updateBudgetEntryAmountApiBudgetEntryNodeIdPatch(
-            budgetEntry.budgetTreeNodeId, budgetTreeNodeUpdate, 'response')
-
-    }
 
 
     public saveRuleSetWrapper(ruleSetWrapper: RuleSetWrapperRead): Observable<SuccessResponse> {
