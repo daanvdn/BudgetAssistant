@@ -264,15 +264,15 @@ class TransactionService:
     ) -> int:
         """Count transactions that need manual review."""
         normalized = BankAccount.normalize_account_number(bank_account)
-
+        # todo: debug this query. it is including transactions where is_manually_reviewed is True
         count_query = (
             select(func.count())
             .select_from(Transaction)
             .where(
-                Transaction.bank_account_id == normalized,
-                Transaction.is_manually_reviewed.is_(False),
+                and_(*[Transaction.bank_account_id == normalized, Transaction.is_manually_reviewed.is_(False)]),
             )
         )
+        self._log_query(count_query, "count_transactions_to_manually_review")
         result = await session.execute(count_query)
         return result.scalar() or 0
 
