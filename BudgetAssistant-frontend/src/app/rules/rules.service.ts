@@ -6,7 +6,7 @@ import {
     CategorizeTransactionsResponse,
     TransactionTypeEnum, SuccessResponse,
     GetOrCreateRuleSetWrapperRequest,
-    RuleSet, convertClientRuleSetToRuleSet
+    RuleSet, convertClientRuleSetToRuleSet,
 } from './rule.models';
 
 @Injectable({ providedIn: 'root' })
@@ -62,5 +62,13 @@ export class RulesService {
     serializeRuleSet(ruleSet: RuleSet): { [key: string]: any } {
         const jsonString = ruleSet.toJson();
         return JSON.parse(jsonString);
+    }
+
+    /**
+     * Save using a pre-serialized RuleSetWrapperCreate body.
+     * Used by the pill editor dialog which handles its own serialization.
+     */
+    saveRuleSetWrapperDirect(body: RuleSetWrapperCreate): Observable<SuccessResponse> {
+        return this.api.rules.saveRuleSetWrapperApiRulesSavePost(body);
     }
 }

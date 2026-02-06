@@ -1,0 +1,56 @@
+<div class="rule-group"
+     [class.condition-and]="ruleSet.condition === 'AND'"
+     [class.condition-or]="ruleSet.condition === 'OR'">
+
+  <!-- Condition badge (AND / OR toggle) -->
+  <button class="condition-badge"
+          [class.and]="ruleSet.condition === 'AND'"
+          [class.or]="ruleSet.condition === 'OR'"
+          (click)="toggleCondition()"
+          matTooltip="Click to toggle between AND / OR">
+    ({{ ruleSet.condition }})
+  </button>
+
+  <!-- Children: rules and nested groups -->
+  <div class="group-children">
+    @for (item of ruleSet.rules; track $index) {
+      <!-- Single Rule -->
+      @if (isRule(item)) {
+        <app-pill-rule-row
+          [rule]="asRule(item)"
+          [fieldsConfig]="fieldsConfig"
+          (ruleChange)="onChildChange()"
+          (remove)="removeChild($index)">
+        </app-pill-rule-row>
+      }
+
+      <!-- Nested RuleSet -->
+      @if (isRuleSet(item)) {
+        <div class="nested-group">
+          <app-pill-rule-group
+            [ruleSet]="asRuleSet(item)"
+            [depth]="depth + 1"
+            [isRoot]="false"
+            (ruleSetChange)="onChildChange()"
+            (remove)="removeChild($index)">
+          </app-pill-rule-group>
+          <button mat-icon-button class="remove-group-btn"
+                  (click)="removeChild($index)"
+                  matTooltip="Remove group">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+      }
+    }
+  </div>
+
+  <!-- Action buttons -->
+  <div class="group-actions">
+    <button class="add-btn" (click)="addFilter()">
+      <mat-icon>add</mat-icon> Add filter
+    </button>
+    <button class="add-btn" (click)="addGroup()">
+      <mat-icon>add</mat-icon> Add group
+    </button>
+  </div>
+</div>

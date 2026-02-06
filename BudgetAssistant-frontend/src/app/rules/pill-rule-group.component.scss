@@ -1,0 +1,119 @@
+@use '../../styles/variables' as *;
+
+$and-color: $primary-blue;
+$or-color: #f59e0b;
+
+.rule-group {
+    position: relative;
+    padding-left: 24px;
+    margin: 4px 0;
+
+    &::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        border-radius: 2px;
+    }
+
+    &.condition-and::before {
+        background: $and-color;
+    }
+
+    &.condition-or::before {
+        background: $or-color;
+    }
+}
+
+.condition-badge {
+    display: inline-flex;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: $transition-fast;
+    border: none;
+    font-family: inherit;
+    margin-bottom: 4px;
+
+    &.and {
+        background: rgba($and-color, 0.1);
+        color: $and-color;
+
+        &:hover {
+            background: rgba($and-color, 0.2);
+        }
+    }
+
+    &.or {
+        background: rgba($or-color, 0.1);
+        color: $or-color;
+
+        &:hover {
+            background: rgba($or-color, 0.2);
+        }
+    }
+}
+
+.group-children {
+    display: flex;
+    flex-direction: column;
+}
+
+.nested-group {
+    margin: 8px 0;
+    position: relative;
+
+    .remove-group-btn {
+        position: absolute;
+        top: 0;
+        right: 0;
+        opacity: 0;
+        transition: $transition-fast;
+        color: $text-muted;
+
+        &:hover {
+            color: $error-danger-red;
+        }
+    }
+
+    &:hover > .remove-group-btn {
+        opacity: 1;
+    }
+}
+
+.group-actions {
+    display: flex;
+    gap: 8px;
+    padding: 8px 0;
+
+    .add-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 12px;
+        border-radius: 16px;
+        border: 1px dashed $border-gray;
+        background: transparent;
+        font-size: 12px;
+        color: $text-secondary;
+        cursor: pointer;
+        transition: $transition-fast;
+        font-family: inherit;
+
+        &:hover {
+            border-color: $primary-blue;
+            color: $primary-blue;
+            background: $light-blue-hover;
+        }
+
+        mat-icon {
+            font-size: 16px;
+            width: 16px;
+            height: 16px;
+        }
+    }
+}

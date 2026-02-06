@@ -19,11 +19,12 @@ import {MatDialog} from '@angular/material/dialog';
 import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
 import {Subscription} from 'rxjs';
 
-import {CategoryRead, RuleSetWrapperRead, TransactionTypeEnum} from './rule.models';
+import {CategoryRead, RuleSetWrapperRead, RuleSet, TransactionTypeEnum} from './rule.models';
 import {RulesService} from './rules.service';
 import {AppService} from '../app.service';
 import {RuleSummaryCardComponent} from './rule-summary-card.component';
 import {RunCategorizationDialogComponent} from './run-categorization-dialog.component';
+import {RuleEditorDialogComponent, RuleEditorDialogData} from './rule-editor-dialog.component';
 
 type ActiveView = 'expenses' | 'revenue';
 
@@ -162,11 +163,65 @@ export class RulesPageComponent implements OnInit, OnDestroy {
     }
 
     onEditRules(category: CategoryRead): void {
-        console.log('Edit clicked for:', category.qualifiedName);
+        const wrapper = this.getRuleSetWrapper(category);
+        if (!wrapper) return;
+
+        const ruleSet = this.rulesService.parseRuleSet(wrapper);
+        const data: RuleEditorDialogData = {category, ruleSetWrapper: wrapper, ruleSet};
+
+        const dialogRef = this.dialog.open(RuleEditorDialogComponent, {
+            data,
+            width: '90vw',
+            maxWidth: '900px',
+            autoFocus: false,
+        });
+
+        dialogRef.afterClosed().subscribe((result?: RuleSet) => {
+            if (result) {
+                // Refresh: re-fetch the wrapper so the summary card updates
+                const key = category.qualifiedName;
+                this.ruleSetWrapperCache.delete(key);
+                this.loadRuleSetWrapper(category);
+            }
+        });
     }
 
     onCreateRules(category: CategoryRead): void {
-        console.log('Create clicked for:', category.qualifiedName);
+        // Ensure we have a wrapper (get-or-create)
+        const existingWrapper = this.getRuleSetWrapper(category);
+        if (existingWrapper) {
+            // Open with a fresh empty RuleSet
+            const emptyRuleSet = new RuleSet('AND', [], false, false);
+            const data: RuleEditorDialogData = {
+                category,
+                ruleSetWrapper: existingWrapper,
+                ruleSet: emptyRuleSet,
+            };
+            const dialogRef = this.dialog.open(RuleEditorDialogComponent, {
+                data,
+                width: '90vw',
+                maxWidth: '900px',
+                autoFocus: false,
+            });
+            dialogRef.afterClosed().subscribe((result?: RuleSet) => {
+                if (result) {
+                    const key = category.qualifiedName;
+                    this.ruleSetWrapperCache.delete(key);
+                    this.loadRuleSetWrapper(category);
+                }
+            });
+        } else {
+            // Load wrapper first, then open dialog
+            const type = this.activeView() === 'expenses'
+                ? TransactionTypeEnum.EXPENSES
+                : TransactionTypeEnum.REVENUE;
+            this.rulesService.getOrCreateRuleSetWrapper(category.qualifiedName, type).subscribe({
+                next: (wrapper) => {
+                    this.ruleSetWrapperCache.set(category.qualifiedName, wrapper);
+                    this.onCreateRules(category); // recurse now that wrapper is loaded
+                },
+            });
+        }
     }
 
     openRunCategorizationDialog(): void {

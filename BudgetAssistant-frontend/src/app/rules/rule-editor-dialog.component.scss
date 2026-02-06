@@ -1,0 +1,78 @@
+@use '../../styles/variables' as *;
+
+.dialog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    border-bottom: 1px solid $border-gray;
+
+    h2 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+        color: $text-primary;
+    }
+
+    .close-btn {
+        color: $text-muted;
+
+        &:hover {
+            color: $text-primary;
+        }
+    }
+}
+
+.dialog-content {
+    padding: 24px;
+    min-height: 200px;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.dialog-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 16px 24px;
+    border-top: 1px solid $border-gray;
+
+    .save-btn {
+        min-width: 100px;
+    }
+
+    .spinner-container {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+}
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    color: $text-muted;
+    text-align: center;
+
+    mat-icon {
+        font-size: 48px;
+        width: 48px;
+        height: 48px;
+        margin-bottom: 12px;
+    }
+
+    p {
+        margin: 0;
+        font-size: 14px;
+    }
+}
+
+.error-message {
+    color: $error-danger-red;
+    font-size: 13px;
+    padding: 8px 0;
+}

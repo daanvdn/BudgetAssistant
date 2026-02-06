@@ -5,7 +5,7 @@ export {
     MatchTypes, MatchTypeOption, MATCH_TYPES,
     DEFAULT_QUERY_BUILDER_CONFIG, FIELDS_BY_PATH_FROM_TRANSACTION_MAP,
     convertClientRuleSetToRuleSet,
-    RuleUtils
+    RuleUtils, QueryBuilderConfig
 } from '../query-builder/query-builder.interfaces';
 
 // Re-export API types from client library

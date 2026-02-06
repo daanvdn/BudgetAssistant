@@ -1,0 +1,108 @@
+<div class="value-editor" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+  <!-- String variant -->
+  @if (fieldType === 'string') {
+    <mat-form-field appearance="outline" class="chip-field">
+      <mat-chip-grid #chipGrid>
+        @for (val of values; track $index) {
+          <mat-chip-row (removed)="removeChip($index)">
+            {{ val }}
+            <button matChipRemove>
+              <mat-icon>cancel</mat-icon>
+            </button>
+          </mat-chip-row>
+        }
+      </mat-chip-grid>
+      <input placeholder="Type to add..."
+             [matChipInputFor]="chipGrid"
+             [matChipInputSeparatorKeyCodes]="separatorKeyCodes"
+             [matChipInputAddOnBlur]="true"
+             (matChipInputTokenEnd)="addChip($event)" />
+    </mat-form-field>
+    <div class="separator"></div>
+    <div class="match-type-row">
+      <span class="match-label">Match:</span>
+      <div class="match-options">
+        @for (mt of matchTypes; track mt.value) {
+          <button class="match-option"
+                  [class.active]="matchType?.value === mt.value"
+                  (click)="onMatchTypeChange(mt)">
+            {{ mt.name }}
+          </button>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Categorical variant -->
+  @if (fieldType === 'categorical') {
+    <div class="categorical-list">
+      @for (option of fieldOptions; track option) {
+        <div class="checkbox-row" (click)="toggleOption(option)">
+          <mat-icon class="checkbox-icon">
+            {{ isOptionSelected(option) ? 'check_box' : 'check_box_outline_blank' }}
+          </mat-icon>
+          <span>{{ option }}</span>
+        </div>
+      }
+      @if (fieldOptions.length === 0) {
+        <div class="empty-options">No options available</div>
+      }
+    </div>
+    <div class="separator"></div>
+    <div class="match-type-row">
+      <span class="match-label">Match:</span>
+      <div class="match-options">
+        @for (mt of matchTypes; track mt.value) {
+          <button class="match-option"
+                  [class.active]="matchType?.value === mt.value"
+                  (click)="onMatchTypeChange(mt)">
+            {{ mt.name }}
+          </button>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Number variant: single input for comparison operators -->
+  @if (fieldType === 'number' && isSingleNumberInput) {
+    <mat-form-field appearance="outline" class="number-field">
+      <input matInput type="number" placeholder="Enter value..."
+             [ngModel]="values[0] ?? ''"
+             (ngModelChange)="onNumberChange($event)" />
+    </mat-form-field>
+  }
+
+  <!-- Number variant: chip grid for equals/not equals -->
+  @if (fieldType === 'number' && !isSingleNumberInput) {
+    <mat-form-field appearance="outline" class="chip-field">
+      <mat-chip-grid #numChipGrid>
+        @for (val of values; track $index) {
+          <mat-chip-row (removed)="removeChip($index)">
+            {{ val }}
+            <button matChipRemove>
+              <mat-icon>cancel</mat-icon>
+            </button>
+          </mat-chip-row>
+        }
+      </mat-chip-grid>
+      <input placeholder="Enter number..."
+             [matChipInputFor]="numChipGrid"
+             [matChipInputSeparatorKeyCodes]="separatorKeyCodes"
+             [matChipInputAddOnBlur]="true"
+             (matChipInputTokenEnd)="addChip($event)" />
+    </mat-form-field>
+    <div class="separator"></div>
+    <div class="match-type-row">
+      <span class="match-label">Match:</span>
+      <div class="match-options">
+        @for (mt of matchTypes; track mt.value) {
+          <button class="match-option"
+                  [class.active]="matchType?.value === mt.value"
+                  (click)="onMatchTypeChange(mt)">
+            {{ mt.name }}
+          </button>
+        }
+      </div>
+    </div>
+  }
+</div>

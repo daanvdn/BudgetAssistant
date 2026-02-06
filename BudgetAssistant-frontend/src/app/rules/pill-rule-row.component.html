@@ -1,0 +1,53 @@
+<div class="pill-row">
+  <!-- Field pill -->
+  <button class="pill pill-field" [matMenuTriggerFor]="fieldMenu">
+    {{ fieldDisplayName }}
+  </button>
+  <mat-menu #fieldMenu="matMenu">
+    @for (group of fieldGroups; track group.label) {
+      <div class="field-group-label">{{ group.label }}</div>
+      @for (field of group.fields; track field.name) {
+        <button mat-menu-item (click)="selectField(field)">
+          {{ field.value || field.name }}
+        </button>
+      }
+    }
+  </mat-menu>
+
+  <!-- Operator pill -->
+  <button class="pill pill-operator" [matMenuTriggerFor]="operatorMenu">
+    {{ operatorDisplayLabel }}
+  </button>
+  <mat-menu #operatorMenu="matMenu">
+    @for (op of availableOperators; track op.name) {
+      <button mat-menu-item (click)="selectOperator(op)">
+        {{ getOperatorMenuLabel(op) }}
+      </button>
+    }
+  </mat-menu>
+
+  <!-- Value pill -->
+  <button class="pill pill-value"
+          [class.pill-placeholder]="!rule.value || rule.value.length === 0"
+          [matMenuTriggerFor]="valueMenu">
+    {{ valueDisplayText }}
+  </button>
+  <mat-menu #valueMenu="matMenu" class="value-editor-menu">
+    <div (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+      <app-value-editor-popover
+        [fieldType]="resolvedFieldType"
+        [values]="rule.value || []"
+        [matchType]="resolvedMatchType"
+        [operator]="resolvedOperator ?? null"
+        [fieldOptions]="fieldOptions"
+        (valuesChange)="onValuesChange($event)"
+        (matchTypeChange)="onMatchTypeChange($event)">
+      </app-value-editor-popover>
+    </div>
+  </mat-menu>
+
+  <!-- Delete button -->
+  <button mat-icon-button class="delete-btn" (click)="remove.emit()" matTooltip="Remove filter">
+    <mat-icon>delete</mat-icon>
+  </button>
+</div>

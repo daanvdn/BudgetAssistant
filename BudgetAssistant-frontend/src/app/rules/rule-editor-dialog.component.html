@@ -1,0 +1,37 @@
+<div class="dialog-header">
+  <h2>Edit rules for "{{ data.category.name }}"</h2>
+  <button mat-icon-button class="close-btn" (click)="onCancel()">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<div class="dialog-content">
+  @if (workingCopy.rules.length > 0 || true) {
+    <app-pill-rule-group
+      [ruleSet]="workingCopy"
+      [depth]="0"
+      [isRoot]="true"
+      (ruleSetChange)="onRuleSetChange($event)">
+    </app-pill-rule-group>
+  }
+</div>
+
+<div class="dialog-actions">
+  @if (errorMessage) {
+    <span class="error-message">{{ errorMessage }}</span>
+  }
+  <span style="flex: 1"></span>
+  <button mat-button (click)="onCancel()">Cancel</button>
+  <button mat-raised-button color="primary" class="save-btn"
+          [disabled]="saving"
+          (click)="onSave()">
+    @if (saving) {
+      <span class="spinner-container">
+        <mat-spinner diameter="18"></mat-spinner>
+        Saving…
+      </span>
+    } @else {
+      Save
+    }
+  </button>
+</div>

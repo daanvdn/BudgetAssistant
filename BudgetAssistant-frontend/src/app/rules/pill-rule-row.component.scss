@@ -1,0 +1,75 @@
+@use '../../styles/variables' as *;
+
+.pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: 16px;
+    border: 1px solid $border-gray;
+    background: $card-background;
+    font-size: 13px;
+    cursor: pointer;
+    transition: $transition-fast;
+    white-space: nowrap;
+    font-family: inherit;
+    color: $text-primary;
+
+    &:hover {
+        border-color: $primary-blue;
+        background: $light-blue-hover;
+    }
+
+    &.pill-field {
+        font-weight: 500;
+    }
+
+    &.pill-operator {
+        color: $text-secondary;
+    }
+
+    &.pill-value {
+        max-width: 250px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    &.pill-placeholder {
+        color: $text-muted;
+        font-style: italic;
+    }
+}
+
+.pill-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+
+    .delete-btn {
+        opacity: 0;
+        transition: $transition-fast;
+        color: $text-muted;
+
+        &:hover {
+            color: $error-danger-red;
+        }
+    }
+
+    &:hover .delete-btn {
+        opacity: 1;
+    }
+}
+
+.field-group-label {
+    padding: 6px 16px 2px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: $text-muted;
+}
+
+// Make the value editor mat-menu panel wider
+::ng-deep .value-editor-menu {
+    max-width: 380px !important;
+}
