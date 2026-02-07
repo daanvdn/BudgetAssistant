@@ -1,10 +1,11 @@
 <div [formGroup]="categoryFormGroup">
-  <mat-form-field class="category-field">
+  <mat-form-field appearance="outline" class="category-field">
     <input #autoInput
            #autoCompleteTrigger="matAutocompleteTrigger"
            formControlName="searchField"
            type="text"
            [placeholder]="selectedCategoryName()"
+           [class.placeholder-default]="selectedCategoryName() === 'select category'"
            [title]="selectedCategoryQualifiedNameStr() ?? ''"
            matInput
            [matAutocomplete]="auto">
