@@ -90,6 +90,12 @@
                     <mat-spinner diameter="48"></mat-spinner>
                     <p>Loading transactions...</p>
                 </div>
+            } @else if (hasNoAccounts()) {
+                <div class="empty-state">
+                    <mat-icon class="empty-icon">cloud_upload</mat-icon>
+                    <h3>No transactions uploaded yet</h3>
+                    <p>Get started by clicking the <mat-icon class="inline-icon">add_to_photos</mat-icon> button in the toolbar to upload a CSV file with your bank transactions.</p>
+                </div>
             } @else if (isEmpty()) {
                 <div class="empty-state">
                     <mat-icon class="empty-icon">receipt_long</mat-icon>

@@ -500,6 +500,13 @@ $breakpoint-tablet: 1024px;
     max-width: 300px;
     margin: 0;
   }
+
+  .inline-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    vertical-align: middle;
+  }
 }
 
 // Overlay for file upload

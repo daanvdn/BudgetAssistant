@@ -235,7 +235,14 @@ export class TransactionsComponent implements OnInit {
   });
 
   protected readonly isLoading = computed(() => {
+    if (!this.selectedAccount() && !this.filesAreUploading()) {
+      return false;
+    }
     return this.transactionsQuery.isPending() || this.filesAreUploading();
+  });
+
+  protected readonly hasNoAccounts = computed(() => {
+    return !this.selectedAccount() && !this.filesAreUploading();
   });
 
   protected readonly isEmpty = computed(() => {
