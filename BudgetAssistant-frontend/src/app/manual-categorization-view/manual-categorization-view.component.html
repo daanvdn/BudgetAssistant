@@ -9,28 +9,24 @@
   <div class="content-wrapper">
     <!-- Action Bar -->
     <div class="action-bar">
-      <div class="action-bar-left">
-        <bank-account-selection class="bank-account-selector"></bank-account-selection>
+      <bank-account-selection class="bank-account-selector"></bank-account-selection>
 
-          <mat-button-toggle-group
-                  [value]="activeView() === 'EXPENSES' ? 'expenses' : 'revenue'"
-                  (change)="onToggleChange($event)"
-                  class="view-toggle">
-              <mat-button-toggle value="expenses">Expenses</mat-button-toggle>
-              <mat-button-toggle value="revenue">Revenue</mat-button-toggle>
-          </mat-button-toggle-group>
-      </div>
+      <mat-button-toggle-group
+              [value]="activeView() === 'EXPENSES' ? 'expenses' : 'revenue'"
+              (change)="onToggleChange($event)"
+              class="view-toggle">
+          <mat-button-toggle value="expenses">Expenses</mat-button-toggle>
+          <mat-button-toggle value="revenue">Revenue</mat-button-toggle>
+      </mat-button-toggle-group>
 
-      <div class="action-bar-right">
-        <mat-paginator
-          [length]="pagination().totalElements"
-          [pageSize]="pagination().size"
-          [pageIndex]="pagination().page"
-          [pageSizeOptions]="[25, 50, 100]"
-          (page)="onPageChange($event)"
-          showFirstLastButtons>
-        </mat-paginator>
-      </div>
+      <mat-paginator
+        [length]="pagination().totalElements"
+        [pageSize]="pagination().size"
+        [pageIndex]="pagination().page"
+        [pageSizeOptions]="[25, 50, 100]"
+        (page)="onPageChange($event)"
+        showFirstLastButtons>
+      </mat-paginator>
     </div>
 
     <!-- Table Content -->

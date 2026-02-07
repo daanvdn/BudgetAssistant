@@ -131,7 +131,7 @@ export class ManualCategorizationViewComponent implements OnInit {
       );
     },
     enabled: !!this.selectedAccount(),
-    staleTime: 30_000,
+    staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false
   }));
 
@@ -147,7 +147,7 @@ export class ManualCategorizationViewComponent implements OnInit {
     },
     onSuccess: () => {
       // Invalidate to refresh the list (transaction may leave the "to review" set)
-      this.queryClient.invalidateQueries({ queryKey: ['manualReviewTransactions'] });
+      this.queryClient.invalidateQueries({ queryKey: ['manualReviewTransactions', this.selectedAccount(), this.activeView()] });
       this.refreshCount();
     },
     onError: (error: any) => {
@@ -275,14 +275,22 @@ export class ManualCategorizationViewComponent implements OnInit {
       for (const tx of row.transactions) {
         this.saveTransactionMutation.mutate({
           transactionId: tx.transactionId,
-          update: { categoryId: category.id, manuallyAssignedCategory: true }
+          update: { categoryId: category.id,
+            manuallyAssignedCategory: true,
+            isManuallyReviewed : true
+
+          }
         });
       }
       this.snackBar.open(`Category assigned to ${count} transaction(s)`, 'Close', { duration: 2000 });
     } else {
       this.saveTransactionMutation.mutate({
         transactionId: row.transactionId,
-        update: { categoryId: category.id, manuallyAssignedCategory: true }
+        update: {
+          categoryId: category.id,
+          manuallyAssignedCategory: true,
+          isManuallyReviewed : true
+        }
       });
       this.snackBar.open('Category saved', 'Close', { duration: 2000 });
     }

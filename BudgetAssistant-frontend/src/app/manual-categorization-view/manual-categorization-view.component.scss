@@ -73,19 +73,7 @@ $breakpoint-mobile: 768px;
   }
 }
 
-.action-bar-left {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-
-  @media (max-width: $breakpoint-mobile) {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-  }
-}
-
+.action-bar-left,
 .action-bar-right {
   display: flex;
   align-items: center;
