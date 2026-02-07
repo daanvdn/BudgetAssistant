@@ -9,7 +9,7 @@ import {ProfileComponent} from "./profile/profile.component";
 import {RegisterComponent} from "./register/register.component";
 import {BudgetComponent} from "./budget/budget.component";
 import {RulesPageComponent} from "./rules/rules-page.component";
-import {ManualCategorizationViewComponent} from "./manual-categorization-view/manual-categorization-view.component";
+import {UncategorizedTransactionsComponent} from "./transactions/uncategorized-transactions/uncategorized-transactions.component";
 import {environment} from '../environments/environment';
 import {TransactionsComponent} from "./transactions/transactions.component";
 
@@ -41,7 +41,7 @@ const childRoutes: Routes = [
     },
     {
         path: 'categorieën',
-        component: ManualCategorizationViewComponent
+        component: UncategorizedTransactionsComponent
     }
 ];
 

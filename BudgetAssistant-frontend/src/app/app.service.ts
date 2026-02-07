@@ -1,47 +1,29 @@
-import {HttpClient, HttpEvent, HttpResponse} from '@angular/common/http';
+import {HttpClient, HttpEvent} from '@angular/common/http';
 import {Injectable} from '@angular/core';
 import {BehaviorSubject, map, Observable, of, Subject, tap} from 'rxjs';
-
-import {Page, PageRequest} from "ngx-pagination-data-source";
 import {
-    DistributionByCategoryForPeriodHandlerResult2,
     FileWrapper,
     ResolvedStartEndDateShortcut,
+    resolveTransactionCategory,
     StartEndDateShortcut,
-    TransactionsCategorizationResponse,
-    TransactionWithCategory,
-    resolveTransactionCategory
+    TransactionWithCategory
 } from './model';
 import {AuthService} from "./auth/auth.service";
 import {
     BankAccountRead,
     BudgetAssistantApiService,
     CategoriesForAccountResponse,
-    CategorizeTransactionsResponse,
     CategoryDetailsForPeriodResponse,
     CategoryIndex,
     CategoryRead,
     DateRangeShortcut,
-    ExpensesAndRevenueForPeriod,
-    GetOrCreateRuleSetWrapperRequest,
     Grouping,
-    PageTransactionsInContextRequest,
-    PageTransactionsToManuallyReviewRequest,
-    PaginatedResponseTransactionRead,
     ResolvedDateRange,
-    RevenueAndExpensesPerPeriodResponse,
     RevenueExpensesQuery,
     RevenueExpensesQueryWithCategory,
-    RuleSetWrapperCreate,
-    RuleSetWrapperRead,
     SaveAliasRequest,
-    SortOrder,
-    SuccessResponse,
-    TransactionInContextQuery,
     TransactionRead,
-    TransactionSortProperty,
     TransactionTypeEnum,
-    TransactionUpdate,
     UploadTransactionsResponse
 } from "@daanvdn/budget-assistant-client";
 import {environment} from "../environments/environment";
@@ -136,12 +118,12 @@ export class AppService {
 
     }
 
-    public countTransactionToManuallyReview(bankAccountNumber: string): Observable<Number> {
+    public countUncategorizedTransactions(bankAccountNumber: string): Observable<Number> {
         if (!bankAccountNumber) {
             console.error('Bank account number is undefined');
             return of(0); // Return observable with 0 if bankAccount or accountNumber is undefined
         }
-        return this.apiService.transactions.countTransactionsToManuallyReviewApiTransactionsCountToManuallyReviewGet(
+        return this.apiService.transactions.countUncategorizedTransactionsApiTransactionsCountUncategorizedGet(
             bankAccountNumber).pipe(map(count => count.count));
 
 
@@ -164,21 +146,6 @@ export class AppService {
         const index = this.idToCategoryIndex$.getValue();
         return transactions.map(t => resolveTransactionCategory(t, index));
     }
-
-    public getRevenueExpensesPerPeriodAndCategoryShow1MonthBeforeAndAfter(restQuery: RevenueExpensesQuery): Observable<DistributionByCategoryForPeriodHandlerResult2> {
-
-
-        const params = {
-            query: JSON.stringify(restQuery), responseType: "json"
-
-        }
-
-        return this.http.get<DistributionByCategoryForPeriodHandlerResult2>(
-            `${this.backendUrl}/revenue_expenses_per_period_and_category_show_1_month_before_and_after`, {params})
-
-    }
-
-
     public resolveStartEndDateShortcut(startEnDateShortCut: StartEndDateShortcut): Observable<ResolvedStartEndDateShortcut> {
         return this.apiService.analysis.resolveStartEndDateShortcutApiAnalysisResolveDateShortcutGet(
             startEnDateShortCut as DateRangeShortcut)

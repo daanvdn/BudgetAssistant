@@ -15,7 +15,7 @@ from schemas import (
     ErrorResponse,
     PageTransactionsInContextRequest,
     PageTransactionsRequest,
-    PageTransactionsToManuallyReviewRequest,
+    PageUncategorizedTransactionsRequest,
     PaginatedResponse,
     SuccessResponse,
     TransactionRead,
@@ -95,9 +95,9 @@ async def page_transactions_in_context(
     )
 
 
-@router.post("/page-to-manually-review", response_model=PaginatedResponse[TransactionRead])
-async def page_transactions_to_manually_review(
-    request: PageTransactionsToManuallyReviewRequest,
+@router.post("/page-uncategorized", response_model=PaginatedResponse[TransactionRead])
+async def page_uncategorized_transactions(
+    request: PageUncategorizedTransactionsRequest,
     current_user: CurrentUser,
     session: AsyncSession = Depends(get_session),
 ) -> PaginatedResponse[TransactionRead]:
@@ -112,7 +112,7 @@ async def page_transactions_to_manually_review(
     (
         transactions,
         total_elements,
-    ) = await transaction_service.page_transactions_to_manually_review(
+    ) = await transaction_service.page_uncategorized_transactions(
         bank_account=request.bank_account,
         page=request.page,
         size=request.size,
@@ -131,8 +131,8 @@ async def page_transactions_to_manually_review(
     )
 
 
-@router.get("/count-to-manually-review", response_model=CountResponse)
-async def count_transactions_to_manually_review(
+@router.get("/count-uncategorized", response_model=CountResponse)
+async def count_uncategorized_transactions(
     bank_account: str,
     current_user: CurrentUser,
     session: AsyncSession = Depends(get_session),
@@ -145,7 +145,7 @@ async def count_transactions_to_manually_review(
             detail="Access denied to this bank account",
         )
 
-    count = await transaction_service.count_transactions_to_manually_review(
+    count = await transaction_service.count_uncategorized_transactions(
         bank_account=bank_account,
         session=session,
     )

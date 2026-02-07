@@ -137,12 +137,12 @@ class TestTransactionService:
     """Tests for TransactionService operations."""
 
     @pytest.mark.asyncio
-    async def test_page_transactions_to_manually_review_returns_transactions(
+    async def test_page_uncategorized_transactions_returns_transactions(
         self,
         async_session: AsyncSession,
         service: TransactionService,
     ):
-        """Test that page_transactions_to_manually_review returns transactions needing review."""
+        """Test that page_uncategorized_transactions returns transactions needing review."""
         # Create bank account
         bank_account = BankAccount(account_number="123456789")
         async_session.add(bank_account)
@@ -156,36 +156,20 @@ class TestTransactionService:
         # Create transactions - 3 expenses (negative), 1 revenue (positive)
         # All with is_manually_reviewed=False
         transaction1 = await create_transaction(
-            async_session,
-            bank_account,
-            counterparty,
-            amount=-10.0,
-            is_manually_reviewed=False,
+            async_session, bank_account, counterparty, amount=-10.0, is_manually_reviewed=False, category_id=None
         )
         transaction2 = await create_transaction(
-            async_session,
-            bank_account,
-            counterparty,
-            amount=-10.0,
-            is_manually_reviewed=False,
+            async_session, bank_account, counterparty, amount=-10.0, is_manually_reviewed=False, category_id=None
         )
         transaction3 = await create_transaction(
-            async_session,
-            bank_account,
-            counterparty,
-            amount=-10.0,
-            is_manually_reviewed=False,
+            async_session, bank_account, counterparty, amount=-10.0, is_manually_reviewed=False, category_id=None
         )
         transaction4 = await create_transaction(
-            async_session,
-            bank_account,
-            counterparty,
-            amount=10.0,
-            is_manually_reviewed=False,
+            async_session, bank_account, counterparty, amount=10.0, is_manually_reviewed=False, category_id=1
         )
         await async_session.commit()
 
-        transactions, total = await service.page_transactions_to_manually_review(
+        transactions, total = await service.page_uncategorized_transactions(
             bank_account=bank_account.account_number,
             page=0,
             size=10,
@@ -203,14 +187,14 @@ class TestTransactionService:
         assert transaction4.transaction_id not in transaction_ids
 
     @pytest.mark.asyncio
-    async def test_page_transactions_to_manually_review_returns_empty_if_no_transactions(
+    async def test_page_uncategorized_transactions_returns_empty_if_no_transactions(
         self,
         async_session: AsyncSession,
         bank_account: BankAccount,
         service: TransactionService,
     ):
         """Test that page_transactions_to_manually_review returns empty if no transactions."""
-        transactions, total = await service.page_transactions_to_manually_review(
+        transactions, total = await service.page_uncategorized_transactions(
             bank_account=bank_account.account_number,
             page=0,
             size=10,
@@ -224,12 +208,12 @@ class TestTransactionService:
         assert total == 0
 
     @pytest.mark.asyncio
-    async def test_count_transactions_to_manually_review_returns_count(
+    async def test_count_uncategorized_transactions_returns_count(
         self,
         async_session: AsyncSession,
         service: TransactionService,
     ):
-        """Test that count_transactions_to_manually_review returns correct count."""
+        """Test that count_uncategorized_transactions returns correct count."""
         # Create bank account
         bank_account = BankAccount(account_number="123456789")
         async_session.add(bank_account)
@@ -242,51 +226,35 @@ class TestTransactionService:
 
         # Create 4 transactions that need manual review
         await create_transaction(
-            async_session,
-            bank_account,
-            counterparty,
-            amount=-10.0,
-            is_manually_reviewed=False,
+            async_session, bank_account, counterparty, amount=-10.0, is_manually_reviewed=False, category_id=None
         )
         await create_transaction(
-            async_session,
-            bank_account,
-            counterparty,
-            amount=-10.0,
-            is_manually_reviewed=False,
+            async_session, bank_account, counterparty, amount=-10.0, is_manually_reviewed=False, category_id=None
         )
         await create_transaction(
-            async_session,
-            bank_account,
-            counterparty,
-            amount=-10.0,
-            is_manually_reviewed=False,
+            async_session, bank_account, counterparty, amount=-10.0, is_manually_reviewed=False, category_id=None
         )
         await create_transaction(
-            async_session,
-            bank_account,
-            counterparty,
-            amount=10.0,
-            is_manually_reviewed=False,
+            async_session, bank_account, counterparty, amount=10.0, is_manually_reviewed=False, category_id=10
         )
         await async_session.commit()
 
-        count = await service.count_transactions_to_manually_review(
+        count = await service.count_uncategorized_transactions(
             bank_account=bank_account.account_number,
             session=async_session,
         )
 
-        assert count == 4
+        assert count == 3
 
     @pytest.mark.asyncio
-    async def test_count_transactions_to_manually_review_returns_zero_if_no_transactions(
+    async def test_count_uncategorized_transactions_returns_zero_if_no_transactions(
         self,
         async_session: AsyncSession,
         bank_account: BankAccount,
         service: TransactionService,
     ):
-        """Test that count_transactions_to_manually_review returns zero if no transactions."""
-        count = await service.count_transactions_to_manually_review(
+        """Test that count_uncategorized_transactions returns zero if no transactions."""
+        count = await service.count_uncategorized_transactions(
             bank_account=bank_account.account_number,
             session=async_session,
         )
@@ -1065,7 +1033,7 @@ class TestTransactionService:
         await async_session.commit()
 
         # Query for revenue only
-        transactions, total = await service.page_transactions_to_manually_review(
+        transactions, total = await service.page_uncategorized_transactions(
             bank_account=bank_account.account_number,
             page=0,
             size=10,
@@ -1079,7 +1047,7 @@ class TestTransactionService:
         assert transactions[0].transaction_id == revenue_txn.transaction_id
 
     @pytest.mark.asyncio
-    async def test_page_transactions_to_manually_review_filters_reviewed_transactions(
+    async def test_page_uncategorized_transactions_filters_transactions_with_category(
         self,
         async_session: AsyncSession,
         service: TransactionService,
@@ -1097,23 +1065,15 @@ class TestTransactionService:
 
         # Create transactions - one reviewed, one not reviewed
         await create_transaction(
-            async_session,
-            bank_account,
-            counterparty,
-            amount=-50.0,
-            is_manually_reviewed=True,
+            async_session, bank_account, counterparty, amount=-50.0, is_manually_reviewed=True, category_id=1
         )
-        unreviewed_txn = await create_transaction(
-            async_session,
-            bank_account,
-            counterparty,
-            amount=-50.0,
-            is_manually_reviewed=False,
+        no_cat_txn = await create_transaction(
+            async_session, bank_account, counterparty, amount=-50.0, is_manually_reviewed=False, category_id=None
         )
         await async_session.commit()
 
         # Query for transactions to review
-        transactions, total = await service.page_transactions_to_manually_review(
+        transactions, total = await service.page_uncategorized_transactions(
             bank_account=bank_account.account_number,
             page=0,
             size=10,
@@ -1124,7 +1084,7 @@ class TestTransactionService:
         )
 
         assert total == 1
-        assert transactions[0].transaction_id == unreviewed_txn.transaction_id
+        assert transactions[0].transaction_id == no_cat_txn.transaction_id
 
     @pytest.mark.asyncio
     async def test_save_transaction_updates_is_recurring(

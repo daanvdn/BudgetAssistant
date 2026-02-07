@@ -1,0 +1,144 @@
+<div class="revenue-expenses-container">
+  <!-- Waiting for Criteria -->
+  @if (isWaitingForCriteria()) {
+    <div class="waiting-container">
+      <mat-icon class="waiting-icon">tune</mat-icon>
+      <h3>Select search criteria</h3>
+      <p>Please select a bank account, period, and grouping to view revenue and expenses data.</p>
+    </div>
+  }
+
+    @else if (isLoading()) {
+        <!-- Loading State -->
+        <div class="loading-container">
+      <mat-spinner diameter="48"></mat-spinner>
+      <p>Loading revenue and expenses data...</p>
+    </div>
+  }
+
+  @else if (hasError()) {
+      <!-- Error State -->
+    <div class="error-container">
+      <mat-icon class="error-icon">error_outline</mat-icon>
+      <h3>Failed to load data</h3>
+      <p>{{ errorMessage() }}</p>
+      <button mat-raised-button color="primary" (click)="retry()">
+        <mat-icon>refresh</mat-icon>
+        Retry
+      </button>
+    </div>
+  }
+  @else if (isEmpty()) {
+      <!-- Empty State -->
+    <div class="empty-container">
+      <mat-icon class="empty-icon">show_chart</mat-icon>
+      <h3>No data found</h3>
+      <p>No revenue or expenses data matches your search criteria.<br>Try adjusting the account, period, or other filters.</p>
+    </div>
+  }
+  @else if (hasData()) {
+      <!-- Data Content -->
+    <div class="content-wrapper">
+      <!-- Chart Section -->
+      <div class="chart-section">
+        <div class="chart-header">
+          <span class="chart-title">Revenue vs. Expenses</span>
+          <button
+            mat-stroked-button 
+            (click)="toggleTable()"
+            class="toggle-table-btn">
+            <mat-icon>{{ toggleTableIcon }}</mat-icon>
+            {{ toggleTableLabel }}
+          </button>
+        </div>
+        
+        <div class="chart-container" [style.height.px]="chartHeight()">
+          <canvas 
+            baseChart
+            [type]="'bar'"
+            [data]="chartData()"
+            [options]="chartOptions"
+            [plugins]="chartPlugins">
+          </canvas>
+        </div>
+      </div>
+
+      <!-- Table Section -->
+      @if (tableIsVisible()) {
+        <div class="table-section">
+          <mat-card>
+            <mat-card-content>
+              <div class="table-wrapper">
+                <table mat-table [dataSource]="data()" class="data-table">
+                  <!-- Period Column -->
+                  <ng-container matColumnDef="period">
+                    <th mat-header-cell *matHeaderCellDef>Period</th>
+                    <td mat-cell *matCellDef="let item">{{ item.period }}</td>
+                  </ng-container>
+
+                  <!-- Revenue Column -->
+                  <ng-container matColumnDef="revenue">
+                    <th mat-header-cell *matHeaderCellDef class="amount-header">Revenue</th>
+                    <td mat-cell *matCellDef="let item" class="amount-cell positive">
+                      €{{ item.revenue | number:'1.2-2' }}
+                    </td>
+                  </ng-container>
+
+                  <!-- Expenses Column -->
+                  <ng-container matColumnDef="expenses">
+                    <th mat-header-cell *matHeaderCellDef class="amount-header">Expenses</th>
+                    <td mat-cell *matCellDef="let item" class="amount-cell negative">
+                      €{{ item.expenses | number:'1.2-2' }}
+                    </td>
+                  </ng-container>
+
+                  <!-- Balance Column -->
+                  <ng-container matColumnDef="balance">
+                    <th mat-header-cell *matHeaderCellDef class="amount-header">Balance</th>
+                    <td mat-cell *matCellDef="let item" 
+                        class="amount-cell balance"
+                        [class.positive]="item.balance >= 0"
+                        [class.negative]="item.balance < 0">
+                      €{{ item.balance | number:'1.2-2' }}
+                    </td>
+                  </ng-container>
+
+                  <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+                  <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+                </table>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      }
+
+      <!-- Mobile Cards (visible on small screens) -->
+      <div class="mobile-cards">
+        @for (item of data(); track item.period) {
+          <mat-card class="period-card">
+            <mat-card-content>
+              <div class="card-header">
+                <span class="period-label">{{ item.period }}</span>
+                <span class="balance-badge" 
+                      [class.positive]="item.balance >= 0"
+                      [class.negative]="item.balance < 0">
+                  €{{ item.balance | number:'1.2-2' }}
+                </span>
+              </div>
+              <div class="card-details">
+                <div class="detail-row">
+                  <span class="label">Revenue</span>
+                  <span class="value positive">€{{ item.revenue | number:'1.2-2' }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="label">Expenses</span>
+                  <span class="value negative">€{{ item.expenses | number:'1.2-2' }}</span>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        }
+      </div>
+    </div>
+  }
+</div>

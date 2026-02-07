@@ -1,18 +1,18 @@
 import {SelectionModel} from '@angular/cdk/collections';
 import {FlatTreeControl} from '@angular/cdk/tree';
 import {
-  Component,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
+  Component,
+  computed,
   DestroyRef,
+  effect,
   EventEmitter,
-  Output,
-  ViewChild,
   inject,
   input,
+  Output,
   signal,
-  computed,
-  effect
+  ViewChild
 } from '@angular/core';
 import {takeUntilDestroyed, toObservable} from '@angular/core/rxjs-interop';
 import {
@@ -24,18 +24,29 @@ import {
   MatTreeNodePadding,
   MatTreeNodeToggle
 } from '@angular/material/tree';
-import {switchMap, debounceTime} from 'rxjs';
+import {debounceTime, switchMap} from 'rxjs';
 import {AppService} from '../app.service';
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {MatFormField, MatSuffix} from '@angular/material/form-field';
 import {MatAutocomplete, MatAutocompleteTrigger} from '@angular/material/autocomplete';
-import {FlatCategoryNode, AmountType} from '../model';
+import {AmountType} from '../model';
 import {MatInput} from '@angular/material/input';
 import {MatOption} from '@angular/material/core';
 import {MatIconButton} from '@angular/material/button';
 import {MatCheckbox} from '@angular/material/checkbox';
 import {MatIcon} from '@angular/material/icon';
-import {TransactionTypeEnum, CategoryRead} from '@daanvdn/budget-assistant-client';
+import {CategoryRead, TransactionTypeEnum} from '@daanvdn/budget-assistant-client';
+
+export type TypeEnum = 'EXPENSES' | 'REVENUE';
+
+export class FlatCategoryNode {
+  level!: number;
+  expandable!: boolean;
+  name!: string;
+  qualifiedName!: string;
+  nodeId!: number;
+  type!: TypeEnum;
+}
 
 @Component({
   selector: 'app-category-tree-dropdown',

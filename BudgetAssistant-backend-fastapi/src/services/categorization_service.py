@@ -26,9 +26,7 @@ class CategorizationService:
     categories.
     """
 
-    async def get_rule_sets_for_user(
-        self, user: User, session: AsyncSession
-    ) -> List[RuleSetWrapper]:
+    async def get_rule_sets_for_user(self, user: User, session: AsyncSession) -> List[RuleSetWrapper]:
         """Get all rule set wrappers for a user.
 
         Args:
@@ -73,9 +71,7 @@ class CategorizationService:
 
         return category_tree
 
-    async def _load_category_children(
-        self, category: Category, session: AsyncSession
-    ) -> None:
+    async def _load_category_children(self, category: Category, session: AsyncSession) -> None:
         """Recursively load children for a category.
 
         Args:
@@ -109,9 +105,7 @@ class CategorizationService:
             bank_accounts = [BankAccount.normalize_account_number(bank_account_id)]
         else:
             result = await session.execute(
-                select(UserBankAccountLink.bank_account_number).where(
-                    UserBankAccountLink.user_id == user.id
-                )
+                select(UserBankAccountLink.bank_account_number).where(UserBankAccountLink.user_id == user.id)
             )
             bank_accounts = list(result.scalars().all())
 
@@ -221,12 +215,8 @@ class CategorizationService:
         rule_sets = await self.get_rule_sets_for_user(user, session)
 
         # Get category trees
-        expenses_tree = await self.get_category_tree(
-            TransactionTypeEnum.EXPENSES, session
-        )
-        revenue_tree = await self.get_category_tree(
-            TransactionTypeEnum.REVENUE, session
-        )
+        expenses_tree = await self.get_category_tree(TransactionTypeEnum.EXPENSES, session)
+        revenue_tree = await self.get_category_tree(TransactionTypeEnum.REVENUE, session)
 
         if not expenses_tree or not revenue_tree:
             # Cannot categorize without category trees
@@ -240,29 +230,22 @@ class CategorizationService:
         )
 
         # Get uncategorized transactions
-        transactions = await self.get_uncategorized_transactions(
-            user, bank_account_id, transaction_type, session
-        )
+        transactions = await self.get_uncategorized_transactions(user, bank_account_id, transaction_type, session)
 
         with_category = 0
         without_category = 0
 
         for transaction in transactions:
-            category = await self.categorize_transaction_with_traverser(
-                transaction, traverser
-            )
+            category = await self.categorize_transaction_with_traverser(transaction, traverser)
 
             if category is not None:
                 transaction.category_id = category.id
                 transaction.category = category
+                transaction.manually_assigned_category = False
+                transaction.is_manually_reviewed = False
                 with_category += 1
             else:
-                # Try counterparty category as fallback
-                if transaction.counterparty and transaction.counterparty.category_id:
-                    transaction.category_id = transaction.counterparty.category_id
-                    with_category += 1
-                else:
-                    without_category += 1
+                without_category += 1
 
         await session.commit()
 
@@ -289,9 +272,7 @@ class CategorizationService:
         Returns:
             Tuple of (with_category_count, without_category_count).
         """
-        return await self.categorize_transactions_with_traverser(
-            user, bank_account_id, transaction_type, session
-        )
+        return await self.categorize_transactions_with_traverser(user, bank_account_id, transaction_type, session)
 
 
 # Singleton instance

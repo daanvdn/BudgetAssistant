@@ -217,7 +217,7 @@ class TransactionService:
 
         return transactions, total_elements
 
-    async def page_transactions_to_manually_review(
+    async def page_uncategorized_transactions(
         self,
         bank_account: str,
         page: int,
@@ -232,7 +232,7 @@ class TransactionService:
 
         conditions = [
             Transaction.bank_account_id == normalized,
-            Transaction.is_manually_reviewed.is_(False),
+            Transaction.category_id.is_(None),
         ]
 
         if transaction_type == TransactionTypeEnum.REVENUE:
@@ -257,22 +257,22 @@ class TransactionService:
 
         return transactions, total_elements
 
-    async def count_transactions_to_manually_review(
+    async def count_uncategorized_transactions(
         self,
         bank_account: str,
         session: AsyncSession,
     ) -> int:
         """Count transactions that need manual review."""
         normalized = BankAccount.normalize_account_number(bank_account)
-        # todo: debug this query. it is including transactions where is_manually_reviewed is True
+
         count_query = (
             select(func.count())
             .select_from(Transaction)
             .where(
-                and_(*[Transaction.bank_account_id == normalized, Transaction.is_manually_reviewed.is_(False)]),
+                and_(*[Transaction.bank_account_id == normalized, Transaction.category_id.is_(None)]),
             )
         )
-        self._log_query(count_query, "count_transactions_to_manually_review")
+        self._log_query(count_query, "count_uncategorized_transactions")
         result = await session.execute(count_query)
         return result.scalar() or 0
 

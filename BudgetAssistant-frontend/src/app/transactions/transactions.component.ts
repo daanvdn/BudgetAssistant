@@ -43,9 +43,9 @@ import {injectMutation, injectQuery,QueryClient} from '@tanstack/angular-query-e
 import {firstValueFrom} from 'rxjs';
 
 import {AppService} from '../app.service';
-import {AmountType, inferAmountType, TransactionWithCategory} from '../model';
+import {AmountType, FileWrapper, inferAmountType, TransactionWithCategory} from '../model';
 import {BankAccountSelectionComponent} from '../bank-account-selection/bank-account-selection.component';
-import {TransactionSearchDialogComponent} from '../transaction-search-dialog/transaction-search-dialog.component';
+import {TransactionSearchDialogComponent} from './transaction-search-dialog/transaction-search-dialog.component';
 import {AuthService} from '../auth/auth.service';
 import {ErrorDialogService} from '../error-dialog/error-dialog.service';
 import {CategoryTreeDropdownComponent} from '../category-tree-dropdown/category-tree-dropdown.component';
@@ -137,7 +137,7 @@ export class TransactionsComponent implements OnInit {
   protected readonly selectedAccount = signal<string | undefined>(undefined);
   protected readonly transactionQuery = signal<TransactionQuery | undefined>(undefined);
   protected readonly filesAreUploading = signal(false);
-  protected readonly transactionsToManuallyReview = computed(() => this.manualReviewCountQuery.data() ?? 0);
+  protected readonly transactionsToManuallyReview = computed(() => this.uncategorizedCountQuery.data() ?? 0);
   protected readonly categoryIndex = signal<CategoryIndex | undefined>(undefined);
 
   // Computed signal to check if category index is ready for mapping
@@ -182,12 +182,12 @@ export class TransactionsComponent implements OnInit {
   });
 
   // TanStack Query for manual review count
-  manualReviewCountQuery = injectQuery(() => ({
-    queryKey: ['manualReviewCount', this.selectedAccount()],
+  uncategorizedCountQuery = injectQuery(() => ({
+    queryKey: ['uncategorizedCount', this.selectedAccount()],
     queryFn: async () => {
       const account = this.selectedAccount();
       if (!account) return 0;
-      const count = await firstValueFrom(this.appService.countTransactionToManuallyReview(account));
+      const count = await firstValueFrom(this.appService.countUncategorizedTransactions(account));
       return count.valueOf();
     },
     enabled: !!this.selectedAccount(),
@@ -260,7 +260,7 @@ export class TransactionsComponent implements OnInit {
       untracked(() => {
         const account = this.selectedAccount();
         if (account) {
-          this.queryClient.invalidateQueries({queryKey: ['manualReviewCount', account]});
+          this.queryClient.invalidateQueries({queryKey: ['uncategorizedCount', account]});
         }
       });
     }
@@ -294,7 +294,7 @@ export class TransactionsComponent implements OnInit {
         });
 
     // Subscribe to selected bank account changes — sets selectedAccount() so
-    // the TanStack manualReviewCountQuery (and transactionsQuery) react to it.
+    // the TanStack uncategorizedCountQuery (and transactionsQuery) react to it.
     this.appService.selectedBankAccountObservable$
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe(bankAccount => {
@@ -368,7 +368,7 @@ export class TransactionsComponent implements OnInit {
 
     this.filesAreUploading.set(true);
 
-    const fileWrappers = Array.from(files).map(file => ({
+    const fileWrappers: Array<FileWrapper> = Array.from(files).map(file => ({
       file,
       inProgress: false,
       progress: 0,
@@ -406,7 +406,7 @@ export class TransactionsComponent implements OnInit {
               this.queryClient.invalidateQueries({queryKey: ['transactions']});
 
               // Invalidate manual review count cache so it refetches from server
-              this.queryClient.invalidateQueries({queryKey: ['manualReviewCount']});
+              this.queryClient.invalidateQueries({queryKey: ['uncategorizedCount']});
 
               this.snackBar.open('Transactions uploaded successfully', 'Close', {duration: 3000});
             }
@@ -489,7 +489,7 @@ export class TransactionsComponent implements OnInit {
       if (transaction.isManuallyReviewed) {
         if (account) {
           this.queryClient.setQueryData<number>(
-            ['manualReviewCount', account],
+            ['uncategorizedCount', account],
             (old) => (old ?? 0) + 1
           );
         }
@@ -511,7 +511,7 @@ export class TransactionsComponent implements OnInit {
       if (!transaction.isManuallyReviewed) {
         if (account) {
           this.queryClient.setQueryData<number>(
-            ['manualReviewCount', account],
+            ['uncategorizedCount', account],
             (old) => Math.max(0, (old ?? 0) - 1)
           );
         }

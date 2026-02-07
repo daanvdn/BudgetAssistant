@@ -5,7 +5,7 @@ import {
   BudgetAssistantApiService,
   BudgetTreeCreate,
   PageTransactionsRequest,
-  PageTransactionsToManuallyReviewRequest,
+  PageUncategorizedTransactionsRequest,
   SortOrder,
   TransactionSortProperty,
   TransactionTypeEnum
@@ -79,7 +79,7 @@ export class RoutePrefetchService {
     this.queryClient.prefetchQuery({
       queryKey: ['manualReviewTransactions', account, TransactionTypeEnum.EXPENSES, 0, 50],
       queryFn: async () => {
-        const request: PageTransactionsToManuallyReviewRequest = {
+        const request: PageUncategorizedTransactionsRequest = {
           page: 0,
           size: 50,
           sortOrder: 'asc' as SortOrder,
@@ -90,7 +90,7 @@ export class RoutePrefetchService {
 
         return firstValueFrom(
           this.apiService.transactions
-            .pageTransactionsToManuallyReviewApiTransactionsPageToManuallyReviewPost(request)
+            .pageUncategorizedTransactionsApiTransactionsPageUncategorizedPost(request)
         );
       },
     });

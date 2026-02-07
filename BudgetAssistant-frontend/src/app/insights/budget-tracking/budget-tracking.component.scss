@@ -1,0 +1,63 @@
+// Import shared theme variables
+@import '../../../styles/variables';;
+
+.mat-mdc-table {
+  border-collapse: collapse;
+  td, th {
+    border: 1px solid $border-gray;
+    padding: 8px;
+    text-align: left;
+
+  }
+  th {
+    background-color: $table-header-bg;
+    font-weight: bold;
+
+  }
+  td{
+
+  }
+}
+
+
+.mat-mdc-table-sticky {
+  background: $table-sticky-bg;
+  opacity: 1;
+}
+.mat-mdc-table-sticky-border-elem-top {
+  border-bottom: 2px solid $table-sticky-border;
+}
+
+.mat-mdc-table-sticky-border-elem-right {
+  border-left: 2px solid $table-sticky-border;
+}
+
+.mat-mdc-table-sticky-border-elem-bottom {
+  border-top: 2px solid $table-sticky-border;
+}
+
+.mat-mdc-table-sticky-border-elem-left {
+  border-right: 2px solid $table-sticky-border;
+}
+
+.color-red {
+  color: $error-danger-red;
+
+}
+.color-light-coral {
+  background: $expense-red-bg;
+
+}
+
+.color-green {
+  color: $success-green;
+}
+
+.mat-mdc-table {
+  width: 100%;
+}
+
+.mat-mdc-header-cell, .mat-mdc-cell {
+  padding: 8px;
+  text-align: left;
+}

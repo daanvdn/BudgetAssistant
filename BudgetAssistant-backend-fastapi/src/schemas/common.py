@@ -118,7 +118,7 @@ class PageTransactionsInContextRequest(PaginationParams):
     query: TransactionInContextQuery
 
 
-class PageTransactionsToManuallyReviewRequest(PaginationParams):
+class PageUncategorizedTransactionsRequest(PaginationParams):
     """Request schema for transactions needing manual review."""
 
     bank_account: str

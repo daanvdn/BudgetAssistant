@@ -5,14 +5,15 @@ import {MatIconButton} from '@angular/material/button';
 import {FaIconComponent} from '@fortawesome/angular-fontawesome';
 import {MatTab, MatTabGroup} from '@angular/material/tabs';
 import {NgIf} from '@angular/common';
-import {CriteriaToolbarComponent} from '../criteria-toolbar/criteria-toolbar.component';
-import {ExpensesRevenueComponent} from '../revenue-expenses/revenue-expenses.component';
+import {CriteriaToolbarComponent} from './criteria-toolbar/criteria-toolbar.component';
+import {ExpensesRevenueComponent} from './revenue-expenses/revenue-expenses.component';
 import {
     RevenueExpensesPerPeriodAndCategoryComponent
-} from '../revenue-expenses-per-period-and-category/revenue-expenses-per-period-and-category.component';
+} from './revenue-expenses-per-period-and-category/revenue-expenses-per-period-and-category.component';
 //import {CategoryDetailsComponent} from '../category-details/category-details.component';
-import {BudgetTrackingComponent} from '../budget-tracking/budget-tracking.component';
-import {Criteria} from '../model/criteria.model';
+import {BudgetTrackingComponent} from './budget-tracking/budget-tracking.component';
+
+import {Criteria} from "../model";
 
 
 @Component({
