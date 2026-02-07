@@ -131,8 +131,7 @@ export class ManualCategorizationViewComponent implements OnInit {
       );
     },
     enabled: !!this.selectedAccount(),
-    staleTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: false
+    staleTime: 5 * 60_000,
   }));
 
   // Save-transaction mutation

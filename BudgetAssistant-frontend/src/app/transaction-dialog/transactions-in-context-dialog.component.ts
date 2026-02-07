@@ -165,8 +165,7 @@ export class TransactionsInContextDialogComponent implements OnInit {
       };
     },
     enabled: this.isCategoryIndexReady(),
-    staleTime: 30000,
-    refetchOnWindowFocus: false
+    staleTime: 30_000,
   }));
 
   // Computed template helpers

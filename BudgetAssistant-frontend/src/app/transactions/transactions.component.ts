@@ -1,5 +1,5 @@
 import {CommonModule, DatePipe, TitleCasePipe} from '@angular/common';
-import {Component, computed, DestroyRef, inject, OnInit, signal, ViewChild} from '@angular/core';
+import {Component, computed, DestroyRef, effect, inject, OnInit, signal, untracked, ViewChild} from '@angular/core';
 import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 import {MatDialog} from '@angular/material/dialog';
 import {MatPaginator, PageEvent} from '@angular/material/paginator';
@@ -39,7 +39,7 @@ import {
   TransactionUpdate,
   UploadTransactionsResponse
 } from '@daanvdn/budget-assistant-client';
-import {injectMutation, injectQuery, injectQueryClient, QueryClient} from '@tanstack/angular-query-experimental';
+import {injectMutation, injectQuery,QueryClient} from '@tanstack/angular-query-experimental';
 import {firstValueFrom} from 'rxjs';
 
 import {AppService} from '../app.service';
@@ -137,7 +137,7 @@ export class TransactionsComponent implements OnInit {
   protected readonly selectedAccount = signal<string | undefined>(undefined);
   protected readonly transactionQuery = signal<TransactionQuery | undefined>(undefined);
   protected readonly filesAreUploading = signal(false);
-  protected readonly transactionsToManuallyReview = signal(0);
+  protected readonly transactionsToManuallyReview = computed(() => this.manualReviewCountQuery.data() ?? 0);
   protected readonly categoryIndex = signal<CategoryIndex | undefined>(undefined);
 
   // Computed signal to check if category index is ready for mapping
@@ -181,6 +181,18 @@ export class TransactionsComponent implements OnInit {
     return this.viewType() !== ViewType.INITIAL_VIEW;
   });
 
+  // TanStack Query for manual review count
+  manualReviewCountQuery = injectQuery(() => ({
+    queryKey: ['manualReviewCount', this.selectedAccount()],
+    queryFn: async () => {
+      const account = this.selectedAccount();
+      if (!account) return 0;
+      const count = await firstValueFrom(this.appService.countTransactionToManuallyReview(account));
+      return count.valueOf();
+    },
+    enabled: !!this.selectedAccount(),
+  }));
+
   // TanStack Query for transactions
   transactionsQuery = injectQuery(() => ({
     queryKey: ['transactions', this.selectedAccount(), this.currentPage(), this.pageSize(), this.sortConfig(), this.transactionQuery()],
@@ -205,8 +217,6 @@ export class TransactionsComponent implements OnInit {
       };
     },
     enabled: !!this.selectedAccount() && this.isCategoryIndexReady(),
-    staleTime: 30000, // 30 seconds
-    refetchOnWindowFocus: false
   }));
 
   // Computed signals for template
@@ -236,6 +246,19 @@ export class TransactionsComponent implements OnInit {
     return this.isEmpty() && this.viewType() === ViewType.RUN_QUERY;
   });
 
+  // Sync manual review count with server whenever transactions are fetched from the API
+  private syncCountEffect = effect(() => {
+    const dataUpdatedAt = this.transactionsQuery.dataUpdatedAt();
+    if (dataUpdatedAt > 0) {
+      untracked(() => {
+        const account = this.selectedAccount();
+        if (account) {
+          this.queryClient.invalidateQueries({queryKey: ['manualReviewCount', account]});
+        }
+      });
+    }
+  });
+
   // Save transaction mutation
   saveTransactionMutation = injectMutation(() => ({
     mutationFn: async (params: { transactionId: string; update: TransactionUpdate }) => {
@@ -263,25 +286,14 @@ export class TransactionsComponent implements OnInit {
           this.categoryIndex.set(categoryIndex);
         });
 
-    // Subscribe to selected bank account changes
+    // Subscribe to selected bank account changes — sets selectedAccount() so
+    // the TanStack manualReviewCountQuery (and transactionsQuery) react to it.
     this.appService.selectedBankAccountObservable$
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe(bankAccount => {
           if (bankAccount?.accountNumber) {
-            this.loadTransactionsToManuallyReviewCount(bankAccount.accountNumber);
+            this.selectedAccount.set(bankAccount.accountNumber);
           }
-          else {
-            this.transactionsToManuallyReview.set(0);
-          }
-        });
-  }
-
-  private loadTransactionsToManuallyReviewCount(accountNumber: string): void {
-    this.appService.countTransactionToManuallyReview(accountNumber)
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe({
-          next: count => this.transactionsToManuallyReview.set(count.valueOf()),
-          error: () => this.transactionsToManuallyReview.set(0)
         });
   }
 
@@ -293,7 +305,7 @@ export class TransactionsComponent implements OnInit {
     }
 
     const accountNumber = this.accountSelectionComponent.selectedBankAccount.accountNumber;
-    if (!accountNumber || accountNumber === this.appService.DUMMY_BANK_ACCOUNT) {
+    if (!accountNumber) {
       console.error('Invalid account number');
       return;
     }
@@ -386,11 +398,8 @@ export class TransactionsComponent implements OnInit {
               // Invalidate queries to refresh data
               this.queryClient.invalidateQueries({queryKey: ['transactions']});
 
-              // Refresh manual review count
-              const account = this.selectedAccount();
-              if (account) {
-                this.loadTransactionsToManuallyReviewCount(account);
-              }
+              // Invalidate manual review count cache so it refetches from server
+              this.queryClient.invalidateQueries({queryKey: ['manualReviewCount']});
 
               this.snackBar.open('Transactions uploaded successfully', 'Close', {duration: 3000});
             }
@@ -459,21 +468,61 @@ export class TransactionsComponent implements OnInit {
   setCategory(transaction: TransactionWithCategory, selectedCategoryQualifiedNameStr: string): void {
     const index = this.categoryIndex();
     const category = index?.qualifiedNameToCategoryIndex[selectedCategoryQualifiedNameStr];
-    if (!category) {
+    const isRemoval = !category || category.id === -1;
+
+    if (!isRemoval && !category) {
       this.snackBar.open('Category not found', 'Close', {duration: 3000});
       return;
     }
 
-    const update: TransactionUpdate = {
-      categoryId: category.id,
-      manuallyAssignedCategory: true,
-      isManuallyReviewed: true,
-    };
+    const account = this.selectedAccount();
 
-    this.saveTransactionMutation.mutate({
-      transactionId: transaction.transactionId,
-      update
-    });
+    if (isRemoval) {
+      // Removing a category — optimistically increment the review count
+      if (transaction.isManuallyReviewed) {
+        if (account) {
+          this.queryClient.setQueryData<number>(
+            ['manualReviewCount', account],
+            (old) => (old ?? 0) + 1
+          );
+        }
+        transaction.isManuallyReviewed = false;
+      }
+
+      const update: TransactionUpdate = {
+        categoryId: null,
+        manuallyAssignedCategory: false,
+        isManuallyReviewed: false,
+      };
+
+      this.saveTransactionMutation.mutate({
+        transactionId: transaction.transactionId,
+        update
+      });
+    } else {
+      // Assigning a category — optimistically decrement the review count
+      if (!transaction.isManuallyReviewed) {
+        if (account) {
+          this.queryClient.setQueryData<number>(
+            ['manualReviewCount', account],
+            (old) => Math.max(0, (old ?? 0) - 1)
+          );
+        }
+        // Mark locally so re-assigning the same row won't double-decrement
+        transaction.isManuallyReviewed = true;
+      }
+
+      const update: TransactionUpdate = {
+        categoryId: category!.id,
+        manuallyAssignedCategory: true,
+        isManuallyReviewed: true,
+      };
+
+      this.saveTransactionMutation.mutate({
+        transactionId: transaction.transactionId,
+        update
+      });
+    }
   }
 
   setIsRecurring(transaction: TransactionWithCategory, event: MatSlideToggleChange): void {

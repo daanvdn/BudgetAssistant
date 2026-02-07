@@ -131,8 +131,7 @@ export class ExpensesRevenueComponent implements OnInit {
         return response.content;
       },
       enabled: this.isValidCriteria(currentCriteria),
-      staleTime: 30000, // 30 seconds
-      refetchOnWindowFocus: false
+      staleTime: 30_000,
     };
   });
 

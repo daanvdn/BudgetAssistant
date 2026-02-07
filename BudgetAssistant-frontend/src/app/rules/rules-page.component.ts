@@ -9,7 +9,8 @@ import {MatDialog} from '@angular/material/dialog';
 import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
 import {MatExpansionModule} from '@angular/material/expansion';
 import {MatChipsModule} from '@angular/material/chips';
-import {Subscription} from 'rxjs';
+import {firstValueFrom, Subscription} from 'rxjs';
+import {injectQueryClient} from '@tanstack/angular-query-experimental';
 
 import {CategoryRead, RuleSetWrapperRead, RuleSet, TransactionTypeEnum} from './rule.models';
 import {RulesService} from './rules.service';
@@ -43,6 +44,7 @@ export class RulesPageComponent implements OnInit, OnDestroy {
     private appService = inject(AppService);
     private rulesService = inject(RulesService);
     private dialog = inject(MatDialog);
+    private queryClient = injectQueryClient();
 
     activeView: WritableSignal<ActiveView> = signal('expenses');
 
@@ -81,15 +83,15 @@ export class RulesPageComponent implements OnInit, OnDestroy {
                 continue;
             }
             this.loadingCategories.add(key);
-            this.rulesService.getOrCreateRuleSetWrapper(key, type).subscribe({
-                next: (wrapper) => {
-                    this.ruleSetWrapperCache.set(key, wrapper);
-                    this.loadingCategories.delete(key);
-                },
-                error: () => {
-                    this.loadingCategories.delete(key);
-                    this.errorCategories.add(key);
-                },
+            this.queryClient.fetchQuery({
+                queryKey: ['ruleSetWrapper', key, type],
+                queryFn: () => firstValueFrom(this.rulesService.getOrCreateRuleSetWrapper(key, type)),
+            }).then(wrapper => {
+                this.ruleSetWrapperCache.set(key, wrapper);
+                this.loadingCategories.delete(key);
+            }).catch(() => {
+                this.loadingCategories.delete(key);
+                this.errorCategories.add(key);
             });
         }
     }
@@ -142,15 +144,15 @@ export class RulesPageComponent implements OnInit, OnDestroy {
             ? TransactionTypeEnum.EXPENSES
             : TransactionTypeEnum.REVENUE;
 
-        this.rulesService.getOrCreateRuleSetWrapper(category.qualifiedName, type).subscribe({
-            next: (wrapper) => {
-                this.ruleSetWrapperCache.set(key, wrapper);
-                this.loadingCategories.delete(key);
-            },
-            error: () => {
-                this.loadingCategories.delete(key);
-                this.errorCategories.add(key);
-            },
+        this.queryClient.fetchQuery({
+            queryKey: ['ruleSetWrapper', key, type],
+            queryFn: () => firstValueFrom(this.rulesService.getOrCreateRuleSetWrapper(key, type)),
+        }).then(wrapper => {
+            this.ruleSetWrapperCache.set(key, wrapper);
+            this.loadingCategories.delete(key);
+        }).catch(() => {
+            this.loadingCategories.delete(key);
+            this.errorCategories.add(key);
         });
     }
 
@@ -181,8 +183,12 @@ export class RulesPageComponent implements OnInit, OnDestroy {
 
     onRetryLoad(category: CategoryRead): void {
         const key = category.qualifiedName;
+        const type = this.activeView() === 'expenses'
+            ? TransactionTypeEnum.EXPENSES
+            : TransactionTypeEnum.REVENUE;
         this.errorCategories.delete(key);
         this.ruleSetWrapperCache.delete(key);
+        this.queryClient.removeQueries({queryKey: ['ruleSetWrapper', key, type]});
         this.loadRuleSetWrapper(category);
     }
 
@@ -203,9 +209,13 @@ export class RulesPageComponent implements OnInit, OnDestroy {
 
         dialogRef.afterClosed().subscribe((result?: RuleSet) => {
             if (result) {
-                // Refresh: re-fetch the wrapper so the summary card updates
+                // Refresh: invalidate cache & re-fetch so the summary card updates
                 const key = category.qualifiedName;
+                const type = this.activeView() === 'expenses'
+                    ? TransactionTypeEnum.EXPENSES
+                    : TransactionTypeEnum.REVENUE;
                 this.ruleSetWrapperCache.delete(key);
+                this.queryClient.removeQueries({queryKey: ['ruleSetWrapper', key, type]});
                 this.loadRuleSetWrapper(category);
             }
         });
@@ -232,7 +242,11 @@ export class RulesPageComponent implements OnInit, OnDestroy {
             dialogRef.afterClosed().subscribe((result?: RuleSet) => {
                 if (result) {
                     const key = category.qualifiedName;
+                    const type = this.activeView() === 'expenses'
+                        ? TransactionTypeEnum.EXPENSES
+                        : TransactionTypeEnum.REVENUE;
                     this.ruleSetWrapperCache.delete(key);
+                    this.queryClient.removeQueries({queryKey: ['ruleSetWrapper', key, type]});
                     this.loadRuleSetWrapper(category);
                 }
             });
@@ -241,11 +255,12 @@ export class RulesPageComponent implements OnInit, OnDestroy {
             const type = this.activeView() === 'expenses'
                 ? TransactionTypeEnum.EXPENSES
                 : TransactionTypeEnum.REVENUE;
-            this.rulesService.getOrCreateRuleSetWrapper(category.qualifiedName, type).subscribe({
-                next: (wrapper) => {
-                    this.ruleSetWrapperCache.set(category.qualifiedName, wrapper);
-                    this.onCreateRules(category); // recurse now that wrapper is loaded
-                },
+            this.queryClient.fetchQuery({
+                queryKey: ['ruleSetWrapper', category.qualifiedName, type],
+                queryFn: () => firstValueFrom(this.rulesService.getOrCreateRuleSetWrapper(category.qualifiedName, type)),
+            }).then(wrapper => {
+                this.ruleSetWrapperCache.set(category.qualifiedName, wrapper);
+                this.onCreateRules(category); // recurse now that wrapper is loaded
             });
         }
     }

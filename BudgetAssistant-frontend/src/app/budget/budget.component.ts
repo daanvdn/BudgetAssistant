@@ -185,8 +185,6 @@ export class BudgetComponent implements OnInit {
       return first;
     },
     enabled: !!this.selectedAccount(),
-    staleTime: 60_000,
-    refetchOnWindowFocus: false
   }));
 
   // ── Computed helpers ──────────────────────────────────────────────────

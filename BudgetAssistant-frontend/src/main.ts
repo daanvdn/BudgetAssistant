@@ -86,7 +86,15 @@ bootstrapApplication(AppComponent, {
         { provide: BASE_PATH, useValue: environment.API_BASE_PATH },
         provideHttpClient(withInterceptorsFromDi()),
         provideAnimations(),
-        provideTanStackQuery(new QueryClient())
+        provideTanStackQuery(new QueryClient({
+            defaultOptions: {
+                queries: {
+                    staleTime: 60_000,           // 1 min before background refetch
+                    gcTime: 10 * 60_000,         // 10 min before inactive cache is GC'd
+                    refetchOnWindowFocus: false,
+                }
+            }
+        }))
     ]
 })
   .catch(err => console.error(err));

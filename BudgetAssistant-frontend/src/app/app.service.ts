@@ -52,7 +52,6 @@ import {environment} from "../environments/environment";
 })
 export class AppService {
 
-    public DUMMY_BANK_ACCOUNT = "dummy";
     currentBankAccounts$ = new BehaviorSubject<BankAccountRead[]>([]);
     currentBankAccountsObservable$ = this.currentBankAccounts$.asObservable();
     private startDate$ = new BehaviorSubject<Date | undefined>(undefined);

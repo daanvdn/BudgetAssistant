@@ -17,7 +17,8 @@
          routerLink="/transacties"
          routerLinkActive="activebutton"
          ariaCurrentWhenActive="page"
-         aria-label="Transacties">
+         aria-label="Transacties"
+         (mouseenter)="onPrefetch('/transacties')">
         <fa-icon class="nav-icon" [icon]="faDollarSign" [fixedWidth]="true"></fa-icon>
         <span class="nav-label">Transacties</span>
       </a>
@@ -37,7 +38,8 @@
          routerLink="/regels"
          routerLinkActive="activebutton"
          ariaCurrentWhenActive="page"
-         aria-label="Regels">
+         aria-label="Regels"
+         (mouseenter)="onPrefetch('/regels')">
         <fa-icon class="nav-icon" [icon]="faNetworkWired" [fixedWidth]="true"></fa-icon>
         <span class="nav-label">Regels</span>
       </a>
@@ -47,7 +49,8 @@
          routerLink="/budget"
          routerLinkActive="activebutton"
          ariaCurrentWhenActive="page"
-         aria-label="Budget">
+         aria-label="Budget"
+         (mouseenter)="onPrefetch('/budget')">
         <fa-icon class="nav-icon" [icon]="faScaleBalanced" [fixedWidth]="true"></fa-icon>
         <span class="nav-label">Budget</span>
       </a>
