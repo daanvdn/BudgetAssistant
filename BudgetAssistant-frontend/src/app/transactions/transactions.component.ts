@@ -50,6 +50,7 @@ import {AuthService} from '../auth/auth.service';
 import {ErrorDialogService} from '../error-dialog/error-dialog.service';
 import {CategoryTreeDropdownComponent} from '../category-tree-dropdown/category-tree-dropdown.component';
 import {HttpEventType, HttpResponse} from '@angular/common/http';
+import {BreakpointService} from '../shared/breakpoint.service';
 
 enum ViewType {
   INITIAL_VIEW = 'INITIAL_VIEW',
@@ -119,6 +120,7 @@ export class TransactionsComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly snackBar = inject(MatSnackBar);
   private readonly queryClient = inject(QueryClient);
+  protected readonly breakpointService = inject(BreakpointService);
 
   // Icon
   protected readonly faTag = faTag;

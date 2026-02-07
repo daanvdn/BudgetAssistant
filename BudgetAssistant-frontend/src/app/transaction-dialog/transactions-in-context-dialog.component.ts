@@ -44,6 +44,7 @@ import {firstValueFrom} from 'rxjs';
 import {AppService} from '../app.service';
 import {AmountType, inferAmountType, TransactionWithCategory} from '../model';
 import {CategoryTreeDropdownComponent} from '../category-tree-dropdown/category-tree-dropdown.component';
+import {BreakpointService} from '../shared/breakpoint.service';
 
 interface SortConfig {
   property: TransactionSortProperty;
@@ -98,6 +99,7 @@ export class TransactionsInContextDialogComponent implements OnInit {
   private readonly apiService = inject(BudgetAssistantApiService);
   private readonly dialogRef = inject(MatDialogRef<TransactionsInContextDialogComponent>);
   private readonly datePipe = inject(DatePipe);
+  protected readonly breakpointService = inject(BreakpointService);
   private readonly snackBar = inject(MatSnackBar);
   readonly query: TransactionInContextQuery = inject(MAT_DIALOG_DATA);
 

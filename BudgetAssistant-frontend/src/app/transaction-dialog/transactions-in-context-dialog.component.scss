@@ -79,10 +79,6 @@ $breakpoint-mobile: 768px;
 .desktop-table {
   display: block;
 
-  @media (max-width: $breakpoint-mobile) {
-    display: none;
-  }
-
   table {
     width: 100%;
     background-color: $card-background;
@@ -198,14 +194,10 @@ $breakpoint-mobile: 768px;
 
 // Mobile cards
 .mobile-cards {
-  display: none;
+  display: flex;
+  flex-direction: column;
   padding: 12px;
   gap: 12px;
-
-  @media (max-width: $breakpoint-mobile) {
-    display: flex;
-    flex-direction: column;
-  }
 }
 
 .transaction-card {

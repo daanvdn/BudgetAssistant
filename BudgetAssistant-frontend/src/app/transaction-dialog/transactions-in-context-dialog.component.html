@@ -35,6 +35,7 @@
                 </mat-paginator>
             </div>
 
+            @if (!breakpointService.isMobile()) {
             <!-- Desktop Table View -->
             <div class="desktop-table">
                 <table
@@ -113,7 +114,7 @@
                     <tr mat-row *matRowDef="let row; columns: displayedColumns" class="transaction-row"></tr>
                 </table>
             </div>
-
+            } @else {
             <!-- Mobile Card View -->
             <div class="mobile-cards">
                 @for (item of transactions(); track item.transactionId) {
@@ -150,6 +151,7 @@
                     </mat-card>
                 }
             </div>
+            }
 
             <!-- Bottom Paginator -->
             <div class="bottom-paginator">

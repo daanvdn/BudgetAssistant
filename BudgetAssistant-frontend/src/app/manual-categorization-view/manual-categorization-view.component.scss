@@ -123,10 +123,6 @@ $breakpoint-mobile: 768px;
 .desktop-table {
   display: block;
 
-  @media (max-width: $breakpoint-mobile) {
-    display: none;
-  }
-
   .categorization-table {
     width: 100%;
     background-color: $card-background;
@@ -245,14 +241,10 @@ $breakpoint-mobile: 768px;
 
 // Mobile cards
 .mobile-cards {
-  display: none;
+  display: flex;
   padding: 12px;
   gap: 16px;
   flex-direction: column;
-
-  @media (max-width: $breakpoint-mobile) {
-    display: flex;
-  }
 }
 
 .group-card {

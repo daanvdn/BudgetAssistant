@@ -47,6 +47,7 @@
           <p>All transactions for this account have been categorized.</p>
         </div>
       } @else {
+        @if (!breakpointService.isMobile()) {
         <!-- Desktop Table View -->
         <div class="desktop-table">
           <table mat-table [dataSource]="tableRows()" class="categorization-table">
@@ -123,7 +124,7 @@
                 class="group-row"></tr>
           </table>
         </div>
-
+        } @else {
         <!-- Mobile Card View -->
         <div class="mobile-cards">
           @for (group of groupedTransactions(); track group.name) {
@@ -172,6 +173,7 @@
             </div>
           }
         </div>
+        }
 
         <!-- Bottom Paginator -->
         <div class="bottom-paginator">

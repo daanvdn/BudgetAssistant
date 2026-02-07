@@ -37,6 +37,7 @@ import {AppService} from '../app.service';
 import {AmountType, inferAmountType} from '../model';
 import {BankAccountSelectionComponent} from '../bank-account-selection/bank-account-selection.component';
 import {CategoryTreeDropdownComponent} from '../category-tree-dropdown/category-tree-dropdown.component';
+import {BreakpointService} from '../shared/breakpoint.service';
 
 /** Represents a group header row in the table */
 interface GroupHeaderRow {
@@ -90,6 +91,7 @@ export class ManualCategorizationViewComponent implements OnInit {
   private readonly apiService = inject(BudgetAssistantApiService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly queryClient = injectQueryClient();
+  protected readonly breakpointService = inject(BreakpointService);
 
   // Signals
   protected readonly activeView = signal<TransactionTypeEnum>(TransactionTypeEnum.EXPENSES);
