@@ -17,33 +17,29 @@
                       autoActiveFirstOption
                       (opened)="onPanelOpened()"
                       (closed)="onPanelClosed()">
-      @defer (on interaction(autoInput)) {
-        <mat-option [disabled]="true">Select a category from the tree</mat-option>
-        <mat-tree [dataSource]="dataSource" [treeControl]="treeControl">
-          <mat-tree-node *matTreeNodeDef="let node" matTreeNodeToggle matTreeNodePadding>
-            <button mat-icon-button [disabled]="true"></button>
-            <mat-checkbox class="tree-checkbox"
-                          [checked]="checklistSelection.isSelected(node)"
-                          (change)="toggleSelection(node)">
-              {{ node.name }}
-            </mat-checkbox>
-          </mat-tree-node>
-          <mat-tree-node *matTreeNodeDef="let node; when: hasChild" matTreeNodePadding>
-            <button mat-icon-button matTreeNodeToggle [attr.aria-label]="'toggle ' + node.name">
-              <mat-icon class="expand-icon">
-                {{ treeControl.isExpanded(node) ? 'expand_more' : 'chevron_right' }}
-              </mat-icon>
-            </button>
-            <mat-checkbox class="tree-checkbox"
-                          [checked]="checklistSelection.isSelected(node)"
-                          (change)="toggleSelection(node)">
-              {{ node.name }}
-            </mat-checkbox>
-          </mat-tree-node>
-        </mat-tree>
-      } @placeholder {
-        <mat-option disabled>Loading categories...</mat-option>
-      }
+      <mat-option [disabled]="true">Select a category from the tree</mat-option>
+      <mat-tree [dataSource]="dataSource" [treeControl]="treeControl">
+        <mat-tree-node *matTreeNodeDef="let node" matTreeNodeToggle matTreeNodePadding>
+          <button mat-icon-button [disabled]="true"></button>
+          <mat-checkbox class="tree-checkbox"
+                        [checked]="checklistSelection.isSelected(node)"
+                        (change)="toggleSelection(node)">
+            {{ node.name }}
+          </mat-checkbox>
+        </mat-tree-node>
+        <mat-tree-node *matTreeNodeDef="let node; when: hasChild" matTreeNodePadding>
+          <button mat-icon-button matTreeNodeToggle [attr.aria-label]="'toggle ' + node.name">
+            <mat-icon class="expand-icon">
+              {{ treeControl.isExpanded(node) ? 'expand_more' : 'chevron_right' }}
+            </mat-icon>
+          </button>
+          <mat-checkbox class="tree-checkbox"
+                        [checked]="checklistSelection.isSelected(node)"
+                        (change)="toggleSelection(node)">
+            {{ node.name }}
+          </mat-checkbox>
+        </mat-tree-node>
+      </mat-tree>
     </mat-autocomplete>
   </mat-form-field>
 </div>

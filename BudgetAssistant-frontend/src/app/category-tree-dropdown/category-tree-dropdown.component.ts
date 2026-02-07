@@ -145,7 +145,7 @@ export class CategoryTreeDropdownComponent {
       if (qn) {
         this.restoreSelectionByQualifiedName(qn);
       }
-    });
+    }, { allowSignalWrites: true });
   }
 
   // --- Panel lifecycle ---
