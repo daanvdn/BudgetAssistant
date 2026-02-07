@@ -22,8 +22,6 @@ def load_expenses_categories_from_file() -> list[str]:
     with pkg_resources.files("resources").joinpath("categories-expenses.txt").open(encoding="utf-8") as file:
         lines = file.read().split("\n")
         lines = [line.strip() for line in lines if line.strip()]
-        lines.append(Category.NO_CATEGORY_NAME)
-        lines.append(Category.DUMMY_CATEGORY_NAME)
         return lines
 
 
@@ -32,8 +30,6 @@ def load_revenue_categories_from_file() -> list[str]:
     with pkg_resources.files("resources").joinpath("categories-revenue.txt").open(encoding="utf-8") as file:
         lines = file.read().split("\n")
         lines = [line.strip() for line in lines if line.strip()]
-        lines.append(Category.NO_CATEGORY_NAME)
-        lines.append(Category.DUMMY_CATEGORY_NAME)
         return lines
 
 
@@ -51,20 +47,6 @@ class TestCategoryTreeInserter:
         assert tree.root is not None
         assert tree.root.name == Category.ROOT_NAME
         assert tree.root.is_root is True
-
-    @pytest.mark.asyncio
-    async def test_run_creates_no_category_and_dummy_category(self, async_session: AsyncSession):
-        """Test that run() creates NO CATEGORY and DUMMY CATEGORY."""
-        inserter = CategoryTreeInserter()
-        tree = await inserter.run(TransactionTypeEnum.EXPENSES, async_session)
-        await async_session.commit()
-
-        # Refresh root to load children
-        await async_session.refresh(tree.root, ["children"])
-
-        child_names = [child.name for child in tree.root.children]
-        assert Category.NO_CATEGORY_NAME in child_names
-        assert Category.DUMMY_CATEGORY_NAME in child_names
 
     @pytest.mark.asyncio
     async def test_run_invalid_type_raises_value_error(self, async_session: AsyncSession):
@@ -158,8 +140,6 @@ class TestCategoryTreeInserter:
             "kredietkaart",
             "gemeenschappelijke kosten",
             "webshops",
-            Category.NO_CATEGORY_NAME,
-            Category.DUMMY_CATEGORY_NAME,
         }
 
         inserter = CategoryTreeInserter()
@@ -246,27 +226,6 @@ class TestCategoryTreeProvider:
 
         with pytest.raises(ValueError, match="Invalid category tree type"):
             await provider.provide(TransactionTypeEnum.BOTH, async_session)
-
-    @pytest.mark.asyncio
-    async def test_provide_creates_no_category_and_dummy(self, async_session: AsyncSession):
-        """Test that provide() creates NO CATEGORY and DUMMY CATEGORY."""
-        provider = CategoryTreeProvider()
-        tree = await provider.provide(TransactionTypeEnum.EXPENSES, async_session)
-        await async_session.commit()
-
-        # Find NO CATEGORY and DUMMY CATEGORY
-        no_cat_result = await async_session.execute(select(Category).where(Category.name == Category.NO_CATEGORY_NAME))
-        no_category = no_cat_result.scalar_one_or_none()
-
-        dummy_result = await async_session.execute(
-            select(Category).where(Category.name == Category.DUMMY_CATEGORY_NAME)
-        )
-        dummy_category = dummy_result.scalar_one_or_none()
-
-        assert no_category is not None
-        assert dummy_category is not None
-        assert no_category.parent_id == tree.root.id
-        assert dummy_category.parent_id == tree.root.id
 
 
 class TestBudgetTreeProvider:

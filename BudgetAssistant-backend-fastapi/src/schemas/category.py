@@ -101,11 +101,9 @@ class CategoryIndex(BaseModel):
         merged_expenses_root_children = (
             self.expenses_root_children if self.expenses_root_children else other.expenses_root_children
         )
-        merged_revenue_root_children = [
-            cat
-            for cat in (self.revenue_root_children if self.revenue_root_children else other.revenue_root_children)
-            if cat.name not in ("NO CATEGORY", "DUMMY CATEGORY")
-        ]
+        merged_revenue_root_children = (
+            self.revenue_root_children if self.revenue_root_children else other.revenue_root_children
+        )
 
         return CategoryIndex(
             id_to_category_index=merged_id_to_category_index,

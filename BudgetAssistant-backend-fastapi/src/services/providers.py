@@ -126,30 +126,6 @@ class CategoryTreeInserter:
         session.add(root)
         await session.flush()
 
-        # Create NO CATEGORY
-        no_category = Category(
-            name=Category.NO_CATEGORY_NAME,
-            parent=root,
-            parent_id=root.id,
-            is_root=False,
-            type=transaction_type,
-            qualified_name=Category.NO_CATEGORY_NAME,
-        )
-        session.add(no_category)
-        await session.flush()
-
-        # Create DUMMY CATEGORY
-        dummy_category = Category(
-            name=Category.DUMMY_CATEGORY_NAME,
-            parent=root,
-            parent_id=root.id,
-            is_root=False,
-            type=transaction_type,
-            qualified_name=Category.DUMMY_CATEGORY_NAME,
-        )
-        session.add(dummy_category)
-        await session.flush()
-
         # Insert all categories from file
         await self._insert_lines(lines, root, transaction_type, session)
 

@@ -1,6 +1,6 @@
 """Budget tree SQLModel database models."""
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Optional
 
 from sqlmodel import Field, Relationship, SQLModel
 
@@ -24,15 +24,15 @@ class BudgetTreeNode(SQLModel, table=True):
     category_id: int | None = Field(default=None, foreign_key="category.id")
 
     # Relationships
-    parent: "BudgetTreeNode | None" = Relationship(
+    parent: Optional["BudgetTreeNode"] = Relationship(
         back_populates="children",
         sa_relationship_kwargs={"remote_side": "BudgetTreeNode.id"},
     )
-    children: list["BudgetTreeNode"] = Relationship(back_populates="parent")
-    category: "Category | None" = Relationship(back_populates="budget_tree_nodes")
+    children: List["BudgetTreeNode"] = Relationship(back_populates="parent")
+    category: Optional["Category"] = Relationship(back_populates="budget_tree_nodes")
 
     # Back reference to budget tree (when this node is the root)
-    budget_tree: "BudgetTree | None" = Relationship(
+    budget_tree: Optional["BudgetTree"] = Relationship(
         back_populates="root",
         sa_relationship_kwargs={"uselist": False},
     )
@@ -83,11 +83,11 @@ class BudgetTree(SQLModel, table=True):
     root_id: int | None = Field(default=None, foreign_key="budgettreenode.id", unique=True)
 
     # Relationships
-    bank_account: "BankAccount | None" = Relationship(
+    bank_account: Optional["BankAccount"] = Relationship(
         back_populates="budget_tree",
         sa_relationship_kwargs={"lazy": "selectin"},
     )
-    root: "BudgetTreeNode | None" = Relationship(
+    root: Optional["BudgetTreeNode"] = Relationship(
         back_populates="budget_tree",
         sa_relationship_kwargs={"lazy": "selectin"},
     )

@@ -152,14 +152,6 @@ class TestCategory:
         assert persisted_root.children[0].id == child_id
         assert persisted_root.children[0].name == "Child"
 
-    def test_no_category_object(self):
-        """Test creating a 'no category' placeholder object."""
-        no_category = Category.no_category_object()
-
-        assert no_category.id == -1
-        assert no_category.name == Category.NO_CATEGORY_NAME
-        assert no_category.is_root is False
-
     @pytest.mark.asyncio
     async def test_category_equality_based_on_qualified_name(self, async_session):
         """Test category equality is based on qualified_name."""

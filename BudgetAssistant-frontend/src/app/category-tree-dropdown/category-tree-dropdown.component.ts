@@ -29,7 +29,7 @@ import {AppService} from '../app.service';
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {MatFormField, MatSuffix} from '@angular/material/form-field';
 import {MatAutocomplete, MatAutocompleteTrigger} from '@angular/material/autocomplete';
-import {FlatCategoryNode, NO_CATEGORY, AmountType} from '../model';
+import {FlatCategoryNode, AmountType} from '../model';
 import {MatInput} from '@angular/material/input';
 import {MatOption} from '@angular/material/core';
 import {MatIconButton} from '@angular/material/button';
@@ -211,9 +211,9 @@ export class CategoryTreeDropdownComponent {
       this.selectedCategoryName.set(this.selectedCategory?.name ?? 'select category');
       this.selectionChange.emit(this.selectedCategory?.qualifiedName);
     } else {
-      this.selectedCategory = NO_CATEGORY;
+      this.selectedCategory = undefined;
       this.selectedCategoryName.set('select category');
-      this.selectionChange.emit(this.selectedCategory?.qualifiedName);
+      this.selectionChange.emit(undefined);
     }
     this.categoryFormGroup.controls['searchField'].reset();
     this.dataSource.data = this.rawTreeData;

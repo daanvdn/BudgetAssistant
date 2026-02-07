@@ -21,8 +21,6 @@ class Category(SQLModel, table=True):
 
     # Class constants (not database columns)
     ROOT_NAME: ClassVar[str] = "root"
-    NO_CATEGORY_NAME: ClassVar[str] = "NO CATEGORY"
-    DUMMY_CATEGORY_NAME: ClassVar[str] = "DUMMY CATEGORY"
 
     id: int | None = Field(default=None, primary_key=True)
     name: str = Field(max_length=255)
@@ -87,16 +85,6 @@ class Category(SQLModel, table=True):
 
     def __gt__(self, other: "Category") -> bool:
         return self.qualified_name > other.qualified_name
-
-    @staticmethod
-    def no_category_object() -> "Category":
-        """Return a placeholder 'no category' instance."""
-        return Category(
-            id=-1,
-            name=Category.NO_CATEGORY_NAME,
-            is_root=False,
-            type=TransactionTypeEnum.BOTH,
-        )
 
     def add_child(self, child: "Category") -> None:
         """Add a child category."""
