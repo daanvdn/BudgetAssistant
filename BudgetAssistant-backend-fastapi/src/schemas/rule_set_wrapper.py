@@ -2,7 +2,7 @@
 
 from typing import Any, Dict, List
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class RuleSetWrapperCreate(BaseModel):
@@ -30,6 +30,15 @@ class RuleSetWrapperRead(BaseModel):
             category_id=obj.category_id,
             rule_set=obj.get_rule_set_as_dict(),
         )
+
+
+class RuleSetWrapperBatchRead(BaseModel):
+    expenses_rules: dict[str, RuleSetWrapperRead] = Field(
+        ..., description="a mapping of qualified name to rule set wrapper"
+    )
+    revenue_rules: dict[str, RuleSetWrapperRead] = Field(
+        ..., description="a mapping of qualified name to rule set wrapper"
+    )
 
 
 class RuleSetWrapperUpdate(BaseModel):

@@ -1,5 +1,7 @@
 """Rules router for rule set management."""
 
+from typing import Any
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,6 +16,7 @@ from schemas import (
     RuleSetWrapperUpdate,
     SuccessResponse,
 )
+from schemas.rule_set_wrapper import RuleSetWrapperBatchRead
 from services.category_service import category_service
 from services.rule_service import rule_service
 
@@ -47,6 +50,35 @@ async def get_or_create_rule_set_wrapper(
     )
 
 
+@router.post("/get-or-create-all", response_model=RuleSetWrapperBatchRead)
+async def get_or_create_all_rule_set_wrappers(
+    current_user: CurrentUser,
+    session: AsyncSession = Depends(get_session),
+) -> RuleSetWrapperBatchRead:
+    """Get or create rule set wrappers for all categories."""
+    grouped = await rule_service.get_or_create_all_rule_set_wrappers(
+        user=current_user,
+        session=session,
+    )
+
+    def _to_read_map(
+        wrappers: dict[str, Any],
+    ) -> dict[str, RuleSetWrapperRead]:
+        return {
+            qn: RuleSetWrapperRead(
+                id=w.id,
+                category_id=w.category_id,
+                rule_set=w.get_rule_set_as_dict(),
+            )
+            for qn, w in wrappers.items()
+        }
+
+    return RuleSetWrapperBatchRead(
+        expenses_rules=_to_read_map(grouped.get(TransactionTypeEnum.EXPENSES, {})),
+        revenue_rules=_to_read_map(grouped.get(TransactionTypeEnum.REVENUE, {})),
+    )
+
+
 @router.post("/save", response_model=SuccessResponse)
 async def save_rule_set_wrapper(
     rule_set_wrapper_in: RuleSetWrapperCreate,
@@ -55,9 +87,7 @@ async def save_rule_set_wrapper(
 ) -> SuccessResponse:
     """Save a rule set wrapper."""
     # Check category exists via service
-    category = await category_service.get_category_by_id(
-        rule_set_wrapper_in.category_id, session
-    )
+    category = await category_service.get_category_by_id(rule_set_wrapper_in.category_id, session)
 
     if not category:
         raise HTTPException(
@@ -66,9 +96,7 @@ async def save_rule_set_wrapper(
         )
 
     # Check if rule set wrapper exists for this category
-    existing = await rule_service.get_rule_set_wrapper_by_category(
-        rule_set_wrapper_in.category_id, session
-    )
+    existing = await rule_service.get_rule_set_wrapper_by_category(rule_set_wrapper_in.category_id, session)
 
     if existing:
         # Update existing via service

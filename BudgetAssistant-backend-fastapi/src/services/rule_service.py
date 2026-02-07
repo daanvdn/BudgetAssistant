@@ -1,5 +1,6 @@
 """Rule service with async SQLModel operations."""
 
+import asyncio
 from collections import defaultdict
 from typing import Any, Dict, List, Optional
 
@@ -93,6 +94,78 @@ class RuleService:
         await session.refresh(rule_set_wrapper)
 
         return rule_set_wrapper
+
+    async def _get_categories(self, session: AsyncSession) -> dict[TransactionTypeEnum, list[int]]:
+        """Get all categories."""
+        result = await session.execute(select(Category))
+        all = result.scalars().all()
+        categories_by_type: dict[TransactionTypeEnum, list[int]] = defaultdict(list)
+        for category in all:
+            categories_by_type[category.transaction_type].append(category.id)
+        return categories_by_type
+
+    async def _get_all_rule_set_wrappers(self, session: AsyncSession) -> dict[int, RuleSetWrapper]:
+        """Get all rule set wrappers."""
+        result = await session.execute(select(RuleSetWrapper))
+        wrappers: list[RuleSetWrapper] = result.scalars().all()
+        return {w.category_id: w for w in wrappers}
+
+    async def get_or_create_all_rule_set_wrappers(
+        self,
+        user: User,
+        session: AsyncSession,
+    ) -> dict[TransactionTypeEnum, dict[str, RuleSetWrapper]]:
+        """Get or create rule set wrappers for ALL categories, efficiently.
+
+        Fetches all categories and existing wrappers in two queries, bulk-creates
+        any missing wrappers and user-links, then returns the results grouped by
+        transaction type with qualified_name as key.
+        """
+        # 1. Fetch all categories and all existing wrappers in two queries
+        cat_result, wrapper_result, link_result = await asyncio.gather(
+            session.execute(select(Category)),
+            session.execute(select(RuleSetWrapper)),
+            session.execute(select(UserRuleSetLink).where(UserRuleSetLink.user_id == user.id)),
+        )
+        all_categories: list[Category] = list(cat_result.scalars().all())
+        all_wrappers: list[RuleSetWrapper] = list(wrapper_result.scalars().all())
+        existing_links: set[int] = {link.ruleset_id for link in link_result.scalars().all()}
+
+        # 2. Index existing wrappers by category_id
+        wrapper_by_cat_id: dict[int, RuleSetWrapper] = {w.category_id: w for w in all_wrappers}
+
+        # 3. Bulk-create missing wrappers
+        new_wrappers: list[RuleSetWrapper] = []
+        for cat in all_categories:
+            if cat.id not in wrapper_by_cat_id:
+                w = RuleSetWrapper(category_id=cat.id, rule_set_json="{}")
+                session.add(w)
+                new_wrappers.append(w)
+
+        if new_wrappers:
+            await session.flush()  # assigns IDs to new wrappers
+
+        # Merge new wrappers into the lookup
+        for w in new_wrappers:
+            wrapper_by_cat_id[w.category_id] = w
+
+        # 4. Bulk-create missing user-links
+        all_wrapper_ids = {w.id for w in wrapper_by_cat_id.values()}
+        missing_link_ids = all_wrapper_ids - existing_links
+        for wrapper_id in missing_link_ids:
+            session.add(UserRuleSetLink(user_id=user.id, ruleset_id=wrapper_id))
+
+        if new_wrappers or missing_link_ids:
+            await session.commit()
+
+        # 5. Build result grouped by transaction type, keyed by qualified_name
+        result: dict[TransactionTypeEnum, dict[str, RuleSetWrapper]] = defaultdict(dict)
+        for cat in all_categories:
+            wrapper = wrapper_by_cat_id.get(cat.id)
+            if wrapper:
+                result[cat.type][cat.qualified_name] = wrapper
+
+        return result
 
     async def save_rule_set(
         self,
