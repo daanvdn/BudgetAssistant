@@ -3,6 +3,7 @@
 Ported from Django's test_rules.py, adapting to pytest and Pydantic validation.
 """
 
+import json
 import random
 from abc import ABC, abstractmethod
 from typing import List, Tuple, Union
@@ -370,9 +371,10 @@ class TestRuleSetWrapperSerializerPydantic:
         assert wrapper.get_rule_set() is None
 
     def test_invalid_json_returns_none(self):
-        """Test that invalid JSON returns None."""
+        """Test that invalid JSON raises JSONDecodeError."""
         wrapper = RuleSetWrapper(category_id=None, rule_set_json="invalid json")
-        assert wrapper.get_rule_set() is None
+        with pytest.raises(json.JSONDecodeError):
+            wrapper.get_rule_set()
 
 
 class TestRuleFactories:

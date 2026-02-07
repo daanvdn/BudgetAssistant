@@ -173,7 +173,7 @@ class TestTransactionsEndpoints:
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             response = await client.post(
-                "/api/transactions/page-to-manually-review",
+                "/api/transactions/page-uncategorized",
                 json={
                     "page": 0,
                     "size": 10,
@@ -190,7 +190,7 @@ class TestTransactionsEndpoints:
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             response = await client.get(
-                "/api/transactions/count-to-manually-review",
+                "/api/transactions/count-uncategorized",
                 params={"bank_account": "BE12345"},
             )
 
@@ -375,17 +375,46 @@ class TestTransactionsEndpointsAuthenticated:
 
     @pytest.mark.asyncio
     async def test_page_to_manually_review_with_auth(self, authenticated_client_with_session):
-        """Test paging transactions to review with authentication."""
+        """Test paging uncategorized transactions with authentication."""
         client, access_token, test_session_maker = authenticated_client_with_session
         headers = {"Authorization": f"Bearer {access_token}"}
-        seeded = await seed_transaction_data(test_session_maker)
+
+        # Seed uncategorized transactions (category_id=None)
+        account_number = "be12345"
+        uncategorized_count = 15
+        async with test_session_maker() as session:
+            user_result = await session.execute(select(User).where(User.email == "testuser@example.com"))
+            user = user_result.scalar_one()
+
+            bank_account = BankAccountFactory.build(account_number=account_number, alias="Test Account")
+            counterparty = CounterpartyFactory.build(name="Acme Corp", account_number="CP-123")
+
+            session.add_all([bank_account, counterparty])
+            await session.flush()
+
+            session.add(
+                UserBankAccountLink(
+                    user_id=user.id,
+                    bank_account_number=account_number,
+                )
+            )
+
+            transactions = TransactionFactory.build_batch(
+                uncategorized_count,
+                bank_account_id=account_number,
+                counterparty_id=counterparty.name,
+                category_id=None,
+            )
+
+            session.add_all(transactions)
+            await session.commit()
 
         response = await client.post(
-            "/api/transactions/page-to-manually-review",
+            "/api/transactions/page-uncategorized",
             json={
                 "page": 0,
                 "size": 10,
-                "bank_account": seeded["account_number"],
+                "bank_account": account_number,
                 "transaction_type": "EXPENSES",
             },
             headers=headers,
@@ -394,29 +423,56 @@ class TestTransactionsEndpointsAuthenticated:
         assert response.status_code == 200
         data = response.json()
         assert "content" in data
-        assert data["total_elements"] == seeded["count"]
+        assert data["total_elements"] == uncategorized_count
         assert len(data["content"]) == 10
-        returned_ids = {item["transaction_id"] for item in data["content"]}
-        assert returned_ids.issubset(set(seeded["transaction_ids"]))
-        assert all(item["is_manually_reviewed"] is False for item in data["content"])
+        assert all(item["category_id"] is None for item in data["content"])
 
     @pytest.mark.asyncio
     async def test_count_to_manually_review_with_auth(self, authenticated_client_with_session):
-        """Test counting transactions to review with authentication."""
+        """Test counting uncategorized transactions with authentication."""
         client, access_token, test_session_maker = authenticated_client_with_session
         headers = {"Authorization": f"Bearer {access_token}"}
-        seeded = await seed_transaction_data(test_session_maker)
+
+        # Seed uncategorized transactions (category_id=None)
+        account_number = "be12345"
+        uncategorized_count = 15
+        async with test_session_maker() as session:
+            user_result = await session.execute(select(User).where(User.email == "testuser@example.com"))
+            user = user_result.scalar_one()
+
+            bank_account = BankAccountFactory.build(account_number=account_number, alias="Test Account")
+            counterparty = CounterpartyFactory.build(name="Acme Corp", account_number="CP-123")
+
+            session.add_all([bank_account, counterparty])
+            await session.flush()
+
+            session.add(
+                UserBankAccountLink(
+                    user_id=user.id,
+                    bank_account_number=account_number,
+                )
+            )
+
+            transactions = TransactionFactory.build_batch(
+                uncategorized_count,
+                bank_account_id=account_number,
+                counterparty_id=counterparty.name,
+                category_id=None,
+            )
+
+            session.add_all(transactions)
+            await session.commit()
 
         response = await client.get(
-            "/api/transactions/count-to-manually-review",
-            params={"bank_account": seeded["account_number"]},
+            "/api/transactions/count-uncategorized",
+            params={"bank_account": account_number},
             headers=headers,
         )
 
         assert response.status_code == 200
         data = response.json()
         assert "count" in data
-        assert data["count"] == seeded["count"]
+        assert data["count"] == uncategorized_count
 
     @pytest.mark.asyncio
     async def test_distinct_counterparty_names_with_auth(self, authenticated_client_with_session):

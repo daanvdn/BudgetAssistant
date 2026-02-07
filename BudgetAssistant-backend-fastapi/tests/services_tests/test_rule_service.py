@@ -144,9 +144,7 @@ def sample_transaction() -> Transaction:
     )
 
 
-def create_rule_set_wrapper_with_rule(
-    category: Category, rule_values: list[str]
-) -> RuleSetWrapper:
+def create_rule_set_wrapper_with_rule(category: Category, rule_values: list[str]) -> RuleSetWrapper:
     """Helper to create a RuleSetWrapper with a simple rule."""
     rule = Rule(
         field=["communications"],
@@ -339,9 +337,10 @@ class TestRuleSetWrapperGetRuleSet:
         assert wrapper.get_rule_set() is None
 
     def test_get_rule_set_returns_none_for_invalid_json(self):
-        """Test that invalid JSON returns None."""
+        """Test that invalid JSON raises JSONDecodeError."""
         wrapper = RuleSetWrapper(id=1, rule_set_json="not valid json")
-        assert wrapper.get_rule_set() is None
+        with pytest.raises(json.JSONDecodeError):
+            wrapper.get_rule_set()
 
     def test_get_rule_set_returns_rule_set_object(self):
         """Test that valid JSON returns a RuleSet object."""

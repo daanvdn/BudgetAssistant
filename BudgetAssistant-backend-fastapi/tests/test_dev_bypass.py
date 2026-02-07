@@ -117,7 +117,7 @@ async def test_dev_bypass_all_endpoints(client, async_session):
     resp = await client.post(
         "/api/transactions/page",
         headers=headers,
-        json={"query": {}, "page": 0, "size": 10, "sort_order": "DESC", "sort_property": "EXECUTION_DATE"},
+        json={"query": {}, "page": 0, "size": 10, "sort_order": "asc", "sort_property": "transaction_id"},
     )
     assert resp.status_code in (200, 422), f"POST /api/transactions/page failed: {resp.status_code} - {resp.text}"
 
@@ -126,40 +126,48 @@ async def test_dev_bypass_all_endpoints(client, async_session):
         "/api/transactions/page-in-context",
         headers=headers,
         json={
-            "query": {"bank_account": "BE12345678901234", "category_id": 1, "transaction_type": "EXPENSES"},
+            "query": {
+                "bank_account": "BE12345678901234",
+                "category_id": 1,
+                "transaction_type": "EXPENSES",
+                "period": "2023-01",
+                "start_date": "2023-01-01",
+                "end_date": "2023-01-31",
+            },
             "page": 0,
             "size": 10,
-            "sort_order": "DESC",
-            "sort_property": "EXECUTION_DATE",
+            "sort_order": "asc",
+            "sort_property": "transaction_id",
         },
     )
     assert resp.status_code in (200, 403, 404, 422), (
         f"POST /api/transactions/page-in-context failed: {resp.status_code} - {resp.text}"
     )
 
-    # POST /api/transactions/page-to-manually-review
+    # POST /api/transactions/page-uncategorized
     resp = await client.post(
-        "/api/transactions/page-to-manually-review",
+        "/api/transactions/page-uncategorized",
         headers=headers,
         json={
             "bank_account": "BE12345678901234",
             "page": 0,
             "size": 10,
-            "sort_order": "DESC",
-            "sort_property": "EXECUTION_DATE",
+            "sort_order": "asc",
+            "sort_property": "transaction_id",
+            "transaction_type": "EXPENSES",
         },
     )
     assert resp.status_code in (200, 403, 404, 422), (
-        f"POST /api/transactions/page-to-manually-review failed: {resp.status_code} - {resp.text}"
+        f"POST /api/transactions/page-uncategorized failed: {resp.status_code} - {resp.text}"
     )
 
-    # GET /api/transactions/count-to-manually-review
+    # GET /api/transactions/count-uncategorized
     resp = await client.get(
-        "/api/transactions/count-to-manually-review?bank_account=BE12345678901234",
+        "/api/transactions/count-uncategorized?bank_account=BE12345678901234",
         headers=headers,
     )
     assert resp.status_code in (200, 403, 404), (
-        f"GET /api/transactions/count-to-manually-review failed: {resp.status_code} - {resp.text}"
+        f"GET /api/transactions/count-uncategorized failed: {resp.status_code} - {resp.text}"
     )
 
     # POST /api/transactions/save
@@ -203,7 +211,13 @@ async def test_dev_bypass_all_endpoints(client, async_session):
     resp = await client.post(
         "/api/analysis/revenue-expenses-per-period",
         headers=headers,
-        json={"bank_accounts": [], "grouping": "MONTH"},
+        json={
+            "account_number": "BE12345678901234",
+            "transaction_type": "EXPENSES",
+            "start": "2023-01-01",
+            "end": "2023-12-31",
+            "grouping": "MONTH",
+        },
     )
     assert resp.status_code in (200, 422), (
         f"POST /api/analysis/revenue-expenses-per-period failed: {resp.status_code} - {resp.text}"
@@ -213,7 +227,13 @@ async def test_dev_bypass_all_endpoints(client, async_session):
     resp = await client.post(
         "/api/analysis/revenue-expenses-per-period-and-category",
         headers=headers,
-        json={"bank_accounts": [], "grouping": "MONTH"},
+        json={
+            "account_number": "BE12345678901234",
+            "transaction_type": "EXPENSES",
+            "start": "2023-01-01",
+            "end": "2023-12-31",
+            "grouping": "MONTH",
+        },
     )
     assert resp.status_code in (200, 422), (
         f"POST /api/analysis/revenue-expenses-per-period-and-category failed: {resp.status_code} - {resp.text}"
@@ -223,7 +243,14 @@ async def test_dev_bypass_all_endpoints(client, async_session):
     resp = await client.post(
         "/api/analysis/category-details-for-period",
         headers=headers,
-        json={"bank_accounts": [], "grouping": "MONTH", "category_qualified_name": "test"},
+        json={
+            "account_number": "BE12345678901234",
+            "transaction_type": "EXPENSES",
+            "start": "2023-01-01",
+            "end": "2023-12-31",
+            "grouping": "MONTH",
+            "category_qualified_name": "test",
+        },
     )
     assert resp.status_code in (200, 404, 422), (
         f"POST /api/analysis/category-details-for-period failed: {resp.status_code} - {resp.text}"
@@ -242,7 +269,13 @@ async def test_dev_bypass_all_endpoints(client, async_session):
     resp = await client.post(
         "/api/analysis/track-budget",
         headers=headers,
-        json={"bank_accounts": ["BE12345678901234"], "grouping": "MONTH"},
+        json={
+            "account_number": "BE12345678901234",
+            "transaction_type": "EXPENSES",
+            "start": "2023-01-01",
+            "end": "2023-12-31",
+            "grouping": "MONTH",
+        },
     )
     assert resp.status_code in (200, 400, 404, 422), (
         f"POST /api/analysis/track-budget failed: {resp.status_code} - {resp.text}"
