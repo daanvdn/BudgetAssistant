@@ -1,6 +1,6 @@
 """Budget tree SQLModel database models."""
 
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING
 
 from sqlmodel import Field, Relationship, SQLModel
 
@@ -24,15 +24,15 @@ class BudgetTreeNode(SQLModel, table=True):
     category_id: int | None = Field(default=None, foreign_key="category.id")
 
     # Relationships
-    parent: Optional["BudgetTreeNode"] = Relationship(
+    parent: "BudgetTreeNode | None" = Relationship(
         back_populates="children",
         sa_relationship_kwargs={"remote_side": "BudgetTreeNode.id"},
     )
-    children: List["BudgetTreeNode"] = Relationship(back_populates="parent")
-    category: Optional["Category"] = Relationship(back_populates="budget_tree_nodes")
+    children: list["BudgetTreeNode"] = Relationship(back_populates="parent")
+    category: "Category | None" = Relationship(back_populates="budget_tree_nodes")
 
     # Back reference to budget tree (when this node is the root)
-    budget_tree: Optional["BudgetTree"] = Relationship(
+    budget_tree: "BudgetTree | None" = Relationship(
         back_populates="root",
         sa_relationship_kwargs={"uselist": False},
     )
@@ -61,11 +61,7 @@ class BudgetTreeNode(SQLModel, table=True):
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, BudgetTreeNode):
             return False
-        return (
-            self.id == other.id
-            and self.category_id == other.category_id
-            and self.amount == other.amount
-        )
+        return self.id == other.id and self.category_id == other.category_id and self.amount == other.amount
 
     def __hash__(self) -> int:
         return hash((self.id, self.category_id, self.amount))
@@ -84,16 +80,14 @@ class BudgetTree(SQLModel, table=True):
     number_of_descendants: int = Field(default=0)
 
     # Foreign key to root node
-    root_id: int | None = Field(
-        default=None, foreign_key="budgettreenode.id", unique=True
-    )
+    root_id: int | None = Field(default=None, foreign_key="budgettreenode.id", unique=True)
 
     # Relationships
-    bank_account: Optional["BankAccount"] = Relationship(
+    bank_account: "BankAccount | None" = Relationship(
         back_populates="budget_tree",
         sa_relationship_kwargs={"lazy": "selectin"},
     )
-    root: Optional["BudgetTreeNode"] = Relationship(
+    root: "BudgetTreeNode | None" = Relationship(
         back_populates="budget_tree",
         sa_relationship_kwargs={"lazy": "selectin"},
     )

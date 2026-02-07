@@ -99,7 +99,6 @@ export class AppService {
     }
 
 
-
     setBankAccount(bankAccount: BankAccountRead) {
         this.selectedBankAccount$.next(bankAccount);
     }
@@ -148,27 +147,7 @@ export class AppService {
 
     }
 
-
-    public getRevenueAndExpensesByYear(restQuery: RevenueExpensesQuery): Observable<Page<ExpensesAndRevenueForPeriod>> {
-
-        return this.apiService.analysis.getRevenueAndExpensesPerPeriodApiAnalysisRevenueExpensesPerPeriodPost(restQuery)
-            .pipe(map((response: RevenueAndExpensesPerPeriodResponse) => {
-                    let page: Page<ExpensesAndRevenueForPeriod> = {
-                        content: response.content,
-                        number: response.page ?? 0,
-                        size: response.size ?? response.content.length,
-                        totalElements: response.totalElements ?? response.content.length
-
-                    }
-                    return page;
-
-
-                }
-            ));
-
-    }
-
-    /**
+   /**
      * Parses an ISO 8601 date string (YYYY-MM-DD) into a Date object.
      * @param json The date string in ISO 8601 format (e.g., "2024-01-15")
      * @returns A Date object representing the parsed date
@@ -181,179 +160,10 @@ export class AppService {
         return new Date(year, month, day);
     }
 
-    public saveTransaction(transaction: TransactionRead): void {
-        const transactionUpdate: TransactionUpdate = {
-            transaction: transaction.transaction,
-            categoryId: transaction.categoryId,
-            manuallyAssignedCategory: transaction.manuallyAssignedCategory,
-            isRecurring: transaction.isRecurring,
-            isAdvanceSharedAccount: transaction.isAdvanceSharedAccount,
-            isManuallyReviewed: transaction.isManuallyReviewed
-        };
-        this.apiService.transactions.saveTransactionApiTransactionsSavePost(transaction.transactionId,
-            transactionUpdate).subscribe({
-            next: () => {
-            },
-            error: (error) => console.error('Error saving transaction:', error)
-        });
-
-
-    }
-
-    /**
-     * Saves a transaction with a specific category ID.
-     * Use this method when you need to update the category without having a full CategoryRead object.
-     */
-    public saveTransactionWithCategoryId(transaction: TransactionRead, categoryId: number | undefined): void {
-        const transactionUpdate: TransactionUpdate = {
-            transaction: transaction.transaction,
-            categoryId: categoryId,
-            manuallyAssignedCategory: true,
-            isRecurring: transaction.isRecurring,
-            isAdvanceSharedAccount: transaction.isAdvanceSharedAccount,
-            isManuallyReviewed: transaction.isManuallyReviewed
-        };
-        this.apiService.transactions.saveTransactionApiTransactionsSavePost(transaction.transactionId,
-            transactionUpdate).subscribe({
-            next: () => {
-            },
-            error: (error) => console.error('Error saving transaction:', error)
-        });
-    }
-
-    private camelToSnake(str: string): string {
-        return str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
-    }
-
-    private toPage(paginatedResponse: PaginatedResponseTransactionRead): Page<TransactionRead> {
-        // Note: The new API returns 0-indexed pages
-        let page = {
-            content: paginatedResponse.content,
-            number: paginatedResponse.page,
-            size: paginatedResponse.size,
-            totalElements: paginatedResponse.totalElements
-        };
-        return page;
-    }
-
     public mapTransactionsWithCategory(transactions: TransactionRead[]): TransactionWithCategory[] {
         const index = this.idToCategoryIndex$.getValue();
         return transactions.map(t => resolveTransactionCategory(t, index));
     }
-
-
-    public pageTransactionsInContext(request: PageRequest<TransactionRead>,
-                                     query: TransactionInContextQuery): Observable<Page<TransactionRead>> {
-        let tmpSortOrder = "asc";
-        if (request.sort && request.sort.order) {
-            tmpSortOrder = request.sort.order;
-        }
-
-        let tmpSortProperty = "bookingDate";
-        if (request.sort && request.sort.property) {
-
-            tmpSortProperty = request.sort.property;
-        }
-        let pageTransactionsInContextRequest: PageTransactionsInContextRequest = {
-            page: request.page++,
-            size: request.size,
-            sortOrder: tmpSortOrder as SortOrder,
-            sortProperty: this.camelToSnake(tmpSortProperty) as TransactionSortProperty,
-            query: query
-
-        }
-        return this.apiService.transactions.pageTransactionsInContextApiTransactionsPageInContextPost(
-            pageTransactionsInContextRequest).pipe(map(result => {
-            return this.toPage(result);
-        }));
-        /*        let orig = this.http.get<Page<string>>(`${this.backendUrl}/page_transactions_in_context`, {params});
-         return orig.pipe(map(p => {
-
-         let newContent: Transaction[] = p.content.map(t => JSON.parse(t, (k, v) => {
-
-         if (k == "bookingDate" || k == "currencyDate") {
-         return this.parseDate(v)
-         }
-         else {
-         return v;
-         }
-
-         }))
-
-
-         let newPage: Page<Transaction> = {
-         content: newContent, number: p.number, size: p.size, totalElements: p.totalElements
-
-         }
-
-         return newPage;
-
-         }))*/
-    }
-
-    public pageTransactionsToManuallyReview(request: PageRequest<TransactionRead>,
-                                            transactionType: TransactionTypeEnum): Observable<Page<TransactionRead>> {
-        let bankAccount = this.selectedBankAccount$.getValue();
-        if (bankAccount == null) {
-            throw new Error("Bank account is not defined!");
-        }
-        let tmpSortOrder = "asc";
-        if (request.sort && request.sort.order) {
-            tmpSortOrder = request.sort.order;
-        }
-
-        let tmpSortProperty = "counterparty";
-        if (request.sort && request.sort.property) {
-
-            tmpSortProperty = request.sort.property;
-        }
-
-
-        let pageTransactionsToManuallyReviewRequest: PageTransactionsToManuallyReviewRequest = {
-            page: request.page++,
-            size: request.size,
-            sortOrder: tmpSortOrder as SortOrder,
-            sortProperty: this.camelToSnake(tmpSortProperty) as TransactionSortProperty,
-            bankAccount: bankAccount.accountNumber,
-            transactionType: transactionType
-
-
-        }
-        return this.apiService.transactions.pageTransactionsToManuallyReviewApiTransactionsPageToManuallyReviewPost(
-            pageTransactionsToManuallyReviewRequest).pipe(
-            map(result => {
-                return this.toPage(result);
-            })
-        );
-
-        /*
-
-         return orig.pipe(map(p => {
-
-         let newContent: Transaction[] = p.content.map(t => JSON.parse(t, (k, v) => {
-
-         if (k == "bookingDate" || k == "currencyDate") {
-         return this.parseDate(v)
-         }
-         else {
-         return v;
-         }
-
-         }))
-
-
-         let newPage: Page<Transaction> = {
-         content: newContent, number: p.number, size: p.size, totalElements: p.totalElements
-
-         }
-
-         return newPage;
-
-         }))
-         */
-
-    }
-
 
     public getRevenueExpensesPerPeriodAndCategoryShow1MonthBeforeAndAfter(restQuery: RevenueExpensesQuery): Observable<DistributionByCategoryForPeriodHandlerResult2> {
 
@@ -417,46 +227,6 @@ export class AppService {
 
     }
 
-
-
-
-    public saveRuleSetWrapper(ruleSetWrapper: RuleSetWrapperRead): Observable<SuccessResponse> {
-        if (!ruleSetWrapper.categoryId) {
-            throw new Error("categoryId is required to save a RuleSetWrapper");
-        }
-        const ruleSetWrapperCreate: RuleSetWrapperCreate = {
-            categoryId: ruleSetWrapper.categoryId,
-            ruleSet: ruleSetWrapper.ruleSet ?? {}
-        };
-        return this.apiService.rules.saveRuleSetWrapperApiRulesSavePost(ruleSetWrapperCreate)
-
-    }
-
-    public getOrCreateRuleSetWrapper(category: CategoryRead,
-                                     categoryType: TransactionTypeEnum): Observable<RuleSetWrapperRead> {
-        const getOrCreateRuleSetWrapper: GetOrCreateRuleSetWrapperRequest = {
-            categoryQualifiedName: category.qualifiedName,
-            type: categoryType,
-        };
-        return this.apiService.rules.getOrCreateRuleSetWrapperApiRulesGetOrCreatePost(getOrCreateRuleSetWrapper)
-
-    }
-
-    public categorizeTransactions(userName: string): Observable<TransactionsCategorizationResponse> {
-        return this.apiService.rules.categorizeTransactionsApiRulesCategorizeTransactionsPost()
-            .pipe(map((r: CategorizeTransactionsResponse) => {
-                    return {
-                        message: r.message,
-                        withCategoryCount: r.withCategoryCount,
-                        withoutCategoryCount: r.withoutCategoryCount
-
-                    }
-                }
-            ))
-
-
-    }
-
     public saveBankAccountAlias(bankAccount: BankAccountRead): Observable<any> {
 
         const saveAlias: SaveAliasRequest = {
@@ -498,18 +268,6 @@ export class AppService {
                 ...(index.revenueRootChildren ?? [])
             ]);
         });
-    }
-
-    /**
-     * Get a category by its qualified name from the CategoryIndex.
-     * Returns the CategoryRead or undefined if not found.
-     */
-    public getCategoryByQualifiedName(qualifiedName: string): CategoryRead | undefined {
-        const index = this.categoryIndexSubject.getValue();
-        if (!index || !qualifiedName) {
-            return undefined;
-        }
-        return index.qualifiedNameToCategoryIndex[qualifiedName];
     }
 
     /**
