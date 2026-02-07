@@ -12,7 +12,6 @@ import {
 } from '@daanvdn/budget-assistant-client';
 import {AppService} from '../app.service';
 import {RulesService} from '../rules/rules.service';
-import {CategoryRead} from '@daanvdn/budget-assistant-client';
 
 /**
  * Prefetches TanStack Query data on navigation‐link hover so that
@@ -98,36 +97,10 @@ export class RoutePrefetchService {
 
   // ── /regels ───────────────────────────────────────────────────────────
   prefetchRules(): void {
-    const expenseCategories = this.flattenCategories(this.appService.sharedCategoryTreeExpenses.getValue());
-    const revenueCategories = this.flattenCategories(this.appService.sharedCategoryTreeRevenue.getValue());
-
-    this.prefetchRuleSetsForCategories(expenseCategories, TransactionTypeEnum.EXPENSES);
-    this.prefetchRuleSetsForCategories(revenueCategories, TransactionTypeEnum.REVENUE);
-  }
-
-  private prefetchRuleSetsForCategories(categories: CategoryRead[], type: TransactionTypeEnum): void {
-    for (const cat of categories) {
-      this.queryClient.prefetchQuery({
-        queryKey: ['ruleSetWrapper', cat.qualifiedName, type],
-        queryFn: () => firstValueFrom(this.rulesService.getOrCreateRuleSetWrapper(cat.qualifiedName, type)),
-      });
-    }
-  }
-
-  private flattenCategories(nodes: CategoryRead[]): CategoryRead[] {
-    const result: CategoryRead[] = [];
-    const recurse = (list: CategoryRead[]) => {
-      for (const node of list) {
-        if (node.name !== 'NO CATEGORY' && node.name !== 'DUMMY CATEGORY') {
-          result.push(node);
-        }
-        if (node.children?.length) {
-          recurse(node.children as CategoryRead[]);
-        }
-      }
-    };
-    recurse(nodes);
-    return result;
+    this.queryClient.prefetchQuery({
+      queryKey: ['allRuleSetWrappers'],
+      queryFn: () => firstValueFrom(this.rulesService.getOrCreateAllRuleSetWrappers()),
+    });
   }
 
   // ── helpers ───────────────────────────────────────────────────────────

@@ -12,7 +12,7 @@ export {ruleSetToApi, ruleSetFromApi, ruleSetFromApiSafe} from './rule-api.schem
 
 // Re-export API types from client library
 export {
-    RuleSetWrapperRead, RuleSetWrapperCreate,
+    RuleSetWrapperRead, RuleSetWrapperCreate, RuleSetWrapperBatchRead,
     CategorizeTransactionsResponse, CategoryRead,
     TransactionTypeEnum, SuccessResponse,
     GetOrCreateRuleSetWrapperRequest

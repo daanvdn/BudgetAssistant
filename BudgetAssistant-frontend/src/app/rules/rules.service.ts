@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, catchError, throwError, retry, timer } from 'rxjs';
 import { BudgetAssistantApiService } from '@daanvdn/budget-assistant-client';
 import {
-    RuleSetWrapperRead, RuleSetWrapperCreate,
+    RuleSetWrapperRead, RuleSetWrapperCreate, RuleSetWrapperBatchRead,
     CategorizeTransactionsResponse,
     TransactionTypeEnum, SuccessResponse,
     GetOrCreateRuleSetWrapperRequest,
@@ -39,6 +39,16 @@ export class RulesService {
         return this.api.rules.getOrCreateRuleSetWrapperApiRulesGetOrCreatePost(request).pipe(
             retry({ count: 1, delay: (_, retryCount) => timer(retryCount * 1000) }),
             catchError(this.handleError('Get or create rule set'))
+        );
+    }
+
+    /**
+     * Get or create RuleSetWrappers for ALL categories in a single API call.
+     */
+    getOrCreateAllRuleSetWrappers(): Observable<RuleSetWrapperBatchRead> {
+        return this.api.rules.getOrCreateAllRuleSetWrappersApiRulesGetOrCreateAllPost().pipe(
+            retry({ count: 1, delay: (_, retryCount) => timer(retryCount * 1000) }),
+            catchError(this.handleError('Get or create all rule sets'))
         );
     }
 

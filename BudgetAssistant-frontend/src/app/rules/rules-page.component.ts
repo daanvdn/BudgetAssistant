@@ -12,7 +12,7 @@ import {MatChipsModule} from '@angular/material/chips';
 import {firstValueFrom, Subscription} from 'rxjs';
 import {injectQueryClient} from '@tanstack/angular-query-experimental';
 
-import {CategoryRead, RuleSetWrapperRead, RuleSet, TransactionTypeEnum} from './rule.models';
+import {CategoryRead, RuleSetWrapperRead, RuleSetWrapperBatchRead, RuleSet, TransactionTypeEnum} from './rule.models';
 import {RulesService} from './rules.service';
 import {AppService} from '../app.service';
 import {RuleSummaryCardComponent} from './rule-summary-card.component';
@@ -62,37 +62,43 @@ export class RulesPageComponent implements OnInit, OnDestroy {
     private static readonly ILLEGAL_NODES = ['NO CATEGORY', 'DUMMY CATEGORY'];
 
     ngOnInit(): void {
+        // Fetch ALL rule set wrappers in a single API call, then populate the cache
+        this.preloadAllRuleSets();
+
         const expSub = this.appService.sharedCategoryTreeExpenses.subscribe(nodes => {
             this.expensesFlatCategories = this.flattenAndSort(this.filterNodes(nodes));
-            this.preloadRuleSets(this.expensesFlatCategories, TransactionTypeEnum.EXPENSES);
         });
 
         const revSub = this.appService.sharedCategoryTreeRevenue.subscribe(nodes => {
             this.revenueFlatCategories = this.flattenAndSort(this.filterNodes(nodes));
-            this.preloadRuleSets(this.revenueFlatCategories, TransactionTypeEnum.REVENUE);
         });
 
         this.subscriptions.push(expSub, revSub);
     }
 
-    /** Eagerly load rule set wrappers for all categories so the empty chip can show immediately */
-    private preloadRuleSets(categories: CategoryRead[], type: TransactionTypeEnum): void {
-        for (const category of categories) {
-            const key = category.qualifiedName;
-            if (this.ruleSetWrapperCache.has(key) || this.loadingCategories.has(key)) {
-                continue;
-            }
-            this.loadingCategories.add(key);
-            this.queryClient.fetchQuery({
-                queryKey: ['ruleSetWrapper', key, type],
-                queryFn: () => firstValueFrom(this.rulesService.getOrCreateRuleSetWrapper(key, type)),
-            }).then(wrapper => {
-                this.ruleSetWrapperCache.set(key, wrapper);
-                this.loadingCategories.delete(key);
-            }).catch(() => {
-                this.loadingCategories.delete(key);
-                this.errorCategories.add(key);
-            });
+    /** Eagerly load ALL rule set wrappers in a single batch API call */
+    private preloadAllRuleSets(): void {
+        this.queryClient.fetchQuery({
+            queryKey: ['allRuleSetWrappers'],
+            queryFn: () => firstValueFrom(this.rulesService.getOrCreateAllRuleSetWrappers()),
+        }).then(batch => {
+            this.populateCacheFromBatch(batch);
+        }).catch(err => {
+            console.error('[RulesPage] Failed to preload all rule sets:', err);
+        });
+    }
+
+    /** Populate the per-category cache from a RuleSetWrapperBatchRead response */
+    private populateCacheFromBatch(batch: RuleSetWrapperBatchRead): void {
+        for (const [qualifiedName, wrapper] of Object.entries(batch.expensesRules)) {
+            this.ruleSetWrapperCache.set(qualifiedName, wrapper);
+            this.loadingCategories.delete(qualifiedName);
+            this.errorCategories.delete(qualifiedName);
+        }
+        for (const [qualifiedName, wrapper] of Object.entries(batch.revenueRules)) {
+            this.ruleSetWrapperCache.set(qualifiedName, wrapper);
+            this.loadingCategories.delete(qualifiedName);
+            this.errorCategories.delete(qualifiedName);
         }
     }
 
@@ -132,7 +138,7 @@ export class RulesPageComponent implements OnInit, OnDestroy {
         this.activeView.set(event.value as ActiveView);
     }
 
-    /** Load rule set wrapper for a category on-demand */
+    /** Load rule set wrapper for a category on-demand via batch endpoint */
     loadRuleSetWrapper(category: CategoryRead): void {
         const key = category.qualifiedName;
         if (this.ruleSetWrapperCache.has(key) || this.loadingCategories.has(key)) {
@@ -140,16 +146,12 @@ export class RulesPageComponent implements OnInit, OnDestroy {
         }
         this.loadingCategories.add(key);
         this.errorCategories.delete(key);
-        const type = this.activeView() === 'expenses'
-            ? TransactionTypeEnum.EXPENSES
-            : TransactionTypeEnum.REVENUE;
 
         this.queryClient.fetchQuery({
-            queryKey: ['ruleSetWrapper', key, type],
-            queryFn: () => firstValueFrom(this.rulesService.getOrCreateRuleSetWrapper(key, type)),
-        }).then(wrapper => {
-            this.ruleSetWrapperCache.set(key, wrapper);
-            this.loadingCategories.delete(key);
+            queryKey: ['allRuleSetWrappers'],
+            queryFn: () => firstValueFrom(this.rulesService.getOrCreateAllRuleSetWrappers()),
+        }).then(batch => {
+            this.populateCacheFromBatch(batch);
         }).catch(() => {
             this.loadingCategories.delete(key);
             this.errorCategories.add(key);
@@ -183,12 +185,9 @@ export class RulesPageComponent implements OnInit, OnDestroy {
 
     onRetryLoad(category: CategoryRead): void {
         const key = category.qualifiedName;
-        const type = this.activeView() === 'expenses'
-            ? TransactionTypeEnum.EXPENSES
-            : TransactionTypeEnum.REVENUE;
         this.errorCategories.delete(key);
         this.ruleSetWrapperCache.delete(key);
-        this.queryClient.removeQueries({queryKey: ['ruleSetWrapper', key, type]});
+        this.queryClient.removeQueries({queryKey: ['allRuleSetWrappers']});
         this.loadRuleSetWrapper(category);
     }
 
@@ -209,13 +208,10 @@ export class RulesPageComponent implements OnInit, OnDestroy {
 
         dialogRef.afterClosed().subscribe((result?: RuleSet) => {
             if (result) {
-                // Refresh: invalidate cache & re-fetch so the summary card updates
+                // Refresh: invalidate batch cache & re-fetch so the summary card updates
                 const key = category.qualifiedName;
-                const type = this.activeView() === 'expenses'
-                    ? TransactionTypeEnum.EXPENSES
-                    : TransactionTypeEnum.REVENUE;
                 this.ruleSetWrapperCache.delete(key);
-                this.queryClient.removeQueries({queryKey: ['ruleSetWrapper', key, type]});
+                this.queryClient.removeQueries({queryKey: ['allRuleSetWrappers']});
                 this.loadRuleSetWrapper(category);
             }
         });
@@ -246,24 +242,18 @@ export class RulesPageComponent implements OnInit, OnDestroy {
             dialogRef.afterClosed().subscribe((result?: RuleSet) => {
                 if (result) {
                     const key = category.qualifiedName;
-                    const type = this.activeView() === 'expenses'
-                        ? TransactionTypeEnum.EXPENSES
-                        : TransactionTypeEnum.REVENUE;
                     this.ruleSetWrapperCache.delete(key);
-                    this.queryClient.removeQueries({queryKey: ['ruleSetWrapper', key, type]});
+                    this.queryClient.removeQueries({queryKey: ['allRuleSetWrappers']});
                     this.loadRuleSetWrapper(category);
                 }
             });
         } else {
-            // Load wrapper first, then open dialog
-            const type = this.activeView() === 'expenses'
-                ? TransactionTypeEnum.EXPENSES
-                : TransactionTypeEnum.REVENUE;
+            // Load wrapper via batch call, then open dialog
             this.queryClient.fetchQuery({
-                queryKey: ['ruleSetWrapper', category.qualifiedName, type],
-                queryFn: () => firstValueFrom(this.rulesService.getOrCreateRuleSetWrapper(category.qualifiedName, type)),
-            }).then(wrapper => {
-                this.ruleSetWrapperCache.set(category.qualifiedName, wrapper);
+                queryKey: ['allRuleSetWrappers'],
+                queryFn: () => firstValueFrom(this.rulesService.getOrCreateAllRuleSetWrappers()),
+            }).then(batch => {
+                this.populateCacheFromBatch(batch);
                 this.onCreateRules(category); // recurse now that wrapper is loaded
             });
         }
