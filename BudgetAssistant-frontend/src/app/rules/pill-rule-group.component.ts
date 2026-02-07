@@ -64,6 +64,7 @@ export class PillRuleGroupComponent {
             'any',                                        // valueMatchType
             StringOperators.CONTAINS,                     // operator
         );
+        newRule.type = this.ruleSet.type;
         this.ruleSet.rules.push(newRule);
         this.ruleSetChange.emit(this.ruleSet);
     }
@@ -72,6 +73,7 @@ export class PillRuleGroupComponent {
     addGroup(): void {
         const nestedCondition = this.ruleSet.condition === 'AND' ? 'OR' : 'AND';
         const newGroup = new RuleSet(nestedCondition, [], false, true);
+        newGroup.type = this.ruleSet.type;
         this.ruleSet.rules.push(newGroup);
         this.ruleSetChange.emit(this.ruleSet);
     }

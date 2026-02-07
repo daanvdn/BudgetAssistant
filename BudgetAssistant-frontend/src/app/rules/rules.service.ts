@@ -6,8 +6,9 @@ import {
     CategorizeTransactionsResponse,
     TransactionTypeEnum, SuccessResponse,
     GetOrCreateRuleSetWrapperRequest,
-    RuleSet, convertClientRuleSetToRuleSet,
+    RuleSet,
 } from './rule.models';
+import {ruleSetToApi, ruleSetFromApi} from './rule-api.schemas';
 
 @Injectable({ providedIn: 'root' })
 export class RulesService {
@@ -69,17 +70,18 @@ export class RulesService {
 
     /**
      * Parse a RuleSetWrapperRead's ruleSet JSON blob into a typed RuleSet.
+     * Validates the data with Zod before hydrating UI classes.
      */
     parseRuleSet(wrapper: RuleSetWrapperRead): RuleSet {
-        return convertClientRuleSetToRuleSet(wrapper.ruleSet);
+        return ruleSetFromApi(wrapper.ruleSet);
     }
 
     /**
-     * Serialize a typed RuleSet back to a plain object for the API.
+     * Serialize a typed RuleSet to a validated plain object for the API.
+     * Uses Zod to ensure the output matches the Pydantic backend model.
      */
     serializeRuleSet(ruleSet: RuleSet): { [key: string]: any } {
-        const jsonString = ruleSet.toJson();
-        return JSON.parse(jsonString);
+        return ruleSetToApi(ruleSet);
     }
 
     /**

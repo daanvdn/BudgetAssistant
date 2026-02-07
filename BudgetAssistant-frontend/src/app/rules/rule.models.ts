@@ -4,9 +4,11 @@ export {
     StringOperators, CategoricalOperators, NumericalOperators,
     MatchTypes, MatchTypeOption, MATCH_TYPES,
     DEFAULT_QUERY_BUILDER_CONFIG, FIELDS_BY_PATH_FROM_TRANSACTION_MAP,
-    convertClientRuleSetToRuleSet,
     RuleUtils, QueryBuilderConfig
 } from './query-builder.interfaces';
+
+// Re-export Zod-based API serialization / deserialization
+export {ruleSetToApi, ruleSetFromApi, ruleSetFromApiSafe} from './rule-api.schemas';
 
 // Re-export API types from client library
 export {
@@ -21,6 +23,18 @@ import {
     DEFAULT_QUERY_BUILDER_CONFIG, FIELDS_BY_PATH_FROM_TRANSACTION_MAP,
     RuleSet, Rule, RuleUtils, QueryBuilderConfig
 } from './query-builder.interfaces';
+
+// Register extended fields (amount, fixed currency) into the shared lookup map
+// so that ruleSetFromApi() can hydrate Field objects for all known fields.
+const _extendedFields: Record<string, Field> = {
+    amount: new Field('amount', 'amount', 'number', 'Amount', undefined, undefined, NumericalOperators.ALL),
+    currency: new Field('currency', 'currency', 'categorical', 'Currency', undefined, [], CategoricalOperators.ALL),
+};
+for (const field of Object.values(_extendedFields)) {
+    if (!FIELDS_BY_PATH_FROM_TRANSACTION_MAP.has(field.pathFromTransaction)) {
+        FIELDS_BY_PATH_FROM_TRANSACTION_MAP.set(field.pathFromTransaction, field);
+    }
+}
 
 // ---------------------------------------------------------------------------
 // New types for the pill-editor / summary UI

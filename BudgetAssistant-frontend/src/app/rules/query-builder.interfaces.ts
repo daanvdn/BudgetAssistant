@@ -107,19 +107,19 @@ export class StringOperators {
 }
 
 export class CategoricalOperators {
-    static IN = new Operator('in', 'in', 'categorical');
-    static NOT_IN = new Operator('not in', 'not in', 'categorical');
-    static EQUALS = new Operator('equals', 'equals', 'categorical');
-    static ALL: Operator[] = [CategoricalOperators.IN, CategoricalOperators.NOT_IN, CategoricalOperators.EQUALS];
+    static CONTAINS = new Operator('contains', 'contains', 'categorical');
+    static EXACT_MATCH = new Operator('exact match', 'exact match', 'categorical');
+    static ALL: Operator[] = [CategoricalOperators.CONTAINS, CategoricalOperators.EXACT_MATCH];
 }
 
 export class NumericalOperators {
-    static EQUALS = new Operator('equals', '=', 'number');
-    static NOT_EQUALS = new Operator('not equals', '!=', 'number');
-    static GREATER_THAN = new Operator('greater than', '>', 'number');
-    static GREATER_THAN_OR_EQUALS = new Operator('greater than or equals', '>=', 'number');
-    static LESS_THAN = new Operator('less than', '<', 'number');
-    static LESS_THAN_OR_EQUALS = new Operator('less than or equals', '<=', 'number');
+    // value = name to match Python's RuleOperator.create() pattern
+    static EQUALS = new Operator('equals', 'equals', 'number');
+    static NOT_EQUALS = new Operator('not equals', 'not equals', 'number');
+    static GREATER_THAN = new Operator('greater than', 'greater than', 'number');
+    static GREATER_THAN_OR_EQUALS = new Operator('greater than or equals', 'greater than or equals', 'number');
+    static LESS_THAN = new Operator('less than', 'less than', 'number');
+    static LESS_THAN_OR_EQUALS = new Operator('less than or equals', 'less than or equals', 'number');
     static ALL: Operator[] = [NumericalOperators.EQUALS, NumericalOperators.NOT_EQUALS, NumericalOperators.GREATER_THAN, NumericalOperators.GREATER_THAN_OR_EQUALS, NumericalOperators.LESS_THAN, NumericalOperators.LESS_THAN_OR_EQUALS];
 }
 
@@ -143,7 +143,6 @@ export class RuleSet {
 
     constructor(condition: string, rules: Array<any>, collapsed?: boolean, isChild?: boolean) {
         this.clazz = 'RuleSet';
-        this.type = 'RuleSet';
         this.condition = condition as ConditionEnum;
 
         // Convert rules to RuleSetRulesInner array
@@ -197,34 +196,6 @@ export class RuleSet {
         return true;
     }
 
-    public toJson(): string {
-        if (!this.isComplete()) {
-            throw new Error('RuleSet is not complete');
-        }
-
-        let clone: RuleSet = this.clone();
-
-        /*
-         // Post-process the serialized JSON to remove properties that are undefined
-         return JSON.parse(JSON.stringify(json, (key, value) => value === undefined ? undefined : value));
-         */
-
-        let mapper = (key: string, value: any) => {
-            if (key === 'field' && value instanceof Field) {
-                return (value as Field).pathFromTransaction;
-            }
-            if (key === 'field' && value instanceof Array) {
-                return value.map((f: Field) => (f as Field).pathFromTransaction);
-            }
-            if (value && typeof value === 'object' && 'name' in value && 'value' in value) {
-                return value.name;
-            }
-
-            return value;
-        }
-
-        return JSON.stringify(clone, mapper);
-    }
 }
 
 
@@ -278,7 +249,7 @@ export class RuleUtils {
         }
         if (rule.fieldType !== undefined && rule.fieldType === 'categorical') {
             const op = rule.operator instanceof Operator ? rule.operator : null;
-            if (rule.operator !== undefined && op && op.equals(CategoricalOperators.EQUALS)) {
+            if (rule.operator !== undefined && op && op.equals(CategoricalOperators.EXACT_MATCH)) {
                 return true;
             }
         }
@@ -322,24 +293,6 @@ export class RuleUtils {
         return false;
     }
 
-    static serializeRuleSet(ruleSet: RuleSet): string {
-        const cache = new Set();
-        const jsonString = JSON.stringify(ruleSet, (key, value) => {
-            if (typeof value === 'object' && value !== null) {
-                if (cache.has(value)) {
-                    // Circular reference found, discard key
-                    return;
-                }
-                // Store value in our set
-                cache.add(value);
-            }
-            return value;
-        });
-        cache.clear(); // Clear the cache
-        return jsonString;
-    }
-
-
 }
 
 
@@ -366,7 +319,6 @@ export class Rule {
     constructor(field?: Field | Field[], fieldType?: FieldType, fieldMatchType?: RuleMatchType, value?: any,
                 valueMatchType?: RuleMatchType, operator?: Operator, ruleForm?: FormGroup) {
         this.clazz = 'Rule';
-        this.type = 'Rule';
         this._fieldObjects = field;
 
         // Convert Field objects to string array for ClientRule
@@ -522,7 +474,7 @@ export const DEFAULT_QUERY_BUILDER_CONFIG: QueryBuilderConfig = {
         counterpartyName: new Field("counterpartyName", "counterparty.name", 'string', "Counterparty Name", undefined,
             undefined,
             StringOperators.ALL),
-        counterpartyAccount: new Field("counterpartyAccount", "counterparty.accountNumber", 'string',
+        counterpartyAccount: new Field("counterpartyAccount", "counterparty.account_number", 'string',
             "Counterparty Account", undefined,
             undefined, StringOperators.ALL),
         transaction: new Field("transaction", "transaction", 'string', "Transaction", undefined, undefined,
@@ -530,7 +482,7 @@ export const DEFAULT_QUERY_BUILDER_CONFIG: QueryBuilderConfig = {
         communications: new Field("communications", "communications", 'string', "Communications", undefined, undefined,
             StringOperators.ALL),
         currency: new Field("currency", "currency", 'category', "Currency", undefined, [], CategoricalOperators.ALL),
-        country: new Field("country", "countryCode", 'categorical', "Country", undefined, [], CategoricalOperators.ALL),
+        country: new Field("country", "country_code", 'categorical', "Country", undefined, [], CategoricalOperators.ALL),
     }
 }
 
@@ -555,215 +507,4 @@ function createMatchTypesByNameMap(matchTypes: MatchTypeOption[]): Map<string, M
 }
 
 export const MATCH_TYPES_BY_NAME_MAP: Map<string, MatchTypeOption> = createMatchTypesByNameMap(MATCH_TYPES);
-
-
-function ruleSetReviverFn(key: string, value: any) {
-    if (value && typeof value === 'object' && 'clazz' in value) {
-        if (value instanceof RuleSet) {
-            return value;
-        }
-        else if (value instanceof Rule) {
-            return value;
-        }
-        if (value.clazz === 'RuleSet') {
-            let rules: Array<RuleSet | Rule> = [];
-            if (Array.isArray(value.rules)) {
-                rules = value.rules.map((ruleOrRuleSet: any) => {
-                    if (ruleOrRuleSet.clazz === 'RuleSet') {
-                        return ruleSetReviverFn('', ruleOrRuleSet);
-                    }
-                    else if (ruleOrRuleSet.clazz === 'Rule') {
-                        return ruleSetReviverFn('', ruleOrRuleSet);
-                    }
-                    return ruleOrRuleSet;
-                });
-            }
-
-            return new RuleSet(value.condition, rules, value.collapsed, value.isChild);
-        }
-        else if (value.clazz === 'Rule') {
-            // Revive the Operator object
-            let operator = value.operator ? new Operator(value.operator.name, value.operator.value,
-                value.operator.type) : undefined;
-
-            // Revive the Field object(s)
-
-            function allItemsAreStrings(arr: any[]): boolean {
-                return arr.every((item: any) => typeof item === 'string');
-            }
-
-            let field;
-            if (Array.isArray(value.field) && allItemsAreStrings(value.field)) {
-                field = value.field.map((f: string) => {
-                    if (!FIELDS_BY_PATH_FROM_TRANSACTION_MAP.has(f)) {
-                        throw new Error(`Field ${f} not found in FIELDS_BY_PATH_FROM_TRANSACTION_MAP`);
-                    }
-                    return FIELDS_BY_PATH_FROM_TRANSACTION_MAP.get(f);
-                });
-            }
-            else if (value.field && typeof value.field === 'string') {
-                field = FIELDS_BY_PATH_FROM_TRANSACTION_MAP.get(value.field);
-            }
-
-            //revive the fieldMatchType
-            let fieldMatchType: RuleMatchType | undefined;
-            if (value.fieldMatchType && typeof value.fieldMatchType === 'string') {
-                const matchTypeOption = MATCH_TYPES_BY_NAME_MAP.get(value.fieldMatchType);
-                fieldMatchType = matchTypeOption?.value;
-            }
-            else {
-                throw new Error('Invalid fieldMatchType');
-            }
-
-            let valueMatchType: RuleMatchType | undefined;
-            if (value.valueMatchType && typeof value.valueMatchType === 'string') {
-                const matchTypeOption = MATCH_TYPES_BY_NAME_MAP.get(value.valueMatchType);
-                valueMatchType = matchTypeOption?.value;
-            }
-            else {
-                throw new Error('Invalid valueMatchType');
-            }
-
-
-            return new Rule(field, value.fieldType, fieldMatchType, value.value, valueMatchType, operator);
-        }
-    }
-
-    return value;
-}
-
-
-function isValidRuleSetObject(obj: any): boolean {
-    // Check if the object has the necessary properties
-    if (!obj || !(obj instanceof RuleSet) || obj.clazz !== 'RuleSet' || !Array.isArray(obj.rules)) {
-        return false;
-    }
-
-    // Check if each rule is a valid RuleSet or Rule object
-    for (const rule of obj.rules) {
-        if (rule instanceof RuleSet) {
-            // If the rule is a RuleSet, check it recursively
-            if (!isValidRuleSetObject(rule)) {
-                return false;
-            }
-        }
-        else if (rule instanceof Rule) {
-            // If the rule is a Rule, check if it has the necessary properties
-
-            if (!rule.field) {
-                return false;
-            }
-            else if (Array.isArray(rule.field)) {
-                if (!rule.field.every(f => typeof f === 'object' && f !== null && 'pathFromTransaction' in f)) {
-                    return false;
-                }
-
-
-            }
-            else {
-                if (!(typeof rule.field === 'object' && rule.field !== null && 'pathFromTransaction' in rule.field)) {
-                    return false;
-                }
-            }
-            if (!rule.operator) {
-                return false;
-            }
-            else {
-                // Operator can be either an Operator instance or a string (RuleOperator)
-                if (!(rule.operator instanceof Operator || typeof rule.operator === 'string')) {
-                    return false;
-                }
-            }
-            if (!rule.value) {
-                return false;
-            }
-            if (!rule.fieldMatchType) {
-                return false;
-            }
-            else {
-                if (!(rule.fieldMatchType && typeof rule.fieldMatchType === 'object' && 'name' in rule.fieldMatchType && 'value' in rule.fieldMatchType)) {
-                    return false;
-                }
-            }
-
-            if (!rule.valueMatchType) {
-                return false;
-            }
-            else {
-                if (!(rule.valueMatchType && typeof rule.valueMatchType === 'object' && 'name' in rule.valueMatchType && 'value' in rule.valueMatchType)) {
-                    return false;
-                }
-            }
-        }
-        else {
-            // If the rule is neither a RuleSet nor a Rule, return false
-            return false;
-        }
-    }
-
-    // If all checks passed, return true
-    return true;
-}
-
-export function deserializeRuleSet(jsonString: string): RuleSet {
-    let ruleSet = JSON.parse(jsonString, ruleSetReviverFn);
-    if (!isValidRuleSetObject(ruleSet)) {
-        throw new Error('Invalid RuleSet object');
-
-    }
-    return ruleSet;
-}
-
-
-/**
- * Converts a ClientRule to a Rule
- */
-export function convertClientRuleToRule(clientRule: ClientRule): Rule {
-    const rule = new Rule();
-    rule.clazz = (clientRule as any).clazz || 'Rule';
-    // Handle field - it's a string in the new API
-    if (typeof clientRule.field === 'string') {
-        rule.field = clientRule.field.split('.');
-    }
-    if (clientRule.fieldType) {
-        rule.fieldType = clientRule.fieldType;
-    }
-    // Handle value - it could be a string or undefined
-    if (clientRule.value) {
-        rule.value = typeof clientRule.value === 'string' ? clientRule.value.split(',') : [String(clientRule.value)];
-    }
-    rule.valueMatchType = (clientRule as any).valueMatchType;
-    rule.operator = clientRule.operator;
-    return rule;
-}
-
-/**
- * Converts a ClientRuleSet to a RuleSet
- */
-export function convertClientRuleSetToRuleSet(clientRuleSet: ClientRuleSet | { [key: string]: any }): RuleSet {
-    // Handle empty or invalid input
-    if (!clientRuleSet || !clientRuleSet.condition) {
-        return new RuleSet('AND', [], false, false);
-    }
-
-    const ruleSet = new RuleSet(
-        clientRuleSet.condition,
-        [],
-        false,
-        (clientRuleSet as any).isChild
-    );
-
-    if (clientRuleSet.rules && Array.isArray(clientRuleSet.rules)) {
-        ruleSet.rules = clientRuleSet.rules.map((rule: any) => {
-            if (rule.clazz === 'RuleSet' || (rule.condition && rule.rules)) {
-                return convertClientRuleSetToRuleSet(rule as ClientRuleSet);
-            }
-            else {
-                return convertClientRuleToRule(rule as ClientRule);
-            }
-        });
-    }
-
-    return ruleSet;
-}
 

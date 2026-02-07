@@ -60,7 +60,7 @@
     @if (node.isGroup && node.children?.length) {
         <span class="condition-label">{{ node.condition }} of:</span>
         <ul class="rule-list">
-            @for (child of node.children; track child.text) {
+            @for (child of node.children; track $index) {
                 <li>
                     @if (child.isGroup) {
                         <ng-container *ngTemplateOutlet="summaryNodeTpl; context: { $implicit: child }">

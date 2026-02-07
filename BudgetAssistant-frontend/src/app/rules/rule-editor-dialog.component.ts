@@ -6,9 +6,10 @@ import {MatIconModule} from '@angular/material/icon';
 import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
 import {MatSnackBar, MatSnackBarModule} from '@angular/material/snack-bar';
 import {
-    RuleSet, Rule, RuleUtils, Operator,
+    RuleSet, Rule, RuleUtils,
 } from './query-builder.interfaces';
 import {CategoryRead, RuleSetWrapperRead, RuleSetWrapperCreate} from './rule.models';
+import {ruleSetToApi} from './rule-api.schemas';
 import {RulesService} from './rules.service';
 import {PillRuleGroupComponent} from './pill-rule-group.component';
 
@@ -19,54 +20,11 @@ export interface RuleEditorDialogData {
     ruleSet: RuleSet;
 }
 
-// ── Serialization helpers (avoids broken toJson()) ────────────────────
-
-function resolveMatchTypeName(mt: any): string {
-    if (!mt) return 'any of';
-    if (typeof mt === 'object' && 'name' in mt) return mt.name;
-    const s = String(mt);
-    if (s === 'any') return 'any of';
-    if (s === 'all') return 'all of';
-    return s;
-}
-
-function serializeRuleSetForApi(ruleSet: RuleSet): { [key: string]: any } {
-    return {
-        clazz: 'RuleSet',
-        type: 'RuleSet',
-        condition: ruleSet.condition,
-        rules: (ruleSet.rules || []).map((item: any) => {
-            if (RuleUtils.isRuleSet(item)) {
-                return serializeRuleSetForApi(item as RuleSet);
-            } else if (RuleUtils.isRule(item)) {
-                return serializeRuleForApi(item as Rule);
-            }
-            return item;
-        }),
-        isChild: ruleSet.isChild ?? false,
-    };
-}
-
-function serializeRuleForApi(rule: Rule): { [key: string]: any } {
-    const opName = rule.operator instanceof Operator
-        ? rule.operator.name
-        : String(rule.operator || '');
-    return {
-        clazz: 'Rule',
-        type: 'Rule',
-        field: rule.field,
-        fieldType: rule.fieldType,
-        value: rule.value,
-        valueMatchType: resolveMatchTypeName(rule.valueMatchType),
-        fieldMatchType: resolveMatchTypeName(rule.fieldMatchType),
-        operator: opName,
-    };
-}
-
 // ── Deep clone helpers ────────────────────────────────────────────────
 
 function deepCloneRuleSet(rs: RuleSet): RuleSet {
     const cloned = new RuleSet(rs.condition, [], rs.collapsed, rs.isChild);
+    cloned.type = rs.type;
     cloned.rules = (rs.rules || []).map((item: any) => {
         if (RuleUtils.isRuleSet(item)) return deepCloneRuleSet(item as RuleSet);
         if (RuleUtils.isRule(item)) return deepCloneRule(item as Rule);
@@ -83,6 +41,7 @@ function deepCloneRule(r: Rule): Rule {
     cloned.valueMatchType = r.valueMatchType;
     cloned.fieldMatchType = r.fieldMatchType;
     cloned.operator = r.operator;
+    cloned.type = r.type;
     return cloned;
 }
 
@@ -127,7 +86,7 @@ export class RuleEditorDialogComponent {
         this.saving = true;
         this.errorMessage = null;
 
-        const serialized = serializeRuleSetForApi(this.workingCopy);
+        const serialized = ruleSetToApi(this.workingCopy);
         const body: RuleSetWrapperCreate = {
             categoryId: this.data.ruleSetWrapper.categoryId!,
             ruleSet: serialized,

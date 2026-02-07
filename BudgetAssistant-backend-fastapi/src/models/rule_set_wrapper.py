@@ -1,9 +1,12 @@
 """RuleSetWrapper SQLModel database model."""
 
 import json
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from logging import Logger
+from typing import TYPE_CHECKING, Any, ClassVar, Dict, List, Optional
 
 from sqlmodel import Field, Relationship, SQLModel
+
+from common.logging_utils import LoggerFactory
 
 from .associations import UserRuleSetLink
 
@@ -16,15 +19,16 @@ if TYPE_CHECKING:
 class RuleSetWrapper(SQLModel, table=True):
     """Wrapper model for storing rule sets as JSON."""
 
+    # ClassVar tells Pydantic this is a class variable, not a model field
+    logger: ClassVar[Logger]
+
     __tablename__ = "rulesetwrapper"
 
     id: int | None = Field(default=None, primary_key=True)
     rule_set_json: str = Field(default="{}")  # Store rule set as JSON string
 
     # Foreign key to category (one-to-one)
-    category_id: int | None = Field(
-        default=None, foreign_key="category.id", unique=True
-    )
+    category_id: int | None = Field(default=None, foreign_key="category.id", unique=True)
 
     # Relationships
     category: Optional["Category"] = Relationship(
@@ -53,8 +57,11 @@ class RuleSetWrapper(SQLModel, table=True):
             if not rule_set_dict:
                 return None
             return RuleSet.model_validate(rule_set_dict)
-        except (json.JSONDecodeError, ValueError):
-            return None
+        except (json.JSONDecodeError, ValueError) as e:
+            self.logger.error(
+                f"Invalid JSON for rule set wrapper with id {self.id}: {self.rule_set_json}", exc_info=True
+            )
+            raise e
 
     def set_rule_set(self, rule_set: "RuleSet") -> None:
         """Set the rule set from a RuleSet object.
@@ -82,5 +89,12 @@ class RuleSetWrapper(SQLModel, table=True):
             return {}
         try:
             return json.loads(self.rule_set_json)
-        except json.JSONDecodeError:
-            return {}
+        except json.JSONDecodeError as e:
+            self.logger.error(
+                f"Invalid JSON for rule set wrapper with id {self.id}: {self.rule_set_json}", exc_info=True
+            )
+            raise e
+
+
+# Initialize the class-level logger after class definition
+RuleSetWrapper.logger = LoggerFactory.for_class(RuleSetWrapper)

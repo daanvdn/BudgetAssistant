@@ -226,7 +226,11 @@ export class RulesPageComponent implements OnInit, OnDestroy {
         const existingWrapper = this.getRuleSetWrapper(category);
         if (existingWrapper) {
             // Open with a fresh empty RuleSet
+            const type = this.activeView() === 'expenses'
+                ? TransactionTypeEnum.EXPENSES
+                : TransactionTypeEnum.REVENUE;
             const emptyRuleSet = new RuleSet('AND', [], false, false);
+            emptyRuleSet.type = type;
             const data: RuleEditorDialogData = {
                 category,
                 ruleSetWrapper: existingWrapper,
