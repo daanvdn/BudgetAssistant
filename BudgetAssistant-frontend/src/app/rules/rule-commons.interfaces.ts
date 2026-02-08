@@ -48,30 +48,6 @@ export type ExtendedConditionEnum = ConditionEnum;
 export type MatchType = RuleMatchType;
 
 
-export function objectsAreEqual(obj1: any, obj2: any): boolean {
-    // Get the keys
-    const keys1 = Object.keys(obj1);
-    const keys2 = Object.keys(obj2);
-
-    // If number of keys is different,
-    // then objects are not equal
-    if (keys1.length !== keys2.length) {
-        return false;
-    }
-
-    // Iterate over keys
-    for (const key of keys1) {
-        const val1 = obj1[key];
-        const val2 = obj2[key];
-        const areObjects = isObject(val1) && isObject(val2);
-        if ((areObjects && !objectsAreEqual(val1, val2)) || (!areObjects && val1 !== val2)) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
 export function isObject(object: any): boolean {
     return object != null && typeof object === 'object';
 }

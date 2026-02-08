@@ -3,7 +3,7 @@ import {CommonModule} from '@angular/common';
 import {MatButtonModule} from '@angular/material/button';
 import {MatIconModule} from '@angular/material/icon';
 import {MatTooltipModule} from '@angular/material/tooltip';
-import {FieldType, Rule, RuleSet, RuleUtils, StringOperators,} from './query-builder.interfaces';
+import {FieldType, Rule, RuleSet, RuleUtils, StringOperators,} from './rule-commons.interfaces';
 import {RULE_FIELDS_CONFIG} from './rule.models';
 import {PillRuleRowComponent} from './pill-rule-row.component';
 

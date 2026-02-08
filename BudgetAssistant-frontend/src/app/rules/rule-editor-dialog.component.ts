@@ -7,7 +7,7 @@ import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
 import {MatSnackBar, MatSnackBarModule} from '@angular/material/snack-bar';
 import {
     RuleSet, Rule, RuleUtils,
-} from './query-builder.interfaces';
+} from './rule-commons.interfaces';
 import {CategoryRead, RuleSetWrapperRead, RuleSetWrapperCreate} from './rule.models';
 import {ruleSetToApi} from './rule-api.schemas';
 import {RulesService} from './rules.service';

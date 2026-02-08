@@ -8,7 +8,7 @@ import {
     Rule, Operator, Field, FieldTypeEnum, MatchTypeOption, MatchTypes,
     StringOperators, CategoricalOperators, NumericalOperators,
     QueryBuilderConfig,
-} from './query-builder.interfaces';
+} from './rule-commons.interfaces';
 import {ValueEditorPopoverComponent} from './value-editor-popover.component';
 
 @Component({

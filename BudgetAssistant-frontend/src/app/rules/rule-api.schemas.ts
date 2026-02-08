@@ -20,7 +20,7 @@ import {
     RuleMatchType,
     RuleSet,
     RuleUtils,
-} from './query-builder.interfaces';
+} from './rule-commons.interfaces';
 
 // ═══════════════════════════════════════════════════════════════════
 //  Primitive / enum schemas

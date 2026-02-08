@@ -1,43 +1,175 @@
-<!--
-<div *ngIf="datatIsLoaded && this.criteria">
-    <div style=" padding-top: 10px; width: 100%; overflow-x: auto">
-        <p-treeTable [value]="treeNodes" [columns]="columns">
-            <ng-template pTemplate="header" let-columns let-rowNode>
-                <tr [ttRow]="rowNode">
-                    <th *ngFor="let col of columns">
-                        {{col}}
-                    </th>
-                </tr>
-            </ng-template>
-            <ng-template pTemplate="body" let-rowNode let-rowData="rowData" let-columns="columns">
-                <tr>
-                    <td *ngFor="let col of columns; let i = index">
-                        <p-treeTableToggler [rowNode]="rowNode" *ngIf="i == 0"></p-treeTableToggler>
-                        {{formatCell(rowData[col])}}
-                    </td>
-                </tr>
-            </ng-template>
-        </p-treeTable>
+<!-- Loading state -->
+@if (budgetQuery.isPending() && budgetQuery.fetchStatus() === 'fetching') {
+  <div class="loading-container">
+    <mat-spinner diameter="48"></mat-spinner>
+    <span class="loading-text">Loading budget data...</span>
+  </div>
+}
+
+<!-- Error state -->
+@if (budgetQuery.isError()) {
+  <div class="error-container">
+    <mat-icon class="error-icon">error_outline</mat-icon>
+    <span class="error-text">Failed to load budget tracking data.</span>
+  </div>
+}
+
+<!-- Empty state (no criteria selected yet) -->
+@if (!criteria()) {
+  <div class="empty-state">
+    <mat-icon class="empty-icon">bar_chart</mat-icon>
+    <p class="empty-text">Select criteria above to view budget tracking.</p>
+  </div>
+}
+
+<!-- Data loaded -->
+@if (budgetQuery.isSuccess() && budgetQuery.data(); as result) {
+  <div class="budget-tracking-container">
+    <!-- Summary cards -->
+    <div class="summary-bar">
+      @if (period()) {
+        <span class="period-label">{{ period() }}: {{ startDate() }} — {{ endDate() }}</span>
+      }
+      <div class="summary-cards">
+        <div class="summary-card">
+          <span class="summary-label">Budgeted</span>
+          <span class="summary-value">{{ formatAmount(totalBudgeted()) }}</span>
+        </div>
+        <div class="summary-card">
+          <span class="summary-label">Actual</span>
+          <span class="summary-value">{{ formatAmount(totalActual()) }}</span>
+        </div>
+        <div class="summary-card" [class]="getDifferenceClass(totalDifference())">
+          <span class="summary-label">Difference</span>
+          <span class="summary-value">{{ formatAmount(totalDifference()) }}</span>
+        </div>
+      </div>
     </div>
-</div>
 
-
-
--->
-<div *ngIf="datatIsLoaded && this.criteria">
-    <div style="padding-top: 10px; width: 100%; overflow-x: auto">
-        <table mat-table [dataSource]="dataSource" class="mat-elevation-z8">
-            <!-- Define the columns -->
-            <ng-container *ngFor="let column of displayedColumns" [matColumnDef]="column">
-                <th mat-header-cell *matHeaderCellDef> {{column}} </th>
-                <td mat-cell *matCellDef="let element"> {{getCellValue(element, column)}} </td>
-            </ng-container>
-
-            <!-- Header row -->
-            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-
-            <!-- Data rows -->
-            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    <!-- Desktop table -->
+    @if (sortedEntries().length > 0) {
+      <div class="table-wrapper">
+        <table class="budget-table">
+          <thead>
+            <tr>
+              <th class="col-category" (click)="toggleSort('categoryName')">
+                <div class="th-content">
+                  Category
+                  <mat-icon class="sort-icon">{{ getSortIcon('categoryName') }}</mat-icon>
+                </div>
+              </th>
+              <th class="col-amount" (click)="toggleSort('budgetedAmount')">
+                <div class="th-content">
+                  Budgeted
+                  <mat-icon class="sort-icon">{{ getSortIcon('budgetedAmount') }}</mat-icon>
+                </div>
+              </th>
+              <th class="col-amount" (click)="toggleSort('actualAmount')">
+                <div class="th-content">
+                  Actual
+                  <mat-icon class="sort-icon">{{ getSortIcon('actualAmount') }}</mat-icon>
+                </div>
+              </th>
+              <th class="col-amount" (click)="toggleSort('difference')">
+                <div class="th-content">
+                  Difference
+                  <mat-icon class="sort-icon">{{ getSortIcon('difference') }}</mat-icon>
+                </div>
+              </th>
+              <th class="col-percentage" (click)="toggleSort('percentageUsed')">
+                <div class="th-content">
+                  % Used
+                  <mat-icon class="sort-icon">{{ getSortIcon('percentageUsed') }}</mat-icon>
+                </div>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (entry of sortedEntries(); track entry.categoryQualifiedName) {
+              <tr class="budget-row">
+                <td class="col-category">
+                  <span class="category-name" [matTooltip]="entry.categoryQualifiedName">
+                    {{ entry.categoryName }}
+                  </span>
+                </td>
+                <td class="col-amount">
+                  {{ formatAmount(entry.budgetedAmount) }}
+                </td>
+                <td class="col-amount">
+                  {{ formatAmount(entry.actualAmount) }}
+                </td>
+                <td class="col-amount" [class]="getDifferenceClass(entry.difference)">
+                  {{ formatAmount(entry.difference) }}
+                </td>
+                <td class="col-percentage">
+                  <div class="percentage-bar-wrapper">
+                    <div
+                      class="percentage-bar"
+                      [class]="getPercentageClass(entry.percentageUsed)"
+                      [style.width.%]="Math.min(entry.percentageUsed ?? 0, 100)">
+                    </div>
+                    <span class="percentage-text" [class]="getPercentageClass(entry.percentageUsed)">
+                      {{ entry.percentageUsed !== undefined && entry.percentageUsed !== null ? (entry.percentageUsed | number:'1.0-0') + '%' : 'N/A' }}
+                    </span>
+                  </div>
+                </td>
+              </tr>
+            }
+            <!-- Totals row -->
+            <tr class="totals-row">
+              <td class="col-category"><strong>Total</strong></td>
+              <td class="col-amount"><strong>{{ formatAmount(totalBudgeted()) }}</strong></td>
+              <td class="col-amount"><strong>{{ formatAmount(totalActual()) }}</strong></td>
+              <td class="col-amount" [class]="getDifferenceClass(totalDifference())">
+                <strong>{{ formatAmount(totalDifference()) }}</strong>
+              </td>
+              <td class="col-percentage"></td>
+            </tr>
+          </tbody>
         </table>
-    </div>
-</div>
+      </div>
+
+      <!-- Mobile cards (shown on small screens) -->
+      <div class="mobile-cards">
+        @for (entry of sortedEntries(); track entry.categoryQualifiedName) {
+          <div class="mobile-card">
+            <div class="mobile-card-header">
+              <span class="category-name">{{ entry.categoryName }}</span>
+              <span class="percentage-badge" [class]="getPercentageClass(entry.percentageUsed)">
+                {{ entry.percentageUsed !== undefined && entry.percentageUsed !== null ? (entry.percentageUsed | number:'1.0-0') + '%' : 'N/A' }}
+              </span>
+            </div>
+            <div class="mobile-card-body">
+              <div class="mobile-field">
+                <span class="mobile-label">Budgeted</span>
+                <span class="mobile-value">{{ formatAmount(entry.budgetedAmount) }}</span>
+              </div>
+              <div class="mobile-field">
+                <span class="mobile-label">Actual</span>
+                <span class="mobile-value">{{ formatAmount(entry.actualAmount) }}</span>
+              </div>
+              <div class="mobile-field">
+                <span class="mobile-label">Difference</span>
+                <span class="mobile-value" [class]="getDifferenceClass(entry.difference)">
+                  {{ formatAmount(entry.difference) }}
+                </span>
+              </div>
+            </div>
+            <div class="mobile-card-bar">
+              <div
+                class="percentage-bar"
+                [class]="getPercentageClass(entry.percentageUsed)"
+                [style.width.%]="Math.min(entry.percentageUsed ?? 0, 100)">
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    } @else {
+      <div class="empty-state">
+        <mat-icon class="empty-icon">account_balance_wallet</mat-icon>
+        <p class="empty-text">No budget entries found for the selected criteria.</p>
+      </div>
+    }
+  </div>
+}

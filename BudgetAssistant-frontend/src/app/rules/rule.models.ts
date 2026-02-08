@@ -5,7 +5,7 @@ export {
     MatchTypes, MatchTypeOption, MATCH_TYPES,
     DEFAULT_QUERY_BUILDER_CONFIG, FIELDS_BY_PATH_FROM_TRANSACTION_MAP,
     RuleUtils, QueryBuilderConfig
-} from './query-builder.interfaces';
+} from './rule-commons.interfaces';
 
 // Re-export Zod-based API serialization / deserialization
 export {ruleSetToApi, ruleSetFromApi, ruleSetFromApiSafe} from './rule-api.schemas';
@@ -22,7 +22,7 @@ import {
     Field, NumericalOperators, CategoricalOperators,
     DEFAULT_QUERY_BUILDER_CONFIG, FIELDS_BY_PATH_FROM_TRANSACTION_MAP,
     RuleSet, Rule, RuleUtils, QueryBuilderConfig
-} from './query-builder.interfaces';
+} from './rule-commons.interfaces';
 
 // Register extended fields (amount, fixed currency) into the shared lookup map
 // so that ruleSetFromApi() can hydrate Field objects for all known fields.

@@ -1,22 +1,22 @@
-import { Component, computed, effect, inject, input, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { MatDialog } from '@angular/material/dialog';
-import { MatTableModule } from '@angular/material/table';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatIconModule } from '@angular/material/icon';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
-import { CdkMenuModule } from '@angular/cdk/menu';
-import { BaseChartDirective } from 'ng2-charts';
-import { ChartData, ChartEvent, Plugin } from 'chart.js';
+import {Component, computed, effect, inject, input, signal} from '@angular/core';
+import {CommonModule} from '@angular/common';
+import {MatDialog} from '@angular/material/dialog';
+import {MatTableModule} from '@angular/material/table';
+import {MatTooltipModule} from '@angular/material/tooltip';
+import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
+import {MatIconModule} from '@angular/material/icon';
+import {MatCardModule} from '@angular/material/card';
+import {MatButtonModule} from '@angular/material/button';
+import {CdkMenuModule} from '@angular/cdk/menu';
+import {BaseChartDirective} from 'ng2-charts';
+import {ChartData, ChartEvent, Plugin} from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 // @ts-ignore
 import autocolors from 'chartjs-plugin-autocolors';
-import { injectQuery } from '@tanstack/angular-query-experimental';
-import { firstValueFrom } from 'rxjs';
+import {injectQuery} from '@tanstack/angular-query-experimental';
+import {firstValueFrom} from 'rxjs';
 
-import { AppService } from '../../app.service';
+import {AppService} from '../../app.service';
 import {
   BudgetAssistantApiService,
   CategoryAmount,
@@ -27,8 +27,7 @@ import {
   TransactionInContextQuery,
   TransactionTypeEnum
 } from '@daanvdn/budget-assistant-client';
-import { TransactionsInContextDialogComponent } from '../transaction-in-context/transactions-in-context-dialog.component';
-import { ErrorDialogService } from '../../error-dialog/error-dialog.service';
+import {TransactionsInContextDialogComponent} from '../transaction-in-context/transactions-in-context-dialog.component';
 import {DateUtilsService} from "../../shared/date-utils.service";
 import {Criteria} from "../../model";
 
@@ -69,7 +68,6 @@ export class RevenueExpensesPerPeriodAndCategoryComponent {
   private readonly apiService = inject(BudgetAssistantApiService);
   private readonly appService = inject(AppService);
   private readonly dialog = inject(MatDialog);
-  private readonly errorDialogService = inject(ErrorDialogService);
   private readonly dateUtilsService = inject(DateUtilsService);
 
   // Input

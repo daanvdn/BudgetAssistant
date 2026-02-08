@@ -1,63 +1,418 @@
 // Import shared theme variables
-@import '../../../styles/variables';;
+@import '../../../styles/variables';
 
-.mat-mdc-table {
-  border-collapse: collapse;
-  td, th {
-    border: 1px solid $border-gray;
-    padding: 8px;
-    text-align: left;
+// Local aliases
+$border-color: $border-gray;
+$background-hover: $hover-gray;
 
-  }
-  th {
-    background-color: $table-header-bg;
-    font-weight: bold;
+// ── Layout ──────────────────────────────────────────────────────────────────
 
-  }
-  td{
-
-  }
+.budget-tracking-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  background-color: $page-background;
 }
 
+// ── Loading / Error / Empty states ──────────────────────────────────────────
 
-.mat-mdc-table-sticky {
-  background: $table-sticky-bg;
-  opacity: 1;
-}
-.mat-mdc-table-sticky-border-elem-top {
-  border-bottom: 2px solid $table-sticky-border;
-}
-
-.mat-mdc-table-sticky-border-elem-right {
-  border-left: 2px solid $table-sticky-border;
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 48px 16px;
 }
 
-.mat-mdc-table-sticky-border-elem-bottom {
-  border-top: 2px solid $table-sticky-border;
+.loading-text {
+  font-size: 14px;
+  color: $text-secondary;
 }
 
-.mat-mdc-table-sticky-border-elem-left {
-  border-right: 2px solid $table-sticky-border;
+.error-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background-color: $expense-red-bg;
+  border: 1px solid $expense-red-border;
+  border-radius: $radius-card;
+  margin: 16px;
 }
 
-.color-red {
+.error-icon {
   color: $error-danger-red;
-
-}
-.color-light-coral {
-  background: $expense-red-bg;
-
 }
 
-.color-green {
-  color: $success-green;
+.error-text {
+  color: $error-danger-red;
+  font-size: 14px;
 }
 
-.mat-mdc-table {
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 48px 16px;
+  color: $text-muted;
+}
+
+.empty-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+  color: $text-muted-light;
+}
+
+.empty-text {
+  font-size: 14px;
+  color: $text-secondary;
+  margin: 0;
+}
+
+// ── Summary bar ─────────────────────────────────────────────────────────────
+
+.summary-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background-color: $card-background;
+  border-radius: $radius-card;
+  padding: 16px;
+  box-shadow: $shadow-card;
+}
+
+.period-label {
+  font-size: 13px;
+  color: $text-secondary;
+  font-weight: 500;
+}
+
+.summary-cards {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+
+  @media (max-width: $breakpoint-mobile) {
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+
+.summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 20px;
+  background-color: $filter-section-bg;
+  border-radius: $radius-card;
+  flex: 1;
+  min-width: 120px;
+
+  &.positive {
+    background-color: $income-green-bg;
+    border: 1px solid $income-green-border;
+
+    .summary-value {
+      color: $success-green;
+    }
+  }
+
+  &.negative {
+    background-color: $expense-red-bg;
+    border: 1px solid $expense-red-border;
+
+    .summary-value {
+      color: $error-danger-red;
+    }
+  }
+}
+
+.summary-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: $text-secondary;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.summary-value {
+  font-size: 20px;
+  font-weight: 600;
+  color: $text-primary;
+}
+
+// ── Desktop table ───────────────────────────────────────────────────────────
+
+.table-wrapper {
+  overflow-x: auto;
+  background-color: $card-background;
+  border-radius: $radius-card;
+  box-shadow: $shadow-card;
+
+  @media (max-width: $breakpoint-tablet) {
+    display: none; // Hide on mobile, show cards instead
+  }
+}
+
+.budget-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  thead {
+    tr {
+      background-color: $table-header-bg;
+    }
+  }
+
+  th {
+    padding: 12px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: $text-primary;
+    text-align: left;
+    border-bottom: 2px solid $border-color;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+    transition: background-color $transition-fast;
+
+    &:hover {
+      background-color: $light-blue-hover;
+    }
+  }
+
+  .th-content {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .sort-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: $text-muted;
+  }
+
+  td {
+    padding: 10px 16px;
+    font-size: 14px;
+    color: $text-primary;
+    border-bottom: 1px solid $border-color;
+    vertical-align: middle;
+  }
+
+  .col-category {
+    min-width: 180px;
+  }
+
+  .col-amount {
+    text-align: right;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+
+    &.positive {
+      color: $success-green;
+      font-weight: 600;
+    }
+
+    &.negative {
+      color: $error-danger-red;
+      font-weight: 600;
+    }
+  }
+
+  .col-percentage {
+    min-width: 160px;
+  }
+}
+
+.category-name {
+  font-weight: 500;
+  cursor: default;
+}
+
+.budget-row {
+  transition: background-color $transition-fast;
+
+  &:hover {
+    background-color: $background-hover;
+  }
+
+  &:nth-child(even) {
+    background-color: rgba($page-background, 0.5);
+
+    &:hover {
+      background-color: $background-hover;
+    }
+  }
+}
+
+.totals-row {
+  background-color: $filter-section-bg;
+
+  td {
+    border-top: 2px solid $border-color;
+    font-weight: 600;
+  }
+
+  .col-amount.positive {
+    color: $success-green;
+  }
+
+  .col-amount.negative {
+    color: $error-danger-red;
+  }
+}
+
+// ── Percentage bar ──────────────────────────────────────────────────────────
+
+.percentage-bar-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   width: 100%;
 }
 
-.mat-mdc-header-cell, .mat-mdc-cell {
-  padding: 8px;
-  text-align: left;
+.percentage-bar {
+  height: 8px;
+  border-radius: 4px;
+  transition: width $transition-standard;
+  min-width: 2px;
+
+  &.percentage-good {
+    background-color: $success-green;
+  }
+
+  &.percentage-warning {
+    background-color: #f59e0b; // Amber 500
+  }
+
+  &.percentage-over {
+    background-color: $error-danger-red;
+  }
+}
+
+.percentage-text {
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+
+  &.percentage-good {
+    color: $success-green;
+  }
+
+  &.percentage-warning {
+    color: #d97706; // Amber 600
+  }
+
+  &.percentage-over {
+    color: $error-danger-red;
+  }
+}
+
+// ── Mobile cards ────────────────────────────────────────────────────────────
+
+.mobile-cards {
+  display: none;
+
+  @media (max-width: $breakpoint-tablet) {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+
+.mobile-card {
+  background-color: $card-background;
+  border-radius: $radius-card;
+  box-shadow: $shadow-card;
+  overflow: hidden;
+}
+
+.mobile-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background-color: $filter-section-bg;
+  border-bottom: 1px solid $border-color;
+
+  .category-name {
+    font-weight: 600;
+    font-size: 14px;
+    color: $text-primary;
+  }
+}
+
+.percentage-badge {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: $radius-tag;
+
+  &.percentage-good {
+    background-color: $income-green-bg;
+    color: $success-green;
+  }
+
+  &.percentage-warning {
+    background-color: #fef3c7; // Amber 100
+    color: #d97706;
+  }
+
+  &.percentage-over {
+    background-color: $expense-red-bg;
+    color: $error-danger-red;
+  }
+}
+
+.mobile-card-body {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 12px 16px;
+
+  @media (max-width: $breakpoint-mobile) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.mobile-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mobile-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: $text-secondary;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.mobile-value {
+  font-size: 15px;
+  font-weight: 600;
+  color: $text-primary;
+  font-variant-numeric: tabular-nums;
+
+  &.positive {
+    color: $success-green;
+  }
+
+  &.negative {
+    color: $error-danger-red;
+  }
+}
+
+.mobile-card-bar {
+  height: 6px;
+  background-color: $filter-section-bg;
 }
